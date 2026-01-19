@@ -1,0 +1,2726 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LeakLens - See What Your Wallet Leaks</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        :root {
+            --bg-primary: #09090b;
+            --bg-secondary: #18181b;
+            --bg-tertiary: #27272a;
+            --border-color: #3f3f46;
+            --border-subtle: #27272a;
+            --text-primary: #fafafa;
+            --text-secondary: #a1a1aa;
+            --text-muted: #71717a;
+            --solana-purple: #9945FF;
+            --solana-green: #14F195;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --success: #22c55e;
+            --info: #3b82f6;
+            --glow-purple: rgba(153, 69, 255, 0.15);
+            --glow-green: rgba(20, 241, 149, 0.15);
+        }
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        html { scroll-behavior: smooth; }
+        
+        body {
+            font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+        
+        /* Animated gradient background */
+        .bg-gradient {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: 
+                radial-gradient(ellipse 80% 50% at 50% -20%, var(--glow-purple), transparent),
+                radial-gradient(ellipse 60% 40% at 100% 100%, var(--glow-green), transparent);
+            pointer-events: none;
+            z-index: 0;
+        }
+        
+        .container {
+            position: relative;
+            z-index: 1;
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 24px;
+        }
+        
+        /* ==================== HEADER ==================== */
+        .header {
+            text-align: center;
+            padding: 80px 0 60px;
+        }
+        
+        .logo-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+        
+        .logo-icon {
+            width: 56px;
+            height: 56px;
+            background: linear-gradient(135deg, var(--solana-purple), var(--solana-green));
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            box-shadow: 0 8px 32px var(--glow-purple);
+        }
+        
+        .logo-text {
+            font-size: 48px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #fff 0%, #a1a1aa 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: -0.02em;
+        }
+        
+        .tagline {
+            font-size: 20px;
+            color: var(--text-secondary);
+            font-weight: 400;
+            margin-bottom: 12px;
+        }
+        
+        .tagline span {
+            color: var(--solana-green);
+            font-weight: 600;
+        }
+        
+        .powered-by {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-subtle);
+            border-radius: 100px;
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+        
+        .powered-by img {
+            height: 16px;
+        }
+
+        /* Mission Section */
+        .mission-section {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-subtle);
+            border-radius: 24px;
+            padding: 32px;
+            margin-bottom: 28px;
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.2);
+        }
+
+        .mission-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 24px;
+        }
+
+        .mission-card {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-subtle);
+            border-radius: 16px;
+            padding: 20px;
+            transition: all 0.2s;
+        }
+
+        .mission-card:hover {
+            border-color: rgba(153, 69, 255, 0.35);
+            transform: translateY(-2px);
+        }
+
+        .mission-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .mission-card p {
+            font-size: 14px;
+            color: var(--text-secondary);
+            line-height: 1.7;
+        }
+
+        .mission-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .mission-list li {
+            font-size: 14px;
+            color: var(--text-secondary);
+            display: flex;
+            gap: 10px;
+            align-items: flex-start;
+        }
+
+        .mission-list li span {
+            color: var(--solana-green);
+            font-weight: 600;
+        }
+        
+        /* ==================== SEARCH ==================== */
+        .search-section {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-subtle);
+            border-radius: 24px;
+            padding: 40px;
+            margin-bottom: 32px;
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.2);
+        }
+        
+        .search-title {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .search-subtitle {
+            color: var(--text-secondary);
+            margin-bottom: 28px;
+            font-size: 15px;
+        }
+        
+        .search-form {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        
+        .input-wrapper {
+            flex: 1;
+            position: relative;
+        }
+        
+        .search-input {
+            width: 100%;
+            background: var(--bg-primary);
+            border: 2px solid var(--border-color);
+            border-radius: 16px;
+            padding: 18px 24px;
+            font-size: 16px;
+            font-family: 'JetBrains Mono', monospace;
+            color: var(--text-primary);
+            transition: all 0.2s;
+        }
+        
+        .search-input:focus {
+            outline: none;
+            border-color: var(--solana-purple);
+            box-shadow: 0 0 0 4px var(--glow-purple);
+        }
+        
+        .search-input::placeholder {
+            color: var(--text-muted);
+        }
+        
+        .network-badge {
+            position: absolute;
+            right: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 14px;
+            background: linear-gradient(135deg, rgba(153, 69, 255, 0.15), rgba(20, 241, 149, 0.15));
+            border: 1px solid rgba(153, 69, 255, 0.3);
+            border-radius: 10px;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--solana-green);
+        }
+        
+        .network-badge img {
+            width: 18px;
+            height: 18px;
+        }
+        
+        .search-btn {
+            background: linear-gradient(135deg, var(--solana-purple), #7c3aed);
+            border: none;
+            border-radius: 16px;
+            padding: 18px 36px;
+            font-size: 16px;
+            font-weight: 600;
+            color: white;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            white-space: nowrap;
+        }
+        
+        .search-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(153, 69, 255, 0.4);
+        }
+        
+        .search-btn:active {
+            transform: translateY(0);
+        }
+        
+        .search-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        /* Limit Slider */
+        .slider-container {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 16px 20px;
+            background: var(--bg-primary);
+            border: 1px solid var(--border-subtle);
+            border-radius: 14px;
+        }
+        
+        .slider-label {
+            font-size: 14px;
+            color: var(--text-secondary);
+            white-space: nowrap;
+        }
+        
+        .slider-wrapper {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        
+        .limit-slider {
+            flex: 1;
+            -webkit-appearance: none;
+            appearance: none;
+            height: 6px;
+            background: var(--bg-tertiary);
+            border-radius: 3px;
+            outline: none;
+            cursor: pointer;
+        }
+        
+        .limit-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            background: linear-gradient(135deg, var(--solana-purple), var(--solana-green));
+            border-radius: 50%;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        .limit-slider::-webkit-slider-thumb:hover {
+            transform: scale(1.15);
+            box-shadow: 0 0 16px var(--glow-purple);
+        }
+        
+        .limit-slider::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            background: linear-gradient(135deg, var(--solana-purple), var(--solana-green));
+            border-radius: 50%;
+            cursor: pointer;
+            border: none;
+        }
+        
+        .slider-value {
+            min-width: 80px;
+            padding: 8px 14px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--solana-green);
+            text-align: center;
+        }
+        
+        /* ==================== LOADING ==================== */
+        .loading-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(9, 9, 11, 0.95);
+            z-index: 1000;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 24px;
+        }
+        
+        .loading-overlay.active {
+            display: flex;
+        }
+        
+        .loading-spinner {
+            width: 64px;
+            height: 64px;
+            border: 3px solid var(--border-color);
+            border-top-color: var(--solana-purple);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin { to { transform: rotate(360deg); } }
+        
+        .loading-text {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 15px;
+            color: var(--solana-green);
+        }
+        
+        .loading-steps {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-top: 16px;
+        }
+        
+        .loading-step {
+            font-size: 13px;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .loading-step.active {
+            color: var(--solana-green);
+        }
+        
+        .loading-step.done {
+            color: var(--success);
+        }
+        
+        /* ==================== RESULTS ==================== */
+        #results {
+            display: none;
+        }
+        
+        #results.active {
+            display: block;
+            animation: slideUp 0.5s ease-out;
+        }
+        
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        /* Exposure Header */
+        .exposure-header {
+            background: linear-gradient(135deg, var(--bg-secondary), rgba(153, 69, 255, 0.05));
+            border: 1px solid var(--border-subtle);
+            border-radius: 24px;
+            padding: 40px;
+            margin-bottom: 24px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .exposure-header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -20%;
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(circle, var(--glow-purple), transparent 70%);
+            opacity: 0.5;
+        }
+        
+        .wallet-info {
+            position: relative;
+            z-index: 1;
+            margin-bottom: 32px;
+        }
+        
+        .wallet-label {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+        }
+        
+        .wallet-address {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 18px;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        
+        .copy-btn {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 6px 12px;
+            font-size: 12px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .copy-btn:hover {
+            background: var(--border-color);
+            color: var(--text-primary);
+        }
+        
+        .score-section {
+            display: flex;
+            align-items: center;
+            gap: 32px;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .score-ring {
+            width: 140px;
+            height: 140px;
+            border-radius: 50%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            background: var(--bg-primary);
+        }
+        
+        .score-ring::before {
+            content: '';
+            position: absolute;
+            inset: -4px;
+            border-radius: 50%;
+            padding: 4px;
+            background: conic-gradient(var(--score-color, var(--danger)) var(--score-pct, 0%), var(--border-color) 0%);
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+        }
+        
+        .score-value {
+            font-size: 42px;
+            font-weight: 700;
+            line-height: 1;
+        }
+        
+        .score-label {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+        
+        .score-details h2 {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+        
+        .score-details p {
+            color: var(--text-secondary);
+            font-size: 15px;
+            max-width: 500px;
+        }
+        
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        
+        @media (max-width: 800px) {
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+        
+        .stat-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-subtle);
+            border-radius: 16px;
+            padding: 20px;
+            text-align: center;
+        }
+        
+        .stat-icon {
+            font-size: 24px;
+            margin-bottom: 8px;
+        }
+        
+        .stat-value {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+        
+        .stat-label {
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+        
+        /* Cards */
+        .card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-subtle);
+            border-radius: 20px;
+            padding: 28px;
+            margin-bottom: 24px;
+        }
+        
+        .card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 24px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid var(--border-subtle);
+        }
+        
+        .card-title {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 18px;
+            font-weight: 600;
+        }
+        
+        .card-title .icon {
+            font-size: 22px;
+        }
+        
+        .card-badge {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--danger);
+            padding: 6px 14px;
+            border-radius: 100px;
+            font-size: 13px;
+            font-weight: 600;
+        }
+        
+        /* Grid layouts */
+        .grid-2 {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 24px;
+        }
+        
+        @media (max-width: 800px) {
+            .grid-2 { grid-template-columns: 1fr; }
+            .score-section { flex-direction: column; text-align: center; }
+        }
+        
+        /* What They Know */
+        .knowledge-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 16px;
+        }
+        
+        .knowledge-item {
+            background: var(--bg-primary);
+            border-radius: 14px;
+            padding: 20px;
+            border-left: 4px solid var(--warning);
+        }
+        
+        .knowledge-category {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--warning);
+            margin-bottom: 8px;
+        }
+        
+        .knowledge-fact {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+        
+        .knowledge-explanation {
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+        
+        /* Surveillance Vectors */
+        .vector-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        
+        .vector-item {
+            display: flex;
+            gap: 16px;
+            padding: 18px;
+            background: var(--bg-primary);
+            border-radius: 14px;
+            border-left: 4px solid var(--danger);
+            transition: all 0.2s;
+        }
+        
+        .vector-item:hover {
+            transform: translateX(4px);
+        }
+        
+        .vector-icon {
+            width: 44px;
+            height: 44px;
+            background: rgba(239, 68, 68, 0.1);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            flex-shrink: 0;
+        }
+        
+        .vector-content h4 {
+            font-size: 15px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+        
+        .vector-content p {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+        }
+        
+        .vector-evidence {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            color: var(--warning);
+            background: rgba(245, 158, 11, 0.1);
+            padding: 8px 12px;
+            border-radius: 8px;
+        }
+        
+        /* Heatmap */
+        .heatmap-container {
+            overflow-x: auto;
+            padding-bottom: 8px;
+        }
+        
+        .heatmap {
+            display: grid;
+            grid-template-columns: repeat(24, 1fr);
+            gap: 4px;
+            min-width: 600px;
+        }
+        
+        .heatmap-cell {
+            aspect-ratio: 1;
+            border-radius: 6px;
+            background: var(--bg-tertiary);
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+        
+        .heatmap-cell:hover {
+            transform: scale(1.2);
+            z-index: 1;
+        }
+        
+        .heatmap-cell.l1 { background: rgba(239, 68, 68, 0.2); }
+        .heatmap-cell.l2 { background: rgba(239, 68, 68, 0.4); }
+        .heatmap-cell.l3 { background: rgba(239, 68, 68, 0.6); }
+        .heatmap-cell.l4 { background: rgba(239, 68, 68, 0.8); }
+        .heatmap-cell.l5 { background: var(--danger); }
+        
+        .heatmap-labels {
+            display: grid;
+            grid-template-columns: repeat(24, 1fr);
+            gap: 4px;
+            margin-top: 8px;
+            min-width: 600px;
+        }
+        
+        .heatmap-labels span {
+            font-size: 10px;
+            color: var(--text-muted);
+            text-align: center;
+        }
+        
+        /* Profile Bars */
+        .profile-item {
+            margin-bottom: 16px;
+        }
+        
+        .profile-item:last-child {
+            margin-bottom: 0;
+        }
+        
+        .profile-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+        
+        .profile-header .label {
+            color: var(--text-secondary);
+        }
+        
+        .profile-header .value {
+            font-weight: 600;
+            font-family: 'JetBrains Mono', monospace;
+        }
+        
+        .profile-bar {
+            height: 8px;
+            background: var(--bg-tertiary);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        
+        .profile-bar .fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 1s ease-out;
+        }
+        
+        /* Protocol Pills */
+        .protocol-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        
+        .protocol-pill {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 16px;
+            background: linear-gradient(135deg, rgba(153, 69, 255, 0.1), rgba(20, 241, 149, 0.05));
+            border: 1px solid rgba(153, 69, 255, 0.2);
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        
+        .protocol-pill:hover {
+            transform: translateY(-2px);
+            border-color: var(--solana-purple);
+        }
+        
+        .protocol-pill .icon {
+            font-size: 18px;
+        }
+        
+        /* Jupiter Portfolio */
+        .token-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .token-item {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 14px;
+            background: var(--bg-primary);
+            border-radius: 12px;
+        }
+        
+        .token-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--bg-tertiary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+        }
+        
+        .token-info {
+            flex: 1;
+        }
+        
+        .token-name {
+            font-weight: 600;
+            font-size: 15px;
+        }
+        
+        .token-amount {
+            font-size: 13px;
+            color: var(--text-muted);
+            font-family: 'JetBrains Mono', monospace;
+        }
+        
+        .token-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 600;
+            color: var(--success);
+        }
+
+        /* Snapshot + Insights */
+        .snapshot-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 14px;
+        }
+
+        .snapshot-item {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-subtle);
+            border-radius: 14px;
+            padding: 16px;
+        }
+
+        .snapshot-label {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--text-muted);
+            margin-bottom: 6px;
+        }
+
+        .snapshot-value {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .snapshot-subtext {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .meta-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px 16px;
+            margin-top: 16px;
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .meta-pill {
+            padding: 6px 12px;
+            border-radius: 999px;
+            background: var(--bg-primary);
+            border: 1px solid var(--border-subtle);
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        /* Link tiles */
+        .link-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 12px;
+        }
+
+        .link-tile {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px 16px;
+            border-radius: 12px;
+            background: var(--bg-primary);
+            border: 1px solid var(--border-subtle);
+            text-decoration: none;
+            color: var(--text-secondary);
+            transition: all 0.2s;
+        }
+
+        .link-tile:hover {
+            border-color: var(--solana-purple);
+            color: var(--text-primary);
+            transform: translateY(-2px);
+        }
+
+        .link-tile .icon {
+            font-size: 20px;
+        }
+
+        .link-tile .label {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .link-tile .desc {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        /* Breakdown bars */
+        .breakdown-list {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .breakdown-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .breakdown-label {
+            min-width: 160px;
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .breakdown-bar {
+            flex: 1;
+            height: 8px;
+            background: var(--bg-tertiary);
+            border-radius: 999px;
+            overflow: hidden;
+        }
+
+        .breakdown-fill {
+            height: 100%;
+            border-radius: 999px;
+        }
+
+        .breakdown-value {
+            min-width: 42px;
+            text-align: right;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        /* Risk list */
+        .risk-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .risk-item {
+            display: flex;
+            gap: 12px;
+            padding: 14px;
+            background: var(--bg-primary);
+            border-radius: 12px;
+            border: 1px solid var(--border-subtle);
+        }
+
+        .risk-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            background: rgba(245, 158, 11, 0.12);
+            color: var(--warning);
+        }
+
+        .risk-content h4 {
+            font-size: 14px;
+            margin-bottom: 4px;
+        }
+
+        .risk-content p {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .risk-tag {
+            display: inline-flex;
+            align-items: center;
+            padding: 3px 10px;
+            border-radius: 999px;
+            font-size: 11px;
+            font-weight: 600;
+            margin-left: auto;
+        }
+
+        /* CTA tiles */
+        .cta-tiles {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 12px;
+            margin-top: 24px;
+        }
+
+        .cta-tile {
+            padding: 16px;
+            border-radius: 14px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            text-decoration: none;
+            color: var(--text-secondary);
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            transition: all 0.2s;
+        }
+
+        .cta-tile strong {
+            color: var(--text-primary);
+            font-size: 15px;
+        }
+
+        .cta-tile.primary {
+            background: linear-gradient(135deg, rgba(20, 241, 149, 0.18), rgba(153, 69, 255, 0.15));
+            border-color: var(--solana-green);
+            color: var(--text-primary);
+        }
+
+        .cta-tile:hover {
+            transform: translateY(-2px);
+            border-color: var(--solana-purple);
+        }
+
+        .cta-tile.secondary {
+            background: var(--bg-primary);
+        }
+
+        /* Playbook */
+        .playbook-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 12px;
+        }
+
+        .playbook-item {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-subtle);
+            border-radius: 12px;
+            padding: 16px;
+        }
+
+        .playbook-item h4 {
+            font-size: 14px;
+            margin-bottom: 6px;
+        }
+
+        .playbook-item p {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .protect-banner {
+            background: linear-gradient(135deg, rgba(153, 69, 255, 0.12), rgba(20, 241, 149, 0.12));
+            border: 1px solid rgba(153, 69, 255, 0.35);
+            border-radius: 18px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .protect-banner h4 {
+            font-size: 16px;
+            margin-bottom: 4px;
+        }
+
+        .protect-steps {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 12px;
+        }
+
+        .protect-step {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-subtle);
+            border-radius: 12px;
+            padding: 14px;
+        }
+
+        .protect-step strong {
+            font-size: 13px;
+            display: block;
+            margin-bottom: 6px;
+        }
+
+        .protect-step p {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+        
+        /* CTA Section */
+        .cta-section {
+            background: linear-gradient(135deg, rgba(20, 241, 149, 0.1), rgba(153, 69, 255, 0.1));
+            border: 2px solid var(--solana-green);
+            border-radius: 24px;
+            padding: 48px;
+            text-align: center;
+            margin-top: 32px;
+        }
+        
+        .cta-icon {
+            font-size: 48px;
+            margin-bottom: 20px;
+        }
+        
+        .cta-section h3 {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 12px;
+        }
+        
+        .cta-section p {
+            color: var(--text-secondary);
+            font-size: 16px;
+            max-width: 600px;
+            margin: 0 auto 28px;
+        }
+        
+        .cta-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            background: linear-gradient(135deg, var(--solana-green), #059669);
+            color: #000;
+            padding: 16px 32px;
+            border-radius: 14px;
+            font-size: 16px;
+            font-weight: 700;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+        
+        .cta-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 32px rgba(20, 241, 149, 0.4);
+        }
+        
+        /* External Links */
+        .external-links {
+            display: flex;
+            justify-content: center;
+            gap: 16px;
+            margin-top: 24px;
+            flex-wrap: wrap;
+        }
+        
+        .ext-link {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 20px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+        
+        .ext-link:hover {
+            border-color: var(--solana-purple);
+            color: var(--text-primary);
+        }
+        
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 48px 24px;
+            margin-top: 48px;
+            border-top: 1px solid var(--border-subtle);
+        }
+        
+        .footer p {
+            color: var(--text-muted);
+            font-size: 14px;
+        }
+        
+        .footer a {
+            color: var(--solana-green);
+            text-decoration: none;
+        }
+        
+        .footer a:hover {
+            text-decoration: underline;
+        }
+        
+        /* Chart */
+        .chart-container {
+            height: 200px;
+            position: relative;
+        }
+        
+        /* Arkham Section */
+        .arkham-box {
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.1), transparent);
+            border: 1px solid rgba(139, 92, 246, 0.2);
+            border-radius: 14px;
+            padding: 20px;
+            margin-bottom: 16px;
+        }
+        
+        .arkham-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: #a78bfa;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .entity-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        
+        .entity-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            background: rgba(139, 92, 246, 0.15);
+            border-radius: 8px;
+            font-size: 13px;
+            color: #c4b5fd;
+        }
+        
+        /* Educational sections responsive */
+        @media (max-width: 800px) {
+            .card > div[style*="grid-template-columns: 1fr 1fr"] {
+                grid-template-columns: 1fr !important;
+            }
+        }
+        
+        /* Link hover effects */
+        #arkham-links a:hover {
+            background: var(--bg-secondary) !important;
+            transform: translateX(4px);
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-gradient"></div>
+    
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="logo-container">
+                <div class="logo-icon">🔍</div>
+                <div class="logo-text">LeakLens</div>
+            </div>
+            <p class="tagline">See what <span>surveillance entities</span> know about your wallet</p>
+            <div class="powered-by">
+                <svg width="16" height="16" viewBox="0 0 128 128" fill="none">
+                    <circle cx="64" cy="64" r="64" fill="url(#solana-grad)"/>
+                    <defs>
+                        <linearGradient id="solana-grad" x1="0" y1="0" x2="128" y2="128">
+                            <stop stop-color="#9945FF"/>
+                            <stop offset="1" stop-color="#14F195"/>
+                        </linearGradient>
+                    </defs>
+                </svg>
+                Powered by Solana
+            </div>
+        </header>
+
+        <section class="mission-section">
+            <div class="mission-grid">
+                <div class="mission-card">
+                    <div class="mission-title">🎯 Objective</div>
+                    <p>
+                        Make mass surveillance in crypto visible and intuitive.
+                        Help users see how public blockchains enable tracking, labeling, and profiling
+                        and why selective privacy tools like encrypt.trade exist.
+                    </p>
+                </div>
+                <div class="mission-card">
+                    <div class="mission-title">📌 What to Explain</div>
+                    <ul class="mission-list">
+                        <li><span>•</span>Why wallets are not anonymous by default</li>
+                        <li><span>•</span>How on-chain activity is tracked, clustered, and labelled</li>
+                        <li><span>•</span>How a single public transaction can permanently reduce privacy</li>
+                        <li><span>•</span>How selective privacy reduces exposure without breaking usability. This can be done using data by connecting data from X and blockscanner. Also, platforms like Arkham and 0xppl.</li>
+                    </ul>
+                </div>
+                <div class="mission-card">
+                    <div class="mission-title">🧠 Plain-English Explainer</div>
+                    <ul class="mission-list">
+                        <li><span>•</span>Every transaction is public, permanent, and searchable by anyone.</li>
+                        <li><span>•</span>Analytics firms cluster wallets by behavior and shared counterparties.</li>
+                        <li><span>•</span>One public link (exchange, profile, or tweet) can deanonymize a whole cluster.</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Search Section -->
+        <div class="search-section">
+            <h2 class="search-title">
+                <span>🎯</span> Analyze Wallet Exposure
+            </h2>
+            <p class="search-subtitle">Enter any Solana wallet to reveal its surveillance fingerprint</p>
+            
+            <div class="search-form">
+                <div class="input-wrapper">
+                    <input type="text" class="search-input" id="wallet-input" 
+                           placeholder="Enter Solana wallet address...">
+                    <div class="network-badge">
+                        <svg width="18" height="18" viewBox="0 0 128 128" fill="none">
+                            <circle cx="64" cy="64" r="64" fill="url(#sol-grad2)"/>
+                            <defs>
+                                <linearGradient id="sol-grad2" x1="0" y1="0" x2="128" y2="128">
+                                    <stop stop-color="#9945FF"/>
+                                    <stop offset="1" stop-color="#14F195"/>
+                                </linearGradient>
+                            </defs>
+                        </svg>
+                        Solana
+                    </div>
+                </div>
+                <button class="search-btn" id="analyze-btn" onclick="analyzeWallet()">
+                    <span>🔬</span> Analyze
+                </button>
+            </div>
+            
+            <div class="slider-container">
+                <span class="slider-label">📊 Transactions to analyze:</span>
+                <div class="slider-wrapper">
+                    <input type="range" class="limit-slider" id="limit-slider" 
+                           min="50" max="500" step="50" value="200"
+                           oninput="updateSliderValue(this.value)">
+                    <div class="slider-value" id="slider-value">200 txns</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Loading Overlay -->
+        <div class="loading-overlay" id="loading">
+            <div class="loading-spinner"></div>
+            <div class="loading-text" id="loading-text">Initializing scan...</div>
+            <div class="loading-steps" id="loading-steps">
+                <div class="loading-step" data-step="1">◯ Fetching transactions</div>
+                <div class="loading-step" data-step="2">◯ Analyzing patterns</div>
+                <div class="loading-step" data-step="3">◯ Detecting behaviors</div>
+                <div class="loading-step" data-step="4">◯ Querying external data</div>
+                <div class="loading-step" data-step="5">◯ Compiling report</div>
+            </div>
+        </div>
+        
+        <!-- Results -->
+        <div id="results">
+            <!-- Exposure Header -->
+            <div class="exposure-header">
+                <div class="wallet-info">
+                    <div class="wallet-label">Subject Wallet</div>
+                    <div class="wallet-address">
+                        <span id="display-address">-</span>
+                        <button class="copy-btn" onclick="copyAddress()">📋 Copy</button>
+                    </div>
+                </div>
+                
+                <div class="score-section">
+                    <div class="score-ring" id="score-ring">
+                        <span class="score-value" id="score-value">-</span>
+                        <span class="score-label">Exposure</span>
+                    </div>
+                    <div class="score-details">
+                        <h2 id="score-title">Analyzing...</h2>
+                        <p id="score-desc">Calculating your surveillance exposure based on on-chain activity.</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Stats -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon">📊</div>
+                    <div class="stat-value" id="stat-txns">-</div>
+                    <div class="stat-label">Transactions</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">🤖</div>
+                    <div class="stat-value" id="stat-bot">-</div>
+                    <div class="stat-label">Bot Probability</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">🌍</div>
+                    <div class="stat-value" id="stat-region">-</div>
+                    <div class="stat-label">Likely Region</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">⚡</div>
+                    <div class="stat-value" id="stat-speed">-</div>
+                    <div class="stat-label">Avg Reaction</div>
+                </div>
+            </div>
+
+            <div class="grid-2">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <span class="icon">🧭</span>
+                            Exposure Snapshot
+                        </div>
+                        <span class="card-badge" id="confidence-badge">-</span>
+                    </div>
+                    <div class="snapshot-grid" id="snapshot-grid"></div>
+                    <div class="meta-row" id="meta-row"></div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <span class="icon">🧾</span>
+                            Identity Leak Surface
+                        </div>
+                    </div>
+                    <p style="color: var(--text-muted); font-size: 13px; margin-bottom: 16px;">
+                        Public posts, profiles, and name services can link a wallet to a real identity.
+                        Check the most common public surfaces below:
+                    </p>
+                    <div class="link-grid">
+                        <a href="#" id="link-x-search" target="_blank" class="link-tile">
+                            <span class="icon">𝕏</span>
+                            <div>
+                                <div class="label">X Search</div>
+                                <div class="desc">Public mentions of your address</div>
+                            </div>
+                        </a>
+                        <a href="#" id="link-sns-search" target="_blank" class="link-tile">
+                            <span class="icon">🪪</span>
+                            <div>
+                                <div class="label">SNS Reverse Lookup</div>
+                                <div class="desc">Solana name service links</div>
+                            </div>
+                        </a>
+                        <a href="#" id="link-solanafm" target="_blank" class="link-tile">
+                            <span class="icon">🛰️</span>
+                            <div>
+                                <div class="label">SolanaFM</div>
+                                <div class="desc">Alternative explorer metadata</div>
+                            </div>
+                        </a>
+                        <a href="#" id="link-0xppl" target="_blank" class="link-tile">
+                            <span class="icon">🧠</span>
+                            <div>
+                                <div class="label">0xPPL</div>
+                                <div class="desc">Public intelligence tooling</div>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- EDUCATIONAL SECTION: How You're Being Watched -->
+            <div class="card" style="border-color: var(--danger); background: linear-gradient(135deg, rgba(239,68,68,0.05), transparent);">
+                <div class="card-header">
+                    <div class="card-title">
+                        <span class="icon">🚨</span>
+                        How Mass Financial Surveillance Works
+                    </div>
+                </div>
+                <p style="color: var(--text-secondary); font-size: 15px; line-height: 1.7; margin-bottom: 20px;">
+                    Every blockchain transaction is <strong style="color: var(--danger);">permanently public</strong>. 
+                    Governments, analytics firms, and exchanges use sophisticated techniques to link your wallet 
+                    to your real identity. Here's exactly how they do it with <em>your</em> data:
+                </p>
+                <div class="knowledge-grid" id="knowledge-grid"></div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">
+                        <span class="icon">🧪</span>
+                        Exposure Breakdown
+                    </div>
+                    <span class="card-badge" id="score-badge">-</span>
+                </div>
+                <div class="breakdown-list" id="exposure-breakdown"></div>
+                <p style="color: var(--text-muted); font-size: 12px; margin-top: 14px;">
+                    This breakdown explains which on-chain behaviors contribute most to your score.
+                </p>
+            </div>
+            
+            <!-- EDUCATIONAL SECTION: Temporal Fingerprinting -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">
+                        <span class="icon">🕐</span>
+                        Temporal Fingerprinting: Your Timezone is Exposed
+                    </div>
+                    <span class="card-badge" id="tz-badge" style="background: rgba(245, 158, 11, 0.1); color: var(--warning);">-</span>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
+                    <div>
+                        <h4 style="color: var(--warning); font-size: 14px; margin-bottom: 12px;">📚 How This Attack Works</h4>
+                        <p style="color: var(--text-muted); font-size: 13px; line-height: 1.7; margin-bottom: 16px;">
+                            Humans sleep. By analyzing <strong>when you DON'T transact</strong>, surveillance entities 
+                            can determine your timezone with high accuracy. A 6-hour gap at 2-8 AM UTC suggests Europe. 
+                            A gap at 8-14 UTC suggests East Asia. Your sleep schedule is a fingerprint.
+                        </p>
+                        <div style="background: var(--bg-primary); border-radius: 12px; padding: 16px;">
+                            <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 8px;">YOUR DETECTED SLEEP WINDOW</div>
+                            <div id="sleep-display" style="font-family: 'JetBrains Mono', monospace; font-size: 18px; color: var(--warning);">Analyzing...</div>
+                        </div>
+                    </div>
+                    <div>
+                        <h4 style="color: var(--text-secondary); font-size: 14px; margin-bottom: 12px;">📊 Your Activity by Hour (UTC)</h4>
+                        <div class="heatmap-container">
+                            <div class="heatmap" id="heatmap"></div>
+                            <div class="heatmap-labels" id="heatmap-labels"></div>
+                        </div>
+                        <p style="color: var(--text-muted); font-size: 11px; margin-top: 12px; text-align: center;">
+                            Red = high activity. Dark = low activity (sleep hours)
+                        </p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- EDUCATIONAL SECTION: Behavioral Fingerprinting -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">
+                        <span class="icon">🤖</span>
+                        Behavioral Fingerprinting: Bot or Human?
+                    </div>
+                    <span class="card-badge" id="bot-badge">-</span>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
+                    <div>
+                        <h4 style="color: var(--info); font-size: 14px; margin-bottom: 12px;">📚 How This Attack Works</h4>
+                        <p style="color: var(--text-muted); font-size: 13px; line-height: 1.7; margin-bottom: 16px;">
+                            When you receive tokens, how fast do you react? Bots respond in <strong>&lt;5 seconds</strong>. 
+                            Humans take 30+ seconds to notice, decide, and act. This single metric can classify you 
+                            with 70%+ accuracy — and bots face extra scrutiny from regulators.
+                        </p>
+                        <div style="background: var(--bg-primary); border-radius: 12px; padding: 16px;">
+                            <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 8px;">YOUR REACTION PROFILE</div>
+                            <div id="reaction-display" style="font-family: 'JetBrains Mono', monospace;">
+                                <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                                    <span style="color: var(--text-muted);">Instant (&lt;5s):</span>
+                                    <span id="instant-count" style="color: var(--danger);">-</span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                                    <span style="color: var(--text-muted);">Fast (5-30s):</span>
+                                    <span id="fast-count" style="color: var(--warning);">-</span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between;">
+                                    <span style="color: var(--text-muted);">Human (&gt;30s):</span>
+                                    <span id="human-count" style="color: var(--success);">-</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <h4 style="color: var(--text-secondary); font-size: 14px; margin-bottom: 12px;">📊 Profile Classification</h4>
+                        <p style="color: var(--text-muted); font-size: 12px; margin-bottom: 16px;">
+                            Based on your behavior, here's how analytics firms would categorize you:
+                        </p>
+                        <div id="profile-bars"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- EDUCATIONAL SECTION: Protocol Fingerprinting -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">
+                        <span class="icon">🔧</span>
+                        Protocol Fingerprinting: Your App Usage
+                    </div>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
+                    <div>
+                        <h4 style="color: var(--solana-purple); font-size: 14px; margin-bottom: 12px;">📚 How This Attack Works</h4>
+                        <p style="color: var(--text-muted); font-size: 13px; line-height: 1.7; margin-bottom: 16px;">
+                            The combination of apps you use creates a <strong>quasi-identifier</strong>. 
+                            Only ~0.1% of users might use Jupiter + Jito + Tensor + a specific token. 
+                            Combined with timezone, you become uniquely identifiable even without direct links.
+                        </p>
+                        <div style="background: var(--bg-primary); border-radius: 12px; padding: 16px;">
+                            <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 12px;">DETECTED PROTOCOLS</div>
+                            <div class="protocol-grid" id="protocols"></div>
+                        </div>
+                    </div>
+                    <div>
+                        <h4 style="color: var(--text-secondary); font-size: 14px; margin-bottom: 12px;">🪐 Your DeFi Positions (via Jupiter)</h4>
+                        <p style="color: var(--text-muted); font-size: 12px; margin-bottom: 16px;">
+                            Your token holdings reveal wealth level, risk appetite, and trading preferences:
+                        </p>
+                        <div class="token-list" id="portfolio"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">
+                        <span class="icon">💰</span>
+                        Financial Surveillance Signals
+                    </div>
+                </div>
+                <p style="color: var(--text-muted); font-size: 13px; margin-bottom: 16px;">
+                    Holdings reveal net worth, risk appetite, and trading style. These signals are derived from
+                    public portfolio data and are visible to anyone.
+                </p>
+                <div id="portfolio-insights"></div>
+            </div>
+            
+            <!-- EDUCATIONAL SECTION: Graph Analysis & Arkham -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">
+                        <span class="icon">🕵️</span>
+                        Graph Analysis: How Arkham Intelligence Tracks You
+                    </div>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
+                    <div>
+                        <h4 style="color: #a78bfa; font-size: 14px; margin-bottom: 12px;">📚 How This Attack Works</h4>
+                        <p style="color: var(--text-muted); font-size: 13px; line-height: 1.7; margin-bottom: 16px;">
+                            <strong>Arkham Intelligence</strong> and similar firms build massive graph databases 
+                            linking wallets through shared counterparties, funding sources, and timing patterns. 
+                            Even "anonymous" wallets get clustered and labeled. If ONE wallet in your cluster 
+                            is ever KYC'd, the entire cluster is identified.
+                        </p>
+                        <div class="arkham-box">
+                            <div class="arkham-title">🏷️ How They'd Label You</div>
+                            <div class="entity-tags" id="arkham-labels"></div>
+                        </div>
+                    </div>
+                    <div>
+                        <h4 style="color: var(--text-secondary); font-size: 14px; margin-bottom: 12px;">🔗 What's Publicly Known</h4>
+                        <p style="color: var(--text-muted); font-size: 12px; margin-bottom: 16px;">
+                            These companies have real-time access to your on-chain activity:
+                        </p>
+                        <div style="display: flex; flex-direction: column; gap: 10px;" id="arkham-links">
+                            <a href="#" id="link-arkham-2" target="_blank" style="display: flex; align-items: center; gap: 12px; padding: 14px; background: var(--bg-primary); border-radius: 10px; text-decoration: none; transition: all 0.2s;">
+                                <span style="font-size: 24px;">🕵️</span>
+                                <div>
+                                    <div style="color: var(--text-primary); font-weight: 600;">Arkham Intelligence</div>
+                                    <div style="color: var(--text-muted); font-size: 12px;">View your full dossier →</div>
+                                </div>
+                            </a>
+                            <a href="#" id="link-solscan-2" target="_blank" style="display: flex; align-items: center; gap: 12px; padding: 14px; background: var(--bg-primary); border-radius: 10px; text-decoration: none; transition: all 0.2s;">
+                                <span style="font-size: 24px;">🔍</span>
+                                <div>
+                                    <div style="color: var(--text-primary); font-weight: 600;">Solscan</div>
+                                    <div style="color: var(--text-muted); font-size: 12px;">Public transaction history →</div>
+                                </div>
+                            </a>
+                            <a href="#" id="link-jup-2" target="_blank" style="display: flex; align-items: center; gap: 12px; padding: 14px; background: var(--bg-primary); border-radius: 10px; text-decoration: none; transition: all 0.2s;">
+                                <span style="font-size: 24px;">🪐</span>
+                                <div>
+                                    <div style="color: var(--text-primary); font-weight: 600;">Jupiter Portfolio</div>
+                                    <div style="color: var(--text-muted); font-size: 12px;">Your complete holdings →</div>
+                                </div>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Surveillance Vectors Summary -->
+            <div class="card" style="border-color: var(--danger);">
+                <div class="card-header">
+                    <div class="card-title">
+                        <span class="icon">🎯</span>
+                        Active Surveillance Vectors on YOUR Wallet
+                    </div>
+                    <span class="card-badge" id="vectors-badge">0 Active</span>
+                </div>
+                <p style="color: var(--text-muted); font-size: 13px; margin-bottom: 20px;">
+                    These are the specific techniques that can be used to track, profile, and identify you:
+                </p>
+                <div class="vector-list" id="vectors-list"></div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">
+                        <span class="icon">⛓️</span>
+                        Privacy Mistakes That Re-Link You
+                    </div>
+                </div>
+                <div class="risk-list" id="mistake-list"></div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">
+                        <span class="icon">🧩</span>
+                        Selective Privacy Playbook
+                    </div>
+                </div>
+                <div class="playbook-list">
+                    <div class="playbook-item">
+                        <h4>1) Break the on-chain link</h4>
+                        <p>Move funds through a privacy-preserving tool so your new wallet is not graph-linked.</p>
+                    </div>
+                    <div class="playbook-item">
+                        <h4>2) Add time & amount randomness</h4>
+                        <p>Delay transfers and avoid identical amounts to reduce timing and amount fingerprinting.</p>
+                    </div>
+                    <div class="playbook-item">
+                        <h4>3) Split roles per wallet</h4>
+                        <p>Separate public identity, trading, and long-term storage to avoid clustering.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">
+                        <span class="icon">🔐</span>
+                        Protect Your Wallet with encrypt.trade
+                    </div>
+                </div>
+                <div class="protect-banner">
+                    <h4>Selective privacy that keeps usability intact</h4>
+                    <p style="color: var(--text-secondary); font-size: 13px;">
+                        encrypt.trade helps you break the on-chain link while still using familiar wallets and apps.
+                        It is built to reduce surveillance exposure without forcing you to abandon usability.
+                    </p>
+                    <div class="protect-steps">
+                        <div class="protect-step">
+                            <strong>Step 1: Create a clean destination</strong>
+                            <p>Generate a fresh wallet and keep it separate from public identity.</p>
+                        </div>
+                        <div class="protect-step">
+                            <strong>Step 2: Break the link</strong>
+                            <p>Use encrypt.trade to move funds privately so graph clustering is disrupted.</p>
+                        </div>
+                        <div class="protect-step">
+                            <strong>Step 3: Rebuild safely</strong>
+                            <p>Add time gaps, vary amounts, and avoid reuse to prevent re-linking.</p>
+                        </div>
+                    </div>
+                    <a href="https://encrypt.trade" target="_blank" class="cta-btn" style="align-self: flex-start;">
+                        🔐 Start with encrypt.trade
+                    </a>
+                </div>
+            </div>
+            
+            <!-- CTA -->
+            <div class="cta-section">
+                <div class="cta-icon">🛡️</div>
+                <h3>Break the Surveillance Chain</h3>
+                <p>
+                    Creating a new wallet doesn't erase your fingerprint. Past activity, timing patterns, 
+                    and counterparty connections remain permanently linkable. True privacy requires 
+                    breaking the on-chain link.
+                </p>
+                <a href="https://encrypt.trade" target="_blank" class="cta-btn">
+                    🔐 Visit encrypt.trade
+                </a>
+
+                <div class="cta-tiles">
+                    <a href="https://encrypt.trade" target="_blank" class="cta-tile primary">
+                        <strong>Break the Link</strong>
+                        Use encrypt.trade to create a clean wallet without traceable links.
+                    </a>
+                    <a href="https://jup.ag" target="_blank" class="cta-tile">
+                        <strong>Start Fresh</strong>
+                        Create a new wallet and fund it cautiously with low linkage.
+                    </a>
+                    <a href="https://lightprotocol.xyz" target="_blank" class="cta-tile">
+                        <strong>Privacy Tools</strong>
+                        Explore privacy primitives for transfers and app usage.
+                    </a>
+                </div>
+                
+                <div class="external-links">
+                    <a href="#" id="link-solscan" target="_blank" class="ext-link">
+                        🔍 View on Solscan
+                    </a>
+                    <a href="#" id="link-arkham" target="_blank" class="ext-link">
+                        🕵️ View on Arkham
+                    </a>
+                    <a href="#" id="link-jupiter" target="_blank" class="ext-link">
+                        🪐 Jupiter Portfolio
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Footer -->
+        <footer class="footer">
+            <p>
+                <strong>LeakLens</strong> — Built for the <a href="https://encrypt.trade" target="_blank">encrypt.trade</a> hackathon
+            </p>
+            <p style="margin-top: 8px;">
+                Track 1: Educate users about mass financial surveillance
+            </p>
+        </footer>
+    </div>
+    
+    <script>
+        // State
+        let currentData = null;
+        let currentWallet = null;
+        let currentPortfolio = null;
+        let currentPortfolioSummary = null;
+        let currentPortfolioStatus = 'idle';
+        
+        // Analyze wallet
+        function updateSliderValue(val) {
+            document.getElementById('slider-value').textContent = val + ' txns';
+        }
+        
+        async function analyzeWallet() {
+            const wallet = document.getElementById('wallet-input').value.trim();
+            const limit = parseInt(document.getElementById('limit-slider').value);
+            
+            if (!wallet) {
+                alert('Please enter a wallet address');
+                return;
+            }
+            
+            // Validate Solana address (base58, 32-44 chars)
+            if (!/^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(wallet)) {
+                alert('Please enter a valid Solana wallet address');
+                return;
+            }
+            
+            currentWallet = wallet;
+            
+            // Show loading
+            const loading = document.getElementById('loading');
+            loading.classList.add('active');
+            
+            // Animate loading steps
+            const steps = document.querySelectorAll('.loading-step');
+            let stepIndex = 0;
+            const stepInterval = setInterval(() => {
+                if (stepIndex > 0) {
+                    steps[stepIndex - 1].classList.remove('active');
+                    steps[stepIndex - 1].classList.add('done');
+                    steps[stepIndex - 1].textContent = '✓ ' + steps[stepIndex - 1].textContent.slice(2);
+                }
+                if (stepIndex < steps.length) {
+                    steps[stepIndex].classList.add('active');
+                    steps[stepIndex].textContent = '● ' + steps[stepIndex].textContent.slice(2);
+                    stepIndex++;
+                }
+            }, 600);
+            
+            try {
+                // Fetch analysis
+                const response = await fetch('/analyze-wallet', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ wallet: wallet, limit: limit, chain: 'solana' })
+                });
+                
+                const data = await response.json();
+                
+                if (data.error || data.detail) {
+                    throw new Error(data.error || data.detail);
+                }
+                
+                currentData = data;
+                
+                // Fetch Jupiter portfolio
+                await fetchJupiterPortfolio(wallet);
+                
+                // Display results
+                displayResults(data);
+                
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error: ' + error.message);
+            } finally {
+                clearInterval(stepInterval);
+                loading.classList.remove('active');
+                // Reset steps
+                steps.forEach(s => {
+                    s.classList.remove('active', 'done');
+                    s.textContent = '◯ ' + s.textContent.slice(2);
+                });
+            }
+        }
+        
+        // Display results
+        function displayResults(data) {
+            document.getElementById('results').classList.add('active');
+            
+            // Address
+            const shortAddr = currentWallet.slice(0, 6) + '...' + currentWallet.slice(-4);
+            document.getElementById('display-address').textContent = shortAddr;
+            
+            // Update external links
+            document.getElementById('link-solscan').href = `https://solscan.io/account/${currentWallet}`;
+            document.getElementById('link-arkham').href = `https://platform.arkhamintelligence.com/explorer/address/${currentWallet}`;
+            document.getElementById('link-jupiter').href = `https://jup.ag/portfolio/${currentWallet}`;
+            document.getElementById('link-arkham-2').href = `https://platform.arkhamintelligence.com/explorer/address/${currentWallet}`;
+            document.getElementById('link-solscan-2').href = `https://solscan.io/account/${currentWallet}`;
+            document.getElementById('link-jup-2').href = `https://jup.ag/portfolio/${currentWallet}`;
+            displayIdentityLinks();
+            
+            // Exposure score
+            const score = calculateScore(data);
+            displayScore(score, data);
+            displaySnapshot(data, score);
+            displayBreakdown(data, score);
+            
+            // Stats
+            document.getElementById('stat-txns').textContent = data.total_transactions || 0;
+            document.getElementById('stat-bot').textContent = (data.reaction_speed?.bot_confidence || 0).toFixed(0) + '%';
+            document.getElementById('stat-speed').textContent = (data.reaction_speed?.avg_reaction_time || 0).toFixed(1) + 's';
+            
+            const geo = data.geographic_origin || {};
+            const regions = [
+                { name: 'Asia', pct: geo.asia_pacific || 0 },
+                { name: 'Europe', pct: geo.europe || 0 },
+                { name: 'Americas', pct: geo.americas || 0 }
+            ].sort((a, b) => b.pct - a.pct);
+            document.getElementById('stat-region').textContent = regions[0].pct > 40 ? regions[0].name : 'Unknown';
+            
+            // What they know
+            displayKnowledge(data);
+            
+            // Sleep window display
+            if (data.sleep_window?.confidence > 30) {
+                const s = String(data.sleep_window.start_hour).padStart(2, '0');
+                const e = String(data.sleep_window.end_hour).padStart(2, '0');
+                document.getElementById('sleep-display').innerHTML = `
+                    ${s}:00 - ${e}:00 UTC<br>
+                    <span style="font-size: 13px; color: var(--text-muted);">${data.sleep_window.confidence.toFixed(0)}% confidence</span>
+                `;
+            } else {
+                document.getElementById('sleep-display').innerHTML = `
+                    No clear pattern<br>
+                    <span style="font-size: 13px; color: var(--text-muted);">Possibly a bot or VPN user</span>
+                `;
+            }
+            
+            // Reaction stats
+            document.getElementById('instant-count').textContent = data.reaction_speed?.instant_reactions || 0;
+            document.getElementById('fast-count').textContent = data.reaction_speed?.fast_reactions || 0;
+            document.getElementById('human-count').textContent = data.reaction_speed?.human_reactions || 0;
+            
+            const botConf = data.reaction_speed?.bot_confidence || 0;
+            document.getElementById('bot-badge').textContent = botConf > 60 ? 'Likely Bot' : botConf > 30 ? 'Mixed Signals' : 'Likely Human';
+            document.getElementById('bot-badge').style.background = botConf > 60 ? 'rgba(239,68,68,0.1)' : botConf > 30 ? 'rgba(245,158,11,0.1)' : 'rgba(34,197,94,0.1)';
+            document.getElementById('bot-badge').style.color = botConf > 60 ? 'var(--danger)' : botConf > 30 ? 'var(--warning)' : 'var(--success)';
+            
+            // Vectors
+            displayVectors(data);
+            
+            // Heatmap
+            displayHeatmap(data);
+            
+            // Profile
+            displayProfile(data);
+            
+            // Protocols
+            displayProtocols(data);
+            
+            // Arkham
+            displayArkham(data);
+
+            // Portfolio insights
+            displayPortfolioInsights();
+
+            // Privacy mistakes
+            displayPrivacyMistakes(data);
+            
+            // Scroll to results
+            document.getElementById('results').scrollIntoView({ behavior: 'smooth' });
+        }
+        
+        // Calculate exposure score
+        function calculateScore(data) {
+            let score = 0;
+            
+            if (data.sleep_window?.confidence > 70) score += 25;
+            else if (data.sleep_window?.confidence > 40) score += 15;
+            else score += 5;
+            
+            if (data.reaction_speed?.total_pairs > 10) score += 20;
+            else if (data.reaction_speed?.total_pairs > 5) score += 10;
+            
+            if (data.total_transactions > 200) score += 20;
+            else if (data.total_transactions > 100) score += 15;
+            else if (data.total_transactions > 50) score += 10;
+            else score += 5;
+            
+            const geo = data.geographic_origin || {};
+            const maxGeo = Math.max(geo.asia_pacific || 0, geo.europe || 0, geo.americas || 0);
+            if (maxGeo > 70) score += 20;
+            else if (maxGeo > 50) score += 10;
+            
+            const p = data.profile_classification || {};
+            if (p.bot > 60 || p.whale > 60) score += 15;
+            else if (p.bot > 40 || p.whale > 40) score += 10;
+            
+            return Math.min(100, score);
+        }
+        
+        // Display score
+        function displayScore(score, data) {
+            const ring = document.getElementById('score-ring');
+            const value = document.getElementById('score-value');
+            const title = document.getElementById('score-title');
+            const desc = document.getElementById('score-desc');
+            
+            value.textContent = score;
+            
+            let color, titleText, descText;
+            if (score >= 80) {
+                color = 'var(--danger)';
+                titleText = 'CRITICAL EXPOSURE';
+                descText = 'Your wallet creates a highly identifiable fingerprint. Surveillance entities can likely determine your identity, location, and patterns.';
+            } else if (score >= 60) {
+                color = 'var(--warning)';
+                titleText = 'HIGH EXPOSURE';
+                descText = 'Significant surveillance exposure detected. Your timezone, behavior, and counterparties reveal substantial information.';
+            } else if (score >= 40) {
+                color = 'var(--info)';
+                titleText = 'MODERATE EXPOSURE';
+                descText = 'Notable patterns detected. Some behavioral and temporal fingerprints are present.';
+            } else {
+                color = 'var(--success)';
+                titleText = 'LOW EXPOSURE';
+                descText = 'Limited surveillance patterns detected. Your activity shows fewer identifiable fingerprints.';
+            }
+            
+            ring.style.setProperty('--score-color', color);
+            ring.style.setProperty('--score-pct', score + '%');
+            value.style.color = color;
+            title.textContent = titleText;
+            title.style.color = color;
+            desc.textContent = descText;
+        }
+
+        function displaySnapshot(data, score) {
+            const grid = document.getElementById('snapshot-grid');
+            const meta = document.getElementById('meta-row');
+            const confidenceBadge = document.getElementById('confidence-badge');
+            
+            const confidence = data.confidence || 'Unknown';
+            const risk = data.risk_assessment?.level || 'Unknown';
+            const riskScore = data.risk_assessment?.score ?? '-';
+            const bot = data.reaction_speed?.bot_confidence ?? 0;
+            const avgReaction = data.reaction_speed?.avg_reaction_time ?? 0;
+            const jitoTips = data.mempool_forensics?.statistics?.jito_tip_count || 0;
+            const sleepConf = data.sleep_window?.confidence ?? 0;
+            const recent = data.most_recent_transaction ? formatDate(data.most_recent_transaction) : 'Unknown';
+            
+            const confStyle = confidence === 'High'
+                ? 'rgba(34,197,94,0.12)'
+                : confidence === 'Medium'
+                    ? 'rgba(245,158,11,0.12)'
+                    : 'rgba(113,113,122,0.15)';
+            const confColor = confidence === 'High'
+                ? 'var(--success)'
+                : confidence === 'Medium'
+                    ? 'var(--warning)'
+                    : 'var(--text-muted)';
+            
+            confidenceBadge.textContent = `${confidence} Confidence`;
+            confidenceBadge.style.background = confStyle;
+            confidenceBadge.style.color = confColor;
+            
+            grid.innerHTML = `
+                <div class="snapshot-item">
+                    <div class="snapshot-label">Risk Level</div>
+                    <div class="snapshot-value">${risk}</div>
+                    <div class="snapshot-subtext">Risk score: ${riskScore}</div>
+                </div>
+                <div class="snapshot-item">
+                    <div class="snapshot-label">Automation Signal</div>
+                    <div class="snapshot-value">${bot.toFixed(0)}% bot</div>
+                    <div class="snapshot-subtext">Avg reaction: ${avgReaction.toFixed(1)}s</div>
+                </div>
+                <div class="snapshot-item">
+                    <div class="snapshot-label">MEV / Priority</div>
+                    <div class="snapshot-value">${jitoTips > 0 ? 'Detected' : 'None detected'}</div>
+                    <div class="snapshot-subtext">${jitoTips} Jito tips observed</div>
+                </div>
+                <div class="snapshot-item">
+                    <div class="snapshot-label">Timing Fingerprint</div>
+                    <div class="snapshot-value">${sleepConf.toFixed(0)}% confidence</div>
+                    <div class="snapshot-subtext">Sleep window detection</div>
+                </div>
+            `;
+            
+            meta.innerHTML = `
+                <span class="meta-pill">Exposure score: ${score}</span>
+                <span class="meta-pill">Last activity: ${recent}</span>
+                <span class="meta-pill">Transactions analyzed: ${data.total_transactions || 0}</span>
+            `;
+        }
+
+        function displayBreakdown(data, score) {
+            const list = document.getElementById('exposure-breakdown');
+            const badge = document.getElementById('score-badge');
+            
+            const geo = data.geographic_origin || {};
+            const maxGeo = Math.max(geo.asia_pacific || 0, geo.europe || 0, geo.americas || 0);
+            const activityScore = Math.min(100, ((data.total_transactions || 0) / 200) * 100);
+            const mevScore = data.mempool_forensics?.statistics?.jito_tip_count > 0 ? 70 : 20;
+            
+            const items = [
+                { label: 'Temporal Fingerprint', value: data.sleep_window?.confidence || 0, color: 'var(--warning)' },
+                { label: 'Behavioral Fingerprint', value: data.reaction_speed?.bot_confidence || 0, color: 'var(--danger)' },
+                { label: 'Activity Volume', value: activityScore, color: 'var(--info)' },
+                { label: 'Geo Consistency', value: maxGeo, color: 'var(--solana-purple)' },
+                { label: 'MEV / Pro Execution', value: mevScore, color: '#a78bfa' }
+            ];
+            
+            badge.textContent = `Score ${score}`;
+            
+            list.innerHTML = items.map(i => `
+                <div class="breakdown-row">
+                    <div class="breakdown-label">${i.label}</div>
+                    <div class="breakdown-bar">
+                        <div class="breakdown-fill" style="width: ${i.value}%; background: ${i.color};"></div>
+                    </div>
+                    <div class="breakdown-value">${i.value.toFixed(0)}%</div>
+                </div>
+            `).join('');
+        }
+
+        function displayIdentityLinks() {
+            if (!currentWallet) return;
+            const x = document.getElementById('link-x-search');
+            const sns = document.getElementById('link-sns-search');
+            const solanafm = document.getElementById('link-solanafm');
+            const ppl = document.getElementById('link-0xppl');
+            
+            x.href = `https://x.com/search?q=${encodeURIComponent(currentWallet)}&src=typed_query`;
+            sns.href = `https://sns.id/#/search?search=${currentWallet}`;
+            solanafm.href = `https://solana.fm/address/${currentWallet}`;
+            ppl.href = 'https://0xppl.com/';
+        }
+        
+        // Display knowledge
+        function displayKnowledge(data) {
+            const grid = document.getElementById('knowledge-grid');
+            const items = [];
+            
+            const geo = data.geographic_origin || {};
+            const regions = [
+                { name: 'Asia/Pacific', pct: geo.asia_pacific || 0 },
+                { name: 'Europe', pct: geo.europe || 0 },
+                { name: 'Americas', pct: geo.americas || 0 }
+            ].sort((a, b) => b.pct - a.pct);
+            
+            if (regions[0].pct > 40) {
+                items.push({ cat: 'Location', fact: `Likely ${regions[0].name}`, exp: `${regions[0].pct.toFixed(0)}% confidence from timing` });
+            }
+            
+            if (data.sleep_window?.confidence > 40) {
+                const s = String(data.sleep_window.start_hour).padStart(2, '0');
+                const e = String(data.sleep_window.end_hour).padStart(2, '0');
+                items.push({ cat: 'Routine', fact: `Sleeps ${s}:00-${e}:00 UTC`, exp: `${data.sleep_window.confidence.toFixed(0)}% confidence` });
+            }
+            
+            const bot = data.reaction_speed?.bot_confidence || 0;
+            if (bot > 60) {
+                items.push({ cat: 'User Type', fact: 'Likely Bot/Automated', exp: `${bot.toFixed(0)}% bot confidence` });
+            } else if (bot < 30 && data.reaction_speed?.total_pairs > 5) {
+                items.push({ cat: 'User Type', fact: 'Likely Human', exp: 'Natural reaction times' });
+            }
+            
+            const p = data.profile_classification || {};
+            if (p.whale > 50) {
+                items.push({ cat: 'Wealth', fact: 'High Net Worth', exp: 'Whale patterns detected' });
+            }
+            
+            items.push({ cat: 'Activity', fact: `${data.total_transactions || 0} Transactions`, exp: 'Total analyzed' });
+            
+            grid.innerHTML = items.map(i => `
+                <div class="knowledge-item">
+                    <div class="knowledge-category">${i.cat}</div>
+                    <div class="knowledge-fact">${i.fact}</div>
+                    <div class="knowledge-explanation">${i.exp}</div>
+                </div>
+            `).join('');
+        }
+        
+        // Display vectors
+        function displayVectors(data) {
+            const list = document.getElementById('vectors-list');
+            const vectors = [];
+            
+            if (data.sleep_window?.confidence > 40) {
+                vectors.push({
+                    icon: '🕐',
+                    title: 'Temporal Fingerprinting',
+                    desc: 'Transaction timing reveals your timezone and daily routine.',
+                    evidence: `Sleep: ${String(data.sleep_window.start_hour).padStart(2,'0')}:00-${String(data.sleep_window.end_hour).padStart(2,'0')}:00 UTC (${data.sleep_window.confidence.toFixed(0)}%)`
+                });
+            }
+            
+            if (data.reaction_speed?.total_pairs > 3) {
+                vectors.push({
+                    icon: '⚡',
+                    title: 'Behavioral Fingerprinting',
+                    desc: 'Reaction speeds classify you as bot or human.',
+                    evidence: `Avg: ${data.reaction_speed.avg_reaction_time?.toFixed(1)}s | Bot: ${data.reaction_speed.bot_confidence?.toFixed(0)}%`
+                });
+            }
+            
+            if (data.total_transactions > 20) {
+                vectors.push({
+                    icon: '🔗',
+                    title: 'Graph Topology Attack',
+                    desc: 'Transaction network can cluster your wallets.',
+                    evidence: `${data.total_transactions} transactions create linkable patterns`
+                });
+            }
+            
+            vectors.push({
+                icon: '🏦',
+                title: 'Exchange KYC Risk',
+                desc: 'CEX interactions link activity to verified identity.',
+                evidence: 'Any exchange deposit/withdrawal creates permanent link'
+            });
+            
+            document.getElementById('vectors-badge').textContent = vectors.length + ' Active';
+            
+            list.innerHTML = vectors.map(v => `
+                <div class="vector-item">
+                    <div class="vector-icon">${v.icon}</div>
+                    <div class="vector-content">
+                        <h4>${v.title}</h4>
+                        <p>${v.desc}</p>
+                        <div class="vector-evidence">${v.evidence}</div>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        // Display heatmap
+        function displayHeatmap(data) {
+            const heatmap = document.getElementById('heatmap');
+            const labels = document.getElementById('heatmap-labels');
+            
+            const hourly = data.activity_pattern?.hourly || Array(24).fill(0);
+            const max = Math.max(...hourly, 1);
+            
+            heatmap.innerHTML = hourly.map((c, h) => {
+                const level = Math.ceil((c / max) * 5);
+                return `<div class="heatmap-cell l${level}" title="${h}:00 UTC - ${c} txns"></div>`;
+            }).join('');
+            
+            labels.innerHTML = Array(24).fill(0).map((_, i) => `<span>${i}</span>`).join('');
+            
+            const geo = data.geographic_origin || {};
+            const regions = [
+                { name: 'Asia', pct: geo.asia_pacific || 0 },
+                { name: 'Europe', pct: geo.europe || 0 },
+                { name: 'Americas', pct: geo.americas || 0 }
+            ].sort((a, b) => b.pct - a.pct);
+            
+            document.getElementById('tz-badge').textContent = regions[0].pct > 40 ? `Likely ${regions[0].name}` : 'Uncertain';
+        }
+        
+        // Display profile
+        function displayProfile(data) {
+            const container = document.getElementById('profile-bars');
+            const p = data.profile_classification || {};
+            
+            const items = [
+                { label: 'Bot/Automated', value: p.bot || 0, color: 'var(--danger)' },
+                { label: 'Whale', value: p.whale || 0, color: 'var(--warning)' },
+                { label: 'Institutional', value: p.institutional || 0, color: 'var(--info)' },
+                { label: 'Professional', value: p.professional || 0, color: '#a78bfa' },
+                { label: 'Airdrop Farmer', value: p.airdrop_farmer || 0, color: 'var(--success)' }
+            ];
+            
+            container.innerHTML = items.map(i => `
+                <div class="profile-item">
+                    <div class="profile-header">
+                        <span class="label">${i.label}</span>
+                        <span class="value" style="color: ${i.color}">${i.value.toFixed(1)}%</span>
+                    </div>
+                    <div class="profile-bar">
+                        <div class="fill" style="width: ${i.value}%; background: ${i.color}"></div>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        // Display protocols
+        function displayProtocols(data) {
+            const container = document.getElementById('protocols');
+            
+            const protocols = [
+                { name: 'Jupiter', icon: '🪐' },
+                { name: 'Raydium', icon: '💧' },
+                { name: 'Phantom', icon: '👻' }
+            ];
+            
+            if (data.mempool_forensics?.statistics?.jito_tip_count > 0) {
+                protocols.unshift({ name: 'Jito MEV', icon: '⚡' });
+            }
+            
+            const p = data.profile_classification || {};
+            if (p.whale > 50) {
+                protocols.push({ name: 'Orca', icon: '🐋' });
+            }
+            
+            if (data.total_transactions > 100) {
+                protocols.push({ name: 'Magic Eden', icon: '🎨' });
+            }
+            
+            container.innerHTML = protocols.map(pr => `
+                <div class="protocol-pill">
+                    <span class="icon">${pr.icon}</span>
+                    ${pr.name}
+                </div>
+            `).join('');
+        }
+
+        function summarizePortfolio(tokens) {
+            if (!tokens || tokens.length === 0) return null;
+            
+            const filtered = tokens.filter(t => (t.usdValue || 0) > 0);
+            const total = filtered.reduce((s, t) => s + (t.usdValue || 0), 0);
+            if (total <= 0) return null;
+            
+            const stableSymbols = ['USDC', 'USDT', 'USDH', 'PYUSD', 'USDS'];
+            const memeSymbols = ['BONK', 'WIF', 'POPCAT', 'MEW', 'BOME', 'MYRO', 'SLERF', 'WEN', 'GIGA'];
+            
+            const stable = filtered.filter(t => stableSymbols.includes((t.symbol || '').toUpperCase()))
+                .reduce((s, t) => s + (t.usdValue || 0), 0);
+            const meme = filtered.filter(t => memeSymbols.includes((t.symbol || '').toUpperCase()))
+                .reduce((s, t) => s + (t.usdValue || 0), 0);
+            
+            const topTokens = filtered
+                .sort((a, b) => (b.usdValue || 0) - (a.usdValue || 0))
+                .slice(0, 3);
+            const topConcentration = topTokens.reduce((s, t) => s + (t.usdValue || 0), 0) / total * 100;
+            
+            return {
+                total,
+                stablePct: (stable / total) * 100,
+                memePct: (meme / total) * 100,
+                topConcentration,
+                topTokens
+            };
+        }
+
+        function displayPortfolioInsights() {
+            const container = document.getElementById('portfolio-insights');
+            if (!container) return;
+            
+            if (!currentPortfolioSummary) {
+                if (currentPortfolioStatus === 'error') {
+                    container.innerHTML = `
+                        <div class="snapshot-item">
+                            <div class="snapshot-label">Portfolio data unavailable</div>
+                            <div class="snapshot-value">Check Jupiter</div>
+                            <div class="snapshot-subtext">Public portfolio APIs can be blocked in browsers. Use the direct link to view exposure.</div>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                if (currentPortfolioStatus === 'empty') {
+                    container.innerHTML = `
+                        <div class="snapshot-item">
+                            <div class="snapshot-label">No significant holdings</div>
+                            <div class="snapshot-value">Low visibility</div>
+                            <div class="snapshot-subtext">Small balances reveal less about wealth & risk profile.</div>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                container.innerHTML = '<p style="color: var(--text-muted); font-size: 14px;">No portfolio data available yet.</p>';
+                return;
+            }
+            
+            const summary = currentPortfolioSummary;
+            const topLabel = summary.topTokens.map(t => `${t.symbol}`).join(', ');
+            
+            container.innerHTML = `
+                <div class="snapshot-grid">
+                    <div class="snapshot-item">
+                        <div class="snapshot-label">Estimated Net Worth</div>
+                        <div class="snapshot-value">$${fmt(summary.total)}</div>
+                        <div class="snapshot-subtext">Total portfolio value</div>
+                    </div>
+                    <div class="snapshot-item">
+                        <div class="snapshot-label">Stablecoin Share</div>
+                        <div class="snapshot-value">${summary.stablePct.toFixed(0)}%</div>
+                        <div class="snapshot-subtext">Cash-like exposure</div>
+                    </div>
+                    <div class="snapshot-item">
+                        <div class="snapshot-label">Memecoin Share</div>
+                        <div class="snapshot-value">${summary.memePct.toFixed(0)}%</div>
+                        <div class="snapshot-subtext">Speculation fingerprint</div>
+                    </div>
+                    <div class="snapshot-item">
+                        <div class="snapshot-label">Top 3 Concentration</div>
+                        <div class="snapshot-value">${summary.topConcentration.toFixed(0)}%</div>
+                        <div class="snapshot-subtext">Tokens: ${topLabel}</div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        // Fetch Jupiter portfolio
+        async function fetchJupiterPortfolio(wallet) {
+            const container = document.getElementById('portfolio');
+            currentPortfolio = null;
+            currentPortfolioSummary = null;
+            currentPortfolioStatus = 'loading';
+            
+            try {
+                const res = await fetch(`https://portfolio.jup.ag/v1/portfolio/${wallet}`);
+                if (!res.ok) throw new Error('Not found');
+                
+                const data = await res.json();
+                currentPortfolio = data;
+                currentPortfolioSummary = summarizePortfolio(data.tokens || []);
+                
+                if (data.tokens && data.tokens.length > 0) {
+                    const top = data.tokens
+                        .filter(t => t.usdValue > 1)
+                        .sort((a, b) => b.usdValue - a.usdValue)
+                        .slice(0, 5);
+                    
+                    if (top.length > 0) {
+                        currentPortfolioStatus = 'ok';
+                        const total = data.tokens.reduce((s, t) => s + (t.usdValue || 0), 0);
+                        
+                        container.innerHTML = top.map(t => `
+                            <div class="token-item">
+                                <div class="token-icon">${getIcon(t.symbol)}</div>
+                                <div class="token-info">
+                                    <div class="token-name">${t.symbol}</div>
+                                    <div class="token-amount">${fmt(t.balance)}</div>
+                                </div>
+                                <div class="token-value">$${fmt(t.usdValue)}</div>
+                            </div>
+                        `).join('') + `
+                            <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border-subtle); display: flex; justify-content: space-between; font-size: 14px;">
+                                <span style="color: var(--text-muted);">Total Portfolio</span>
+                                <span style="color: var(--success); font-weight: 600; font-family: 'JetBrains Mono', monospace;">$${fmt(total)}</span>
+                            </div>
+                        `;
+                        displayPortfolioInsights();
+                        return;
+                    }
+                }
+                
+                currentPortfolioStatus = 'empty';
+                container.innerHTML = '<p style="color: var(--text-muted); font-size: 14px;">No significant holdings found</p>';
+                displayPortfolioInsights();
+                
+            } catch (e) {
+                currentPortfolioStatus = 'error';
+                container.innerHTML = `
+                    <p style="color: var(--text-muted); font-size: 14px; margin-bottom: 8px;">
+                        Unable to fetch portfolio in-browser (CORS or API limits).
+                    </p>
+                    <a href="https://jup.ag/portfolio/${wallet}" target="_blank" style="color: var(--solana-green); font-size: 13px; text-decoration: none;">
+                        Open Jupiter Portfolio →
+                    </a>
+                `;
+                displayPortfolioInsights();
+            }
+        }
+        
+        // Display Arkham
+        function displayArkham(data) {
+            const labelsDiv = document.getElementById('arkham-labels');
+            
+            const labels = [];
+            const p = data.profile_classification || {};
+            
+            if (p.bot > 60) labels.push({ icon: '🤖', text: 'Bot' });
+            if (p.whale > 60) labels.push({ icon: '🐋', text: 'Whale' });
+            if (p.institutional > 50) labels.push({ icon: '🏛️', text: 'Institutional' });
+            if (p.airdrop_farmer > 50) labels.push({ icon: '🌾', text: 'Airdrop Farmer' });
+            if (data.mempool_forensics?.statistics?.jito_tip_count > 0) labels.push({ icon: '⚡', text: 'MEV User' });
+            if (data.total_transactions > 500) labels.push({ icon: '📊', text: 'High Activity' });
+            
+            if (labels.length > 0) {
+                labelsDiv.innerHTML = labels.map(l => `<span class="entity-tag">${l.icon} ${l.text}</span>`).join('');
+            } else {
+                labelsDiv.innerHTML = `
+                    <span style="color: var(--text-muted); font-size: 13px;">
+                        No public labels yet (fresh or low-activity wallet). Graph clustering still applies.
+                    </span>
+                `;
+            }
+        }
+
+        function displayPrivacyMistakes(data) {
+            const list = document.getElementById('mistake-list');
+            if (!list) return;
+            
+            const issues = [];
+            const avgReaction = data.reaction_speed?.avg_reaction_time || 0;
+            const totalTx = data.total_transactions || 0;
+            const sleepConf = data.sleep_window?.confidence || 0;
+            const jitoTips = data.mempool_forensics?.statistics?.jito_tip_count || 0;
+            const memePct = currentPortfolioSummary?.memePct || 0;
+            
+            if (avgReaction > 0 && avgReaction < 10 && data.reaction_speed?.total_pairs > 3) {
+                issues.push({
+                    icon: '⏱️',
+                    title: 'Timing correlation risk',
+                    detail: `Fast reactions (${avgReaction.toFixed(1)}s) can re-link privacy moves without delays.`,
+                    level: 'High'
+                });
+            }
+            
+            if (sleepConf > 40) {
+                issues.push({
+                    icon: '🌙',
+                    title: 'Routine fingerprint',
+                    detail: `Sleep window confidence ${sleepConf.toFixed(0)}% exposes timezone.`,
+                    level: 'Medium'
+                });
+            }
+            
+            if (totalTx > 20) {
+                issues.push({
+                    icon: '🔁',
+                    title: 'Address reuse',
+                    detail: `${totalTx} transactions on one address makes clustering easier.`,
+                    level: 'High'
+                });
+            }
+            
+            if (memePct > 25) {
+                issues.push({
+                    icon: '🧨',
+                    title: 'Memecoin trading fingerprint',
+                    detail: `${memePct.toFixed(0)}% of portfolio in memecoins is a strong behavioral marker.`,
+                    level: 'Medium'
+                });
+            }
+            
+            if (jitoTips > 0) {
+                issues.push({
+                    icon: '⚡',
+                    title: 'Execution profile leakage',
+                    detail: `Jito tips detected (${jitoTips}) create a recognizable execution style.`,
+                    level: 'Medium'
+                });
+            }
+            
+            if (issues.length === 0) {
+                list.innerHTML = `
+                    <div class="risk-item">
+                        <div class="risk-icon" style="background: rgba(34,197,94,0.12); color: var(--success);">✅</div>
+                        <div class="risk-content">
+                            <h4>No obvious re-linking patterns</h4>
+                            <p>Keep using delays, avoid reuse, and separate wallets for different roles.</p>
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+            
+            list.innerHTML = issues.map(i => {
+                const style = i.level === 'High'
+                    ? 'background: rgba(239,68,68,0.12); color: var(--danger);'
+                    : i.level === 'Medium'
+                        ? 'background: rgba(245,158,11,0.12); color: var(--warning);'
+                        : 'background: rgba(34,197,94,0.12); color: var(--success);';
+                
+                return `
+                    <div class="risk-item">
+                        <div class="risk-icon">${i.icon}</div>
+                        <div class="risk-content">
+                            <h4>${i.title}</h4>
+                            <p>${i.detail}</p>
+                        </div>
+                        <span class="risk-tag" style="${style}">${i.level}</span>
+                    </div>
+                `;
+            }).join('');
+        }
+        
+        // Helpers
+        function formatDate(isoString) {
+            try {
+                const date = new Date(isoString);
+                if (Number.isNaN(date.getTime())) return 'Unknown';
+                return date.toLocaleString('en-US', {
+                    month: 'short',
+                    day: 'numeric',
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    timeZone: 'UTC',
+                    timeZoneName: 'short'
+                });
+            } catch (e) {
+                return 'Unknown';
+            }
+        }
+
+        function fmt(n) {
+            if (n >= 1000000) return (n / 1000000).toFixed(2) + 'M';
+            if (n >= 1000) return (n / 1000).toFixed(2) + 'K';
+            return n.toFixed(2);
+        }
+        
+        function getIcon(s) {
+            const icons = { SOL: '◎', USDC: '💵', USDT: '💵', JUP: '🪐', BONK: '🐕', WIF: '🐕', RAY: '💧' };
+            return icons[s] || '🪙';
+        }
+        
+        function copyAddress() {
+            navigator.clipboard.writeText(currentWallet);
+            const btn = document.querySelector('.copy-btn');
+            btn.textContent = '✓ Copied';
+            setTimeout(() => btn.textContent = '📋 Copy', 2000);
+        }
+        
+        // Enter key
+        document.getElementById('wallet-input').addEventListener('keypress', e => {
+            if (e.key === 'Enter') analyzeWallet();
+        });
+    </script>
+</body>
+</html>
