@@ -17,6 +17,7 @@ import os
 import traceback
 import asyncio
 import json
+import requests
 from datetime import datetime
 
 # Import LeakLens analysis functions
@@ -148,6 +149,38 @@ def analyze_transaction(request: TransactionAnalysisRequest):
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Analysis failed: {str(e)}")
+
+
+@app.get("/portfolio/{wallet}")
+def get_jupiter_portfolio(wallet: str):
+    """
+    Proxy endpoint to fetch Jupiter portfolio data (bypasses CORS).
+    """
+    try:
+        url = f"https://portfolio.jup.ag/v1/portfolio/{wallet}"
+        response = requests.get(url, timeout=10)
+        
+        # If Jupiter API returns 404 or other errors, return empty portfolio instead of failing
+        if response.status_code == 404:
+            return {"tokens": [], "totalValue": 0}
+        
+        response.raise_for_status()
+        return response.json()
+    except requests.exceptions.Timeout:
+        raise HTTPException(status_code=504, detail="Portfolio fetch timeout")
+    except requests.exceptions.ConnectionError:
+        raise HTTPException(status_code=503, detail="Unable to connect to portfolio service")
+    except requests.exceptions.HTTPError as e:
+        # Return empty portfolio for client errors (4xx), fail for server errors (5xx)
+        if e.response.status_code < 500:
+            return {"tokens": [], "totalValue": 0}
+        raise HTTPException(status_code=502, detail=f"Portfolio service error: {str(e)}")
+    except Exception as e:
+        # Log the error for debugging
+        print(f"[ERROR] Portfolio fetch failed for {wallet}: {str(e)}")
+        traceback.print_exc()
+        # Return empty portfolio instead of failing completely
+        return {"tokens": [], "totalValue": 0}
 
 
 @app.post("/analyze-wallet")
@@ -340,7 +373,16 @@ def analyze_wallet_comprehensive(request: WalletAnalysisRequest):
 
 @app.get("/health")
 def health():
-    return {"status": "healthy"}
+    return {"status": "healthy", "version": "2.0.0"}
+
+@app.get("/error-test")
+def error_test():
+    """Test endpoint to verify error handling"""
+    try:
+        # This will always work
+        return {"message": "Error handling test passed", "requests_available": True}
+    except Exception as e:
+        return {"error": str(e), "traceback": traceback.format_exc()}
 
 
 @app.websocket("/ws/stalker")

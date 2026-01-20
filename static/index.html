@@ -178,9 +178,31 @@
         .container {
             position: relative;
             z-index: 1;
-            max-width: 1920px;
+            max-width: 100%;
             margin: 0 auto;
             padding: 0;
+            width: 100%;
+        }
+        
+        /* Smooth animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(-10px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        
+        .panel {
+            animation: fadeIn 0.4s ease-out;
+            transition: all 0.3s ease;
+        }
+        
+        .panel:hover {
+            border-color: var(--border-color);
+            transform: translateY(-2px);
         }
         
         .logo-container {
@@ -1535,40 +1557,40 @@
         <!-- Main Dashboard Panel (Blueprint Style - 1:1 Match) -->
         <div id="dashboard" style="display: none;">
             <!-- Single Large Dashboard Container -->
-            <div class="main-dashboard-panel" style="background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 8px; padding: 24px; margin: 24px; box-shadow: 0 0 40px rgba(0, 0, 0, 0.5);">
-                <div class="dashboard-grid" style="display: grid; grid-template-columns: 320px 1fr 340px; grid-template-rows: auto auto; gap: 20px;">
+            <div class="main-dashboard-panel" style="background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 12px; padding: 32px; margin: 20px auto; max-width: 1800px; box-shadow: 0 0 60px rgba(0, 0, 0, 0.6);">
+                <div class="dashboard-grid" style="display: grid; grid-template-columns: 340px 1fr 360px; grid-template-rows: auto auto; gap: 24px;">
                     <!-- Identity Linkage Panel (Top Left) -->
-                    <div class="panel" style="background: var(--bg-tertiary); border: 1px solid var(--border-color); border-radius: 6px; padding: 18px; position: relative;">
-                        <div class="panel-title" style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.15em; color: var(--text-muted); margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between; font-family: 'JetBrains Mono', monospace;">
+                    <div class="panel" style="background: var(--bg-tertiary); border: 1px solid var(--border-color); border-radius: 8px; padding: 24px; position: relative;">
+                        <div class="panel-title" style="font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.2em; color: var(--text-muted); margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; font-family: 'JetBrains Mono', monospace;">
                             IDENTITY LINKAGE
-                            <span class="panel-badge" id="identity-confidence" style="font-size: 9px; padding: 3px 8px; background: rgba(0, 255, 136, 0.15); border: 1px solid rgba(0, 255, 136, 0.4); border-radius: 3px; color: var(--solana-green); font-weight: 700; font-family: 'JetBrains Mono', monospace;">98% CONFIDENCE</span>
+                            <span class="panel-badge" id="identity-confidence" style="font-size: 8px; padding: 4px 10px; background: rgba(0, 255, 136, 0.12); border: 1px solid rgba(0, 255, 136, 0.3); border-radius: 4px; color: var(--solana-green); font-weight: 700; font-family: 'JetBrains Mono', monospace;">98% CONFIDENCE</span>
                         </div>
-                        <div class="profile-header" style="display: flex; align-items: center; gap: 14px; margin-bottom: 18px;">
-                            <div class="profile-avatar" id="profile-avatar" style="width: 56px; height: 56px; border-radius: 50%; background: linear-gradient(135deg, #4a4a4a, #2a2a2a); display: flex; align-items: center; justify-content: center; font-size: 24px; border: 2px solid var(--border-color); flex-shrink: 0;">👤</div>
+                        <div class="profile-header" style="display: flex; align-items: center; gap: 16px; margin-bottom: 24px;">
+                            <div class="profile-avatar" id="profile-avatar" style="width: 64px; height: 64px; border-radius: 50%; background: linear-gradient(135deg, #3a3a3a, #1a1a1a); display: flex; align-items: center; justify-content: center; font-size: 28px; border: 3px solid var(--border-color); flex-shrink: 0; box-shadow: 0 0 20px rgba(255, 255, 255, 0.1);">👤</div>
                             <div class="profile-info" style="flex: 1;">
-                                <h3 id="profile-handle" style="font-size: 17px; font-weight: 600; margin-bottom: 4px; font-family: 'Space Grotesk', sans-serif; color: var(--text-primary);">@cryptowhale_01</h3>
-                                <div class="uid" id="profile-uid" style="font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--text-muted); letter-spacing: 0.05em;">UID: 8829-AF-221</div>
+                                <h3 id="profile-handle" style="font-size: 18px; font-weight: 600; margin-bottom: 6px; font-family: 'Space Grotesk', sans-serif; color: var(--text-primary); letter-spacing: -0.02em;">@cryptowhale_01</h3>
+                                <div class="uid" id="profile-uid" style="font-family: 'JetBrains Mono', monospace; font-size: 9px; color: var(--text-muted); letter-spacing: 0.1em;">UID: 8829-AF-221</div>
                             </div>
                         </div>
-                        <div class="identity-links" id="identity-links" style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 16px;">
+                        <div class="identity-links" id="identity-links" style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px;">
                             <!-- Populated by JS -->
                         </div>
-                        <div class="intel-note" id="intel-note" style="padding: 10px 12px; background: rgba(255, 170, 0, 0.08); border-left: 3px solid var(--warning); border-radius: 4px; font-size: 10px; color: var(--warning); line-height: 1.6; font-family: 'JetBrains Mono', monospace;">
+                        <div class="intel-note" id="intel-note" style="padding: 12px 14px; background: rgba(255, 170, 0, 0.06); border-left: 3px solid var(--warning); border-radius: 6px; font-size: 9px; color: var(--warning); line-height: 1.7; font-family: 'JetBrains Mono', monospace;">
                             <!-- Populated by JS -->
                         </div>
                     </div>
                 
                     <!-- Network Clustering Panel (Top Middle) -->
-                    <div class="panel network-panel" style="background: var(--bg-tertiary); border: 1px solid var(--border-color); border-radius: 6px; padding: 18px; position: relative; min-height: 450px;">
-                        <div class="panel-title" style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.15em; color: var(--text-muted); margin-bottom: 16px; font-family: 'JetBrains Mono', monospace;">
+                    <div class="panel network-panel" style="background: var(--bg-tertiary); border: 1px solid var(--border-color); border-radius: 8px; padding: 24px; position: relative; min-height: 480px;">
+                        <div class="panel-title" style="font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.2em; color: var(--text-muted); margin-bottom: 20px; font-family: 'JetBrains Mono', monospace;">
                             NETWORK CLUSTERING V.4.8.2 // HEURISTIC MODE
                         </div>
-                        <div class="network-canvas" id="network-canvas" style="width: 100%; height: 380px; position: relative; background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: 4px; margin-top: 12px;">
+                        <div class="network-canvas" id="network-canvas" style="width: 100%; height: 400px; position: relative; background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: 6px; margin-top: 16px;">
                             <!-- Network graph rendered here -->
                         </div>
-                        <div class="network-legend" style="display: flex; gap: 20px; margin-top: 16px; font-size: 9px; flex-wrap: wrap; font-family: 'JetBrains Mono', monospace;">
+                        <div class="network-legend" style="display: flex; gap: 24px; margin-top: 20px; font-size: 8px; flex-wrap: wrap; font-family: 'JetBrains Mono', monospace;">
                             <div class="legend-item" style="display: flex; align-items: center; gap: 8px;">
-                                <div class="legend-dot" style="width: 10px; height: 10px; border-radius: 50%; border: 2px solid var(--yellow); background: rgba(255, 215, 0, 0.3); box-shadow: 0 0 8px rgba(255, 215, 0, 0.5);"></div>
+                                <div class="legend-dot" style="width: 10px; height: 10px; border-radius: 50%; border: 2px solid var(--yellow); background: rgba(255, 215, 0, 0.3); box-shadow: 0 0 10px rgba(255, 215, 0, 0.6);"></div>
                                 <span style="color: var(--text-secondary); font-weight: 600;">TARGET ENTITY</span>
                             </div>
                             <div class="legend-item" style="display: flex; align-items: center; gap: 8px;">
@@ -1580,92 +1602,93 @@
                                 <span style="color: var(--text-secondary); font-weight: 600;">STANDARD WALLET</span>
                             </div>
                         </div>
-                        <div class="intel-note" id="network-intel-note" style="padding: 10px 12px; background: rgba(255, 170, 0, 0.08); border-left: 3px solid var(--warning); border-radius: 4px; font-size: 10px; color: var(--warning); line-height: 1.6; margin-top: 16px; font-family: 'JetBrains Mono', monospace;">
+                        <div class="intel-note" id="network-intel-note" style="padding: 12px 14px; background: rgba(255, 170, 0, 0.06); border-left: 3px solid var(--warning); border-radius: 6px; font-size: 9px; color: var(--warning); line-height: 1.7; margin-top: 20px; font-family: 'JetBrains Mono', monospace;">
                             <!-- Populated by JS -->
                         </div>
                     </div>
                 
                     <!-- Financial Profiling Panel (Top Right) -->
-                    <div class="panel financial-panel" style="background: var(--bg-tertiary); border: 1px solid var(--border-color); border-radius: 6px; padding: 18px; position: relative;">
-                        <div class="panel-title" style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.15em; color: var(--text-muted); margin-bottom: 18px; font-family: 'JetBrains Mono', monospace;">
+                    <div class="panel financial-panel" style="background: var(--bg-tertiary); border: 1px solid var(--border-color); border-radius: 8px; padding: 24px; position: relative;">
+                        <div class="panel-title" style="font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.2em; color: var(--text-muted); margin-bottom: 24px; font-family: 'JetBrains Mono', monospace;">
                             FINANCIAL PROFILING
                         </div>
-                        <div style="margin-bottom: 16px;">
-                            <div class="net-worth-label" style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-muted); margin-bottom: 6px; font-family: 'JetBrains Mono', monospace;">NET WORTH ESTIMATE</div>
-                            <div class="net-worth" id="net-worth" style="font-size: 28px; font-weight: 700; font-family: 'JetBrains Mono', monospace; color: var(--solana-green); margin-bottom: 4px;">$4,250,100.00</div>
-                            <div class="net-worth-change" id="net-worth-change" style="font-size: 12px; color: var(--success); font-weight: 600; display: flex; align-items: center; gap: 4px;">
+                        <div style="margin-bottom: 24px;">
+                            <div class="net-worth-label" style="font-size: 8px; text-transform: uppercase; letter-spacing: 0.15em; color: var(--text-muted); margin-bottom: 8px; font-family: 'JetBrains Mono', monospace;">NET WORTH ESTIMATE</div>
+                            <div class="net-worth" id="net-worth" style="font-size: 32px; font-weight: 700; font-family: 'JetBrains Mono', monospace; color: var(--solana-green); margin-bottom: 6px; letter-spacing: -0.02em;">$4,250,100.00</div>
+                            <div class="net-worth-change" id="net-worth-change" style="font-size: 11px; color: var(--success); font-weight: 600; display: flex; align-items: center; gap: 4px; font-family: 'JetBrains Mono', monospace;">
                                 <span>↗</span> <span>+$240k (24h)</span>
                             </div>
                         </div>
-                        <div style="margin-bottom: 18px;">
-                            <div style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-muted); margin-bottom: 10px; font-family: 'JetBrains Mono', monospace;">TOTAL PNL</div>
-                            <div class="pnl-chart" id="pnl-chart" style="height: 90px; display: flex; align-items: flex-end; gap: 6px; background: var(--bg-primary); padding: 8px; border-radius: 4px; border: 1px solid var(--border-color);">
+                        <div style="margin-bottom: 24px;">
+                            <div style="font-size: 8px; text-transform: uppercase; letter-spacing: 0.15em; color: var(--text-muted); margin-bottom: 12px; font-family: 'JetBrains Mono', monospace;">TOTAL PNL</div>
+                            <div class="pnl-chart" id="pnl-chart" style="height: 100px; display: flex; align-items: flex-end; gap: 8px; background: var(--bg-primary); padding: 12px; border-radius: 6px; border: 1px solid var(--border-color);">
                                 <!-- Populated by JS -->
                             </div>
                         </div>
-                        <div class="fund-origins" style="display: flex; flex-direction: column; gap: 14px; margin-bottom: 16px;">
+                        <div class="fund-origins" style="display: flex; flex-direction: column; gap: 16px; margin-bottom: 20px;">
                             <div class="fund-item" style="display: flex; flex-direction: column;">
-                                <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-                                    <span class="fund-label" style="font-size: 10px; color: var(--text-secondary); font-family: 'JetBrains Mono', monospace; font-weight: 600;">DEFI PROTOCOLS</span>
-                                    <span class="fund-value" id="defi-pct" style="font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 700; color: var(--text-primary);">62%</span>
+                                <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                                    <span class="fund-label" style="font-size: 9px; color: var(--text-secondary); font-family: 'JetBrains Mono', monospace; font-weight: 600; letter-spacing: 0.05em;">DEFI PROTOCOLS</span>
+                                    <span class="fund-value" id="defi-pct" style="font-family: 'JetBrains Mono', monospace; font-size: 10px; font-weight: 700; color: var(--text-primary);">62%</span>
                                 </div>
-                                <div class="fund-bar" style="width: 100%; height: 8px; background: var(--bg-primary); border-radius: 4px; overflow: hidden;">
-                                    <div class="fund-bar-fill defi" id="defi-bar" style="height: 100%; border-radius: 4px; background: var(--solana-green); transition: width 0.5s; width: 62%;"></div>
+                                <div class="fund-bar" style="width: 100%; height: 6px; background: var(--bg-primary); border-radius: 3px; overflow: hidden;">
+                                    <div class="fund-bar-fill defi" id="defi-bar" style="height: 100%; border-radius: 3px; background: var(--solana-green); transition: width 0.6s ease-out; width: 62%;"></div>
                                 </div>
                             </div>
                             <div class="fund-item" style="display: flex; flex-direction: column;">
-                                <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-                                    <span class="fund-label" style="font-size: 10px; color: var(--text-secondary); font-family: 'JetBrains Mono', monospace; font-weight: 600;">MIXERS (HIGH RISK)</span>
-                                    <span class="fund-value" id="mixer-pct" style="font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 700; color: var(--danger);">28%</span>
+                                <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                                    <span class="fund-label" style="font-size: 9px; color: var(--text-secondary); font-family: 'JetBrains Mono', monospace; font-weight: 600; letter-spacing: 0.05em;">MIXERS (HIGH RISK)</span>
+                                    <span class="fund-value" id="mixer-pct" style="font-family: 'JetBrains Mono', monospace; font-size: 10px; font-weight: 700; color: var(--danger);">28%</span>
                                 </div>
-                                <div class="fund-bar" style="width: 100%; height: 8px; background: var(--bg-primary); border-radius: 4px; overflow: hidden;">
-                                    <div class="fund-bar-fill mixer" id="mixer-bar" style="height: 100%; border-radius: 4px; background: var(--danger); transition: width 0.5s; width: 28%;"></div>
+                                <div class="fund-bar" style="width: 100%; height: 6px; background: var(--bg-primary); border-radius: 3px; overflow: hidden;">
+                                    <div class="fund-bar-fill mixer" id="mixer-bar" style="height: 100%; border-radius: 3px; background: var(--danger); transition: width 0.6s ease-out; width: 28%;"></div>
                                 </div>
                             </div>
                             <div class="fund-item" style="display: flex; flex-direction: column;">
-                                <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-                                    <span class="fund-label" style="font-size: 10px; color: var(--text-secondary); font-family: 'JetBrains Mono', monospace; font-weight: 600;">CEX WITHDRAWALS</span>
-                                    <span class="fund-value" id="cex-pct" style="font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 700; color: var(--warning);">10%</span>
+                                <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                                    <span class="fund-label" style="font-size: 9px; color: var(--text-secondary); font-family: 'JetBrains Mono', monospace; font-weight: 600; letter-spacing: 0.05em;">CEX WITHDRAWALS</span>
+                                    <span class="fund-value" id="cex-pct" style="font-family: 'JetBrains Mono', monospace; font-size: 10px; font-weight: 700; color: var(--warning);">10%</span>
                                 </div>
-                                <div class="fund-bar" style="width: 100%; height: 8px; background: var(--bg-primary); border-radius: 4px; overflow: hidden;">
-                                    <div class="fund-bar-fill cex" id="cex-bar" style="height: 100%; border-radius: 4px; background: var(--warning); transition: width 0.5s; width: 10%;"></div>
+                                <div class="fund-bar" style="width: 100%; height: 6px; background: var(--bg-primary); border-radius: 3px; overflow: hidden;">
+                                    <div class="fund-bar-fill cex" id="cex-bar" style="height: 100%; border-radius: 3px; background: var(--warning); transition: width 0.6s ease-out; width: 10%;"></div>
                                 </div>
                             </div>
                         </div>
-                        <div class="intel-note" id="financial-intel-note" style="padding: 10px 12px; background: rgba(255, 170, 0, 0.08); border-left: 3px solid var(--warning); border-radius: 4px; font-size: 10px; color: var(--warning); line-height: 1.6; font-family: 'JetBrains Mono', monospace;">
+                        <div class="intel-note" id="financial-intel-note" style="padding: 12px 14px; background: rgba(255, 170, 0, 0.06); border-left: 3px solid var(--warning); border-radius: 6px; font-size: 9px; color: var(--warning); line-height: 1.7; font-family: 'JetBrains Mono', monospace;">
                             <!-- Populated by JS -->
                         </div>
                     </div>
                 
                     <!-- Risk Score Panel (Bottom Left - Row 2) -->
-                    <div class="panel risk-panel" style="background: var(--bg-tertiary); border: 1px solid var(--border-color); border-radius: 6px; padding: 18px; position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; min-height: 220px; grid-column: 1;">
-                        <div class="panel-title" style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.15em; color: var(--text-muted); width: 100%; text-align: left; font-family: 'JetBrains Mono', monospace;">RISK SCORE</div>
-                        <div style="display: flex; flex-direction: column; align-items: center; gap: 8px; flex: 1; justify-content: center;">
-                            <div class="risk-score" id="risk-score" style="font-size: 72px; font-weight: 700; font-family: 'JetBrains Mono', monospace; color: var(--danger); line-height: 1;">92</div>
-                            <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 4px;">
-                                <span style="font-size: 32px; color: var(--danger);">⚠</span>
-                                <div class="risk-level" id="risk-level" style="font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.15em; color: var(--danger); font-family: 'JetBrains Mono', monospace;">CRITICAL THREAT LEVEL</div>
+                    <div class="panel risk-panel" style="background: var(--bg-tertiary); border: 1px solid var(--border-color); border-radius: 8px; padding: 24px; position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px; min-height: 260px; grid-column: 1;">
+                        <div class="panel-title" style="font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.2em; color: var(--text-muted); width: 100%; text-align: left; font-family: 'JetBrains Mono', monospace; margin-bottom: 8px;">RISK SCORE</div>
+                        <div style="display: flex; flex-direction: column; align-items: center; gap: 12px; flex: 1; justify-content: center;">
+                            <div class="risk-score" id="risk-score" style="font-size: 80px; font-weight: 700; font-family: 'JetBrains Mono', monospace; color: var(--danger); line-height: 1; letter-spacing: -0.05em;">92</div>
+                            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                                <span style="font-size: 28px; color: var(--danger);">⚠</span>
+                                <div class="risk-level" id="risk-level" style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.2em; color: var(--danger); font-family: 'JetBrains Mono', monospace;">CRITICAL THREAT LEVEL</div>
                             </div>
                         </div>
-                        <div class="risk-bar" style="width: 100%; height: 10px; background: var(--bg-primary); border-radius: 5px; overflow: hidden; margin-top: 8px;">
-                            <div class="risk-bar-fill" id="risk-bar-fill" style="height: 100%; background: linear-gradient(90deg, var(--danger), #ff6666); transition: width 0.5s; width: 92%;"></div>
+                        <div class="risk-bar" style="width: 100%; height: 8px; background: var(--bg-primary); border-radius: 4px; overflow: hidden; margin-top: 12px;">
+                            <div class="risk-bar-fill" id="risk-bar-fill" style="height: 100%; background: linear-gradient(90deg, var(--danger), #ff6666); transition: width 0.8s ease-out; width: 92%;"></div>
                         </div>
                     </div>
                 
                     <!-- Recent Activity Log Panel (Bottom Left - Row 2) -->
-                    <div class="panel activity-panel" style="background: var(--bg-tertiary); border: 1px solid var(--border-color); border-radius: 6px; padding: 18px; position: relative; grid-column: 2; grid-row: 2;">
-                        <div class="panel-title" style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.15em; color: var(--text-muted); margin-bottom: 16px; font-family: 'JetBrains Mono', monospace;">
-                            RECENT ACTIVITY LOG
+                    <div class="panel activity-panel" style="background: var(--bg-tertiary); border: 1px solid var(--border-color); border-radius: 8px; padding: 24px; position: relative; grid-column: 2; grid-row: 2;">
+                        <div class="panel-title" style="font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.2em; color: var(--text-muted); margin-bottom: 20px; font-family: 'JetBrains Mono', monospace; display: flex; justify-content: space-between; align-items: center;">
+                            <span>RECENT ACTIVITY LOG</span>
+                            <button onclick="viewFullHistory()" style="background: none; border: none; color: var(--solana-green); font-size: 8px; font-weight: 700; cursor: pointer; font-family: 'JetBrains Mono', monospace; text-transform: uppercase; letter-spacing: 0.15em; padding: 4px 0;">VIEW FULL →</button>
                         </div>
-                        <div style="max-height: 350px; overflow-y: auto;">
-                            <table class="activity-table" id="activity-table" style="width: 100%; font-size: 10px; margin-top: 12px; font-family: 'JetBrains Mono', monospace;">
+                        <div style="max-height: 380px; overflow-y: auto; scrollbar-width: thin; scrollbar-color: var(--border-color) transparent;">
+                            <table class="activity-table" id="activity-table" style="width: 100%; font-size: 9px; font-family: 'JetBrains Mono', monospace; border-collapse: collapse;">
                                 <thead>
                                     <tr>
-                                        <th style="text-align: left; padding: 10px 8px; color: var(--text-muted); font-weight: 700; text-transform: uppercase; font-size: 9px; letter-spacing: 0.1em; border-bottom: 1px solid var(--border-color);">TIME (UTC)</th>
-                                        <th style="text-align: left; padding: 10px 8px; color: var(--text-muted); font-weight: 700; text-transform: uppercase; font-size: 9px; letter-spacing: 0.1em; border-bottom: 1px solid var(--border-color);">ACTION</th>
-                                        <th style="text-align: left; padding: 10px 8px; color: var(--text-muted); font-weight: 700; text-transform: uppercase; font-size: 9px; letter-spacing: 0.1em; border-bottom: 1px solid var(--border-color);">ASSET</th>
-                                        <th style="text-align: left; padding: 10px 8px; color: var(--text-muted); font-weight: 700; text-transform: uppercase; font-size: 9px; letter-spacing: 0.1em; border-bottom: 1px solid var(--border-color);">VALUE</th>
-                                        <th style="text-align: left; padding: 10px 8px; color: var(--text-muted); font-weight: 700; text-transform: uppercase; font-size: 9px; letter-spacing: 0.1em; border-bottom: 1px solid var(--border-color);">RISK</th>
+                                        <th style="text-align: left; padding: 12px 10px; color: var(--text-muted); font-weight: 700; text-transform: uppercase; font-size: 8px; letter-spacing: 0.15em; border-bottom: 1px solid var(--border-color);">TIME</th>
+                                        <th style="text-align: left; padding: 12px 10px; color: var(--text-muted); font-weight: 700; text-transform: uppercase; font-size: 8px; letter-spacing: 0.15em; border-bottom: 1px solid var(--border-color);">ACTION</th>
+                                        <th style="text-align: left; padding: 12px 10px; color: var(--text-muted); font-weight: 700; text-transform: uppercase; font-size: 8px; letter-spacing: 0.15em; border-bottom: 1px solid var(--border-color);">ASSET</th>
+                                        <th style="text-align: left; padding: 12px 10px; color: var(--text-muted); font-weight: 700; text-transform: uppercase; font-size: 8px; letter-spacing: 0.15em; border-bottom: 1px solid var(--border-color);">VALUE</th>
+                                        <th style="text-align: left; padding: 12px 10px; color: var(--text-muted); font-weight: 700; text-transform: uppercase; font-size: 8px; letter-spacing: 0.15em; border-bottom: 1px solid var(--border-color);">RISK</th>
                                     </tr>
                                 </thead>
                                 <tbody id="activity-tbody" style="color: var(--text-secondary);">
@@ -1673,37 +1696,34 @@
                                 </tbody>
                             </table>
                         </div>
-                        <div class="view-full" style="text-align: center; margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--border-color);">
-                            <button onclick="viewFullHistory()" style="background: none; border: none; color: var(--solana-green); text-decoration: none; font-size: 10px; font-weight: 700; cursor: pointer; font-family: 'JetBrains Mono', monospace; text-transform: uppercase; letter-spacing: 0.1em;">VIEW FULL HISTORY →</button>
-                        </div>
                     </div>
                 
                     <!-- Behavioral Anomalies Panel (Bottom Right - Row 2) -->
-                    <div class="panel behavioral-panel" style="background: var(--bg-tertiary); border: 1px solid var(--border-color); border-radius: 6px; padding: 18px; position: relative; grid-column: 3; grid-row: 2;">
-                        <div class="panel-title" style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.15em; color: var(--text-muted); margin-bottom: 16px; font-family: 'JetBrains Mono', monospace;">
+                    <div class="panel behavioral-panel" style="background: var(--bg-tertiary); border: 1px solid var(--border-color); border-radius: 8px; padding: 24px; position: relative; grid-column: 3; grid-row: 2;">
+                        <div class="panel-title" style="font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.2em; color: var(--text-muted); margin-bottom: 20px; font-family: 'JetBrains Mono', monospace;">
                             BEHAVIORAL ANOMALIES
                         </div>
-                        <div class="behavior-item" style="padding: 14px; background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: 4px; margin-bottom: 14px;">
-                            <div class="behavior-label" style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-muted); margin-bottom: 10px; font-family: 'JetBrains Mono', monospace; font-weight: 700;">SLEEP SCHEDULE</div>
-                            <div class="behavior-value" id="sleep-schedule" style="font-size: 15px; font-weight: 600; color: var(--text-primary); margin-bottom: 6px; font-family: 'Space Grotesk', sans-serif;">Irregular Pattern</div>
-                            <div class="behavior-detail" id="sleep-detail" style="font-size: 11px; color: var(--text-muted); font-family: 'JetBrains Mono', monospace; line-height: 1.5;">Activity peaks between 02:00-06:00 UTC (85% of transactions)</div>
+                        <div class="behavior-item" style="padding: 16px; background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: 6px; margin-bottom: 16px; transition: all 0.3s ease;">
+                            <div class="behavior-label" style="font-size: 8px; text-transform: uppercase; letter-spacing: 0.15em; color: var(--text-muted); margin-bottom: 12px; font-family: 'JetBrains Mono', monospace; font-weight: 700;">SLEEP SCHEDULE</div>
+                            <div class="behavior-value" id="sleep-schedule" style="font-size: 16px; font-weight: 600; color: var(--text-primary); margin-bottom: 8px; font-family: 'Space Grotesk', sans-serif; letter-spacing: -0.01em;">Irregular Pattern</div>
+                            <div class="behavior-detail" id="sleep-detail" style="font-size: 10px; color: var(--text-muted); font-family: 'JetBrains Mono', monospace; line-height: 1.6;">Activity peaks between 02:00-06:00 UTC</div>
                         </div>
-                        <div class="behavior-item" style="padding: 14px; background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: 4px; margin-bottom: 14px;">
-                            <div class="behavior-label" style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-muted); margin-bottom: 10px; font-family: 'JetBrains Mono', monospace; font-weight: 700;">BATCH TXNS</div>
-                            <div class="behavior-value" id="batch-txns" style="font-size: 15px; font-weight: 600; color: var(--text-primary); margin-bottom: 6px; font-family: 'Space Grotesk', sans-serif;">42 Batches Detected</div>
-                            <div class="behavior-detail" id="batch-detail" style="font-size: 11px; color: var(--text-muted); font-family: 'JetBrains Mono', monospace; line-height: 1.5;">Average batch size: 8.3 txns within 2-minute window</div>
+                        <div class="behavior-item" style="padding: 16px; background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: 6px; margin-bottom: 16px; transition: all 0.3s ease;">
+                            <div class="behavior-label" style="font-size: 8px; text-transform: uppercase; letter-spacing: 0.15em; color: var(--text-muted); margin-bottom: 12px; font-family: 'JetBrains Mono', monospace; font-weight: 700;">BATCH TXNS</div>
+                            <div class="behavior-value" id="batch-txns" style="font-size: 16px; font-weight: 600; color: var(--text-primary); margin-bottom: 8px; font-family: 'Space Grotesk', sans-serif; letter-spacing: -0.01em;">42 Batches</div>
+                            <div class="behavior-detail" id="batch-detail" style="font-size: 10px; color: var(--text-muted); font-family: 'JetBrains Mono', monospace; line-height: 1.6;">Avg: 8.3 txns per batch</div>
                         </div>
-                        <div class="behavior-item" style="padding: 14px; background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: 4px; margin-bottom: 14px;">
-                            <div class="behavior-label" style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-muted); margin-bottom: 10px; font-family: 'JetBrains Mono', monospace; font-weight: 700;">WALLET AGE</div>
-                            <div class="behavior-value" id="wallet-age" style="font-size: 15px; font-weight: 600; color: var(--text-primary); margin-bottom: 6px; font-family: 'Space Grotesk', sans-serif;">2.4 Years</div>
-                            <div class="behavior-detail" id="wallet-age-detail" style="font-size: 11px; color: var(--text-muted); font-family: 'JetBrains Mono', monospace; line-height: 1.5;">First transaction: 2021-11-15 (Pre-exploit wallet)</div>
+                        <div class="behavior-item" style="padding: 16px; background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: 6px; margin-bottom: 16px; transition: all 0.3s ease;">
+                            <div class="behavior-label" style="font-size: 8px; text-transform: uppercase; letter-spacing: 0.15em; color: var(--text-muted); margin-bottom: 12px; font-family: 'JetBrains Mono', monospace; font-weight: 700;">WALLET AGE</div>
+                            <div class="behavior-value" id="wallet-age" style="font-size: 16px; font-weight: 600; color: var(--text-primary); margin-bottom: 8px; font-family: 'Space Grotesk', sans-serif; letter-spacing: -0.01em;">2.4 Years</div>
+                            <div class="behavior-detail" id="wallet-age-detail" style="font-size: 10px; color: var(--text-muted); font-family: 'JetBrains Mono', monospace; line-height: 1.6;">First seen: 2021-11-15</div>
                         </div>
                     </div>
                 </div>
             </div>
             
             <!-- Educational Section (All panels below main dashboard) -->
-            <div class="educational-section" id="educational-section" style="margin: 24px; padding-top: 24px;">
+            <div class="educational-section" id="educational-section" style="margin: 20px auto; padding-top: 32px; max-width: 1800px;">
                 <!-- Educational panels will be populated here by JavaScript -->
             </div>
         </div>
@@ -2408,28 +2428,28 @@
             document.getElementById('identity-confidence').textContent = '98% CONFIDENCE';
             
             document.getElementById('identity-links').innerHTML = `
-                <div class="identity-link" style="display: flex; align-items: center; justify-content: space-between; padding: 12px; background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: 4px;">
-                    <span style="font-size: 10px; color: var(--text-secondary); font-family: 'JetBrains Mono', monospace; font-weight: 600;">Twitter/X</span>
-                    <div style="display: flex; align-items: center; gap: 6px;">
-                        <span style="font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--text-primary);">${handle}</span>
-                        <span style="font-size: 9px; padding: 2px 6px; background: rgba(0, 255, 136, 0.15); border: 1px solid rgba(0, 255, 136, 0.4); border-radius: 3px; color: var(--solana-green); font-weight: 700; font-family: 'JetBrains Mono', monospace;">VERIFIED</span>
+                <div class="identity-link" style="display: flex; align-items: center; justify-content: space-between; padding: 14px; background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: 6px; transition: all 0.2s ease;">
+                    <span style="font-size: 9px; color: var(--text-secondary); font-family: 'JetBrains Mono', monospace; font-weight: 600; letter-spacing: 0.05em;">Twitter/X</span>
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <span style="font-family: 'JetBrains Mono', monospace; font-size: 9px; color: var(--text-primary);">${handle}</span>
+                        <span style="font-size: 7px; padding: 3px 8px; background: rgba(0, 255, 136, 0.12); border: 1px solid rgba(0, 255, 136, 0.3); border-radius: 4px; color: var(--solana-green); font-weight: 700; font-family: 'JetBrains Mono', monospace; letter-spacing: 0.1em;">VERIFIED</span>
                     </div>
                 </div>
-                <div class="identity-link" style="display: flex; align-items: center; justify-content: space-between; padding: 12px; background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: 4px;">
-                    <span style="font-size: 10px; color: var(--text-secondary); font-family: 'JetBrains Mono', monospace; font-weight: 600;">Discord</span>
-                    <span style="font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--text-primary);">${discordHandle}</span>
+                <div class="identity-link" style="display: flex; align-items: center; justify-content: space-between; padding: 14px; background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: 6px; transition: all 0.2s ease;">
+                    <span style="font-size: 9px; color: var(--text-secondary); font-family: 'JetBrains Mono', monospace; font-weight: 600; letter-spacing: 0.05em;">Discord</span>
+                    <span style="font-family: 'JetBrains Mono', monospace; font-size: 9px; color: var(--text-primary);">${discordHandle}</span>
                 </div>
-                <div class="identity-link" style="display: flex; align-items: center; justify-content: space-between; padding: 12px; background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: 4px;">
-                    <span style="font-size: 10px; color: var(--text-secondary); font-family: 'JetBrains Mono', monospace; font-weight: 600;">ProtonMail</span>
-                    <span style="font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--text-secondary); filter: blur(4px); letter-spacing: 0.1em; user-select: none;">crypto••••••@protonmail.com</span>
+                <div class="identity-link" style="display: flex; align-items: center; justify-content: space-between; padding: 14px; background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: 6px; transition: all 0.2s ease;">
+                    <span style="font-size: 9px; color: var(--text-secondary); font-family: 'JetBrains Mono', monospace; font-weight: 600; letter-spacing: 0.05em;">ProtonMail</span>
+                    <span style="font-family: 'JetBrains Mono', monospace; font-size: 9px; color: var(--text-secondary); filter: blur(3px); letter-spacing: 0.1em; user-select: none;">crypto••••••@protonmail.com</span>
                 </div>
-                <div class="identity-link" style="display: flex; align-items: center; justify-content: space-between; padding: 12px; background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: 4px;">
-                    <span style="font-size: 10px; color: var(--text-secondary); font-family: 'JetBrains Mono', monospace; font-weight: 600;">IP GEO</span>
-                    <span style="font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--text-primary);">Zurich, CH</span>
+                <div class="identity-link" style="display: flex; align-items: center; justify-content: space-between; padding: 14px; background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: 6px; transition: all 0.2s ease;">
+                    <span style="font-size: 9px; color: var(--text-secondary); font-family: 'JetBrains Mono', monospace; font-weight: 600; letter-spacing: 0.05em;">IP GEO</span>
+                    <span style="font-family: 'JetBrains Mono', monospace; font-size: 9px; color: var(--text-primary);">Zurich, CH</span>
                 </div>
-                <div class="identity-link" style="display: flex; align-items: center; justify-content: space-between; padding: 12px; background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: 4px;">
-                    <span style="font-size: 10px; color: var(--text-secondary); font-family: 'JetBrains Mono', monospace; font-weight: 600;">LAST ACTIVE</span>
-                    <span style="font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--text-primary);">Just Now</span>
+                <div class="identity-link" style="display: flex; align-items: center; justify-content: space-between; padding: 14px; background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: 6px; transition: all 0.2s ease;">
+                    <span style="font-size: 9px; color: var(--text-secondary); font-family: 'JetBrains Mono', monospace; font-weight: 600; letter-spacing: 0.05em;">LAST ACTIVE</span>
+                    <span style="font-family: 'JetBrains Mono', monospace; font-size: 9px; color: var(--text-primary);">Just Now</span>
                 </div>
             `;
             
@@ -3282,10 +3302,10 @@
             currentPortfolioStatus = 'loading';
             
             try {
-                const res = await fetch(`https://portfolio.jup.ag/v1/portfolio/${wallet}`, {
+                // Use backend proxy to avoid CORS issues
+                const res = await fetch(`/portfolio/${wallet}`, {
                     method: 'GET',
-                    mode: 'cors',
-                    credentials: 'omit'
+                    headers: { 'Content-Type': 'application/json' }
                 });
                 if (!res.ok) throw new Error('Not found');
                 
