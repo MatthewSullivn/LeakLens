@@ -3,20 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LeakLens - See What Your Wallet Leaks</title>
+    <title>LEAKLENS - Surveillance Analysis</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <style>
         :root {
-            --bg-primary: #09090b;
-            --bg-secondary: #18181b;
-            --bg-tertiary: #27272a;
-            --border-color: #3f3f46;
-            --border-subtle: #27272a;
-            --text-primary: #fafafa;
-            --text-secondary: #a1a1aa;
-            --text-muted: #71717a;
+            --bg-primary: #0a0a0a;
+            --bg-secondary: #151515;
+            --bg-tertiary: #1f1f1f;
+            --border-color: #2a2a2a;
+            --border-subtle: #1f1f1f;
+            --text-primary: #ffffff;
+            --text-secondary: #a0a0a0;
+            --text-muted: #666666;
             --solana-purple: #9945FF;
             --solana-green: #14F195;
             --danger: #ef4444;
@@ -34,38 +34,152 @@
         body {
             font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, sans-serif;
             background: var(--bg-primary);
+            background-image: 
+                linear-gradient(rgba(15, 15, 15, 0.5) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(15, 15, 15, 0.5) 1px, transparent 1px);
+            background-size: 20px 20px;
             color: var(--text-primary);
             min-height: 100vh;
             line-height: 1.6;
             overflow-x: hidden;
         }
         
-        /* Animated gradient background */
-        .bg-gradient {
-            position: fixed;
+        /* Top Header Bar */
+        .top-header {
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border-color);
+            padding: 12px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
             top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: 
-                radial-gradient(ellipse 80% 50% at 50% -20%, var(--glow-purple), transparent),
-                radial-gradient(ellipse 60% 40% at 100% 100%, var(--glow-green), transparent);
-            pointer-events: none;
-            z-index: 0;
+            z-index: 100;
+            backdrop-filter: blur(10px);
+        }
+        
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        
+        .header-title {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .target-address {
+            font-family: 'JetBrains Mono', monospace;
+            color: var(--solana-green);
+            font-weight: 400;
+        }
+        
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 12px;
+            background: rgba(20, 241, 149, 0.15);
+            border: 1px solid rgba(20, 241, 149, 0.3);
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--solana-green);
+            text-transform: uppercase;
+        }
+        
+        .status-badge::before {
+            content: '●';
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        .tag-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 4px 10px;
+            background: rgba(239, 68, 68, 0.15);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--danger);
+            text-transform: uppercase;
+        }
+        
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .header-btn {
+            padding: 8px 16px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            color: var(--text-primary);
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: 'JetBrains Mono', monospace;
+        }
+        
+        .header-btn:hover {
+            background: var(--bg-secondary);
+            border-color: var(--border-subtle);
+        }
+        
+        .header-btn.primary {
+            background: linear-gradient(135deg, var(--solana-purple), #7c3aed);
+            border: none;
+        }
+        
+        .header-btn.danger {
+            background: rgba(239, 68, 68, 0.15);
+            border-color: rgba(239, 68, 68, 0.3);
+            color: var(--danger);
+        }
+        
+        .header-btn.danger:hover {
+            background: rgba(239, 68, 68, 0.25);
+        }
+        
+        .header-icon {
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 16px;
+        }
+        
+        .header-icon:hover {
+            background: var(--bg-secondary);
         }
         
         .container {
             position: relative;
             z-index: 1;
-            max-width: 1100px;
+            max-width: 1600px;
             margin: 0 auto;
             padding: 24px;
-        }
-        
-        /* ==================== HEADER ==================== */
-        .header {
-            text-align: center;
-            padding: 80px 0 60px;
         }
         
         .logo-container {
@@ -192,11 +306,16 @@
         /* ==================== SEARCH ==================== */
         .search-section {
             background: var(--bg-secondary);
-            border: 1px solid var(--border-subtle);
-            border-radius: 24px;
-            padding: 40px;
-            margin-bottom: 32px;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 32px;
+            margin-bottom: 24px;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
             box-shadow: 0 4px 24px rgba(0, 0, 0, 0.2);
+            display: block !important;
+            visibility: visible !important;
         }
         
         .search-title {
@@ -228,13 +347,15 @@
         .search-input {
             width: 100%;
             background: var(--bg-primary);
-            border: 2px solid var(--border-color);
-            border-radius: 16px;
-            padding: 18px 24px;
-            font-size: 16px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 14px 20px;
+            font-size: 14px;
             font-family: 'JetBrains Mono', monospace;
             color: var(--text-primary);
             transition: all 0.2s;
+            pointer-events: auto !important;
+            z-index: 10;
         }
         
         .search-input:focus {
@@ -272,9 +393,9 @@
         .search-btn {
             background: linear-gradient(135deg, var(--solana-purple), #7c3aed);
             border: none;
-            border-radius: 16px;
-            padding: 18px 36px;
-            font-size: 16px;
+            border-radius: 8px;
+            padding: 14px 28px;
+            font-size: 14px;
             font-weight: 600;
             color: white;
             cursor: pointer;
@@ -283,6 +404,7 @@
             align-items: center;
             gap: 10px;
             white-space: nowrap;
+            pointer-events: auto !important;
         }
         
         .search-btn:hover {
@@ -1338,62 +1460,26 @@
     </style>
 </head>
 <body>
-    <div class="bg-gradient"></div>
+    <!-- Top Header Bar -->
+    <div class="top-header">
+        <div class="header-left">
+            <div class="header-title">
+                LEAKLENS // TARGET: <span class="target-address" id="header-address">-</span>
+            </div>
+            <div class="status-badge" id="status-badge" style="display: none;">LIVE SURVEILLANCE ACTIVE</div>
+            <div class="tag-badge" id="tag-badge" style="display: none;">SUSPECTED DEV</div>
+        </div>
+        <div class="header-right">
+            <button class="header-btn" onclick="exportReport()">EXPORT REPORT</button>
+            <button class="header-btn danger" onclick="escalateTarget()">ESCALATE</button>
+            <div class="header-icon">⚙️</div>
+            <div class="header-icon">🔔</div>
+        </div>
+    </div>
     
     <div class="container">
-        <!-- Header -->
-        <header class="header">
-            <div class="logo-container">
-                <div class="logo-icon">🔍</div>
-                <div class="logo-text">LeakLens</div>
-            </div>
-            <p class="tagline">See what <span>surveillance entities</span> know about your wallet</p>
-            <div class="powered-by">
-                <svg width="16" height="16" viewBox="0 0 128 128" fill="none">
-                    <circle cx="64" cy="64" r="64" fill="url(#solana-grad)"/>
-                    <defs>
-                        <linearGradient id="solana-grad" x1="0" y1="0" x2="128" y2="128">
-                            <stop stop-color="#9945FF"/>
-                            <stop offset="1" stop-color="#14F195"/>
-                        </linearGradient>
-                    </defs>
-                </svg>
-                Powered by Solana
-            </div>
-        </header>
-
-        <section class="mission-section">
-            <div class="mission-grid">
-                <div class="mission-card">
-                    <div class="mission-title">🎯 Objective</div>
-                    <p>
-                        Make mass surveillance in crypto visible and intuitive.
-                        Help users see how public blockchains enable tracking, labeling, and profiling
-                        and why selective privacy tools like encrypt.trade exist.
-                    </p>
-                </div>
-                <div class="mission-card">
-                    <div class="mission-title">📌 What to Explain</div>
-                    <ul class="mission-list">
-                        <li><span>•</span>Why wallets are not anonymous by default</li>
-                        <li><span>•</span>How on-chain activity is tracked, clustered, and labelled</li>
-                        <li><span>•</span>How a single public transaction can permanently reduce privacy</li>
-                        <li><span>•</span>How selective privacy reduces exposure without breaking usability. This can be done using data by connecting data from X and blockscanner. Also, platforms like Arkham and 0xppl.</li>
-                    </ul>
-                </div>
-                <div class="mission-card">
-                    <div class="mission-title">🧠 Plain-English Explainer</div>
-                    <ul class="mission-list">
-                        <li><span>•</span>Every transaction is public, permanent, and searchable by anyone.</li>
-                        <li><span>•</span>Analytics firms cluster wallets by behavior and shared counterparties.</li>
-                        <li><span>•</span>One public link (exchange, profile, or tweet) can deanonymize a whole cluster.</li>
-                    </ul>
-                </div>
-            </div>
-        </section>
-        
-        <!-- Search Section -->
-        <div class="search-section">
+        <!-- Search Section (Initially visible) -->
+        <div class="search-section" id="search-section">
             <h2 class="search-title">
                 <span>🎯</span> Analyze Wallet Exposure
             </h2>
@@ -1445,7 +1531,165 @@
             </div>
         </div>
         
-        <!-- Results -->
+        <!-- Dashboard Layout (Blueprint Style) -->
+        <div id="dashboard" style="display: none;">
+            <div class="dashboard-grid" style="display: grid; grid-template-columns: 1fr 1.2fr 1fr; grid-template-rows: auto auto; gap: 16px; margin-bottom: 24px;">
+                <!-- Identity Linkage Panel (Top Left) -->
+                <div class="panel" style="background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 12px; padding: 20px; position: relative; overflow: hidden;">
+                    <div class="panel-title" style="font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-muted); margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between;">
+                        IDENTITY LINKAGE
+                        <span class="panel-badge" id="identity-confidence" style="font-size: 10px; padding: 4px 8px; background: rgba(153, 69, 255, 0.15); border: 1px solid rgba(153, 69, 255, 0.3); border-radius: 4px; color: var(--solana-green); font-weight: 600;">-</span>
+                    </div>
+                    <div class="profile-header" style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
+                        <div class="profile-avatar" id="profile-avatar" style="width: 48px; height: 48px; border-radius: 50%; background: linear-gradient(135deg, var(--solana-purple), var(--solana-green)); display: flex; align-items: center; justify-content: center; font-size: 20px; border: 2px solid var(--border-color);">👤</div>
+                        <div class="profile-info">
+                            <h3 id="profile-handle" style="font-size: 16px; font-weight: 600; margin-bottom: 2px;">-</h3>
+                            <div class="uid" id="profile-uid" style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--text-muted);">UID: -</div>
+                        </div>
+                    </div>
+                    <div class="identity-links" id="identity-links" style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 12px;">
+                        <!-- Populated by JS -->
+                    </div>
+                    <div class="intel-note" id="intel-note" style="padding: 12px; background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.2); border-radius: 8px; font-size: 11px; color: var(--warning); line-height: 1.5;">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+                
+                <!-- Network Clustering Panel (Top Middle) -->
+                <div class="panel network-panel" style="background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 12px; padding: 20px; position: relative; overflow: hidden; min-height: 400px;">
+                    <div class="panel-title" style="font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-muted); margin-bottom: 16px;">
+                        NETWORK CLUSTERING V.4.0.2 // HEURISTIC MODE
+                    </div>
+                    <div class="network-canvas" id="network-canvas" style="width: 100%; height: 350px; position: relative; background: var(--bg-primary); border: 1px solid var(--border-subtle); border-radius: 8px; margin-top: 12px;">
+                        <!-- Network graph rendered here -->
+                    </div>
+                    <div class="network-legend" style="display: flex; gap: 16px; margin-top: 20px; font-size: 11px; flex-wrap: wrap;">
+                        <div class="legend-item" style="display: flex; align-items: center; gap: 6px;">
+                            <div class="legend-dot" style="width: 12px; height: 12px; border-radius: 50%; border: 2px solid var(--solana-green); background: rgba(255,255,255,0.1);"></div>
+                            <span>TARGET ENTITY</span>
+                        </div>
+                        <div class="legend-item" style="display: flex; align-items: center; gap: 6px;">
+                            <div class="legend-dot" style="width: 12px; height: 12px; border-radius: 50%; border: 2px solid var(--danger); background: rgba(239,68,68,0.2);"></div>
+                            <span>HIGH RISK CONTRACT</span>
+                        </div>
+                        <div class="legend-item" style="display: flex; align-items: center; gap: 6px;">
+                            <div class="legend-dot" style="width: 12px; height: 12px; border-radius: 50%; border: 2px solid var(--border-color); background: var(--bg-tertiary);"></div>
+                            <span>STANDARD WALLET</span>
+                        </div>
+                    </div>
+                    <div class="intel-note" id="network-intel-note" style="padding: 12px; background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.2); border-radius: 8px; font-size: 11px; color: var(--warning); line-height: 1.5; margin-top: 12px;">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+                
+                <!-- Financial Profiling Panel (Top Right) -->
+                <div class="panel financial-panel" style="background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 12px; padding: 20px; position: relative; overflow: hidden;">
+                    <div class="panel-title" style="font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-muted); margin-bottom: 16px;">
+                        FINANCIAL PROFILING
+                    </div>
+                    <div class="net-worth" id="net-worth" style="font-size: 32px; font-weight: 700; font-family: 'JetBrains Mono', monospace; color: var(--solana-green);">$-</div>
+                    <div class="net-worth-change" id="net-worth-change" style="font-size: 14px; color: var(--success); font-weight: 600; margin-top: 4px;">-</div>
+                    <div class="pnl-chart" id="pnl-chart" style="height: 80px; margin: 16px 0; display: flex; align-items: flex-end; gap: 4px;">
+                        <!-- Populated by JS -->
+                    </div>
+                    <div class="fund-origins" style="display: flex; flex-direction: column; gap: 12px;">
+                        <div class="fund-item" style="display: flex; flex-direction: column;">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+                                <span class="fund-label" style="font-size: 12px; color: var(--text-secondary);">DEFI PROTOCOLS</span>
+                                <span class="fund-value" id="defi-pct" style="font-family: 'JetBrains Mono', monospace; font-size: 14px; font-weight: 600; color: var(--text-primary);">-</span>
+                            </div>
+                            <div class="fund-bar" style="width: 100%; height: 6px; background: var(--bg-primary); border-radius: 3px; overflow: hidden;">
+                                <div class="fund-bar-fill defi" id="defi-bar" style="height: 100%; border-radius: 3px; background: var(--solana-green); transition: width 0.5s; width: 0%;"></div>
+                            </div>
+                        </div>
+                        <div class="fund-item" style="display: flex; flex-direction: column;">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+                                <span class="fund-label" style="font-size: 12px; color: var(--text-secondary);">MIXERS (HIGH RISK)</span>
+                                <span class="fund-value" id="mixer-pct" style="font-family: 'JetBrains Mono', monospace; font-size: 14px; font-weight: 600; color: var(--danger);">-</span>
+                            </div>
+                            <div class="fund-bar" style="width: 100%; height: 6px; background: var(--bg-primary); border-radius: 3px; overflow: hidden;">
+                                <div class="fund-bar-fill mixer" id="mixer-bar" style="height: 100%; border-radius: 3px; background: var(--danger); transition: width 0.5s; width: 0%;"></div>
+                            </div>
+                        </div>
+                        <div class="fund-item" style="display: flex; flex-direction: column;">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+                                <span class="fund-label" style="font-size: 12px; color: var(--text-secondary);">CEX WITHDRAWALS</span>
+                                <span class="fund-value" id="cex-pct" style="font-family: 'JetBrains Mono', monospace; font-size: 14px; font-weight: 600; color: var(--warning);">-</span>
+                            </div>
+                            <div class="fund-bar" style="width: 100%; height: 6px; background: var(--bg-primary); border-radius: 3px; overflow: hidden;">
+                                <div class="fund-bar-fill cex" id="cex-bar" style="height: 100%; border-radius: 3px; background: var(--warning); transition: width 0.5s; width: 0%;"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="intel-note" id="financial-intel-note" style="padding: 12px; background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.2); border-radius: 8px; font-size: 11px; color: var(--warning); line-height: 1.5; margin-top: 12px;">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+                
+                <!-- Risk Score Panel (Middle Left) -->
+                <div class="panel risk-panel" style="background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 12px; padding: 20px; position: relative; overflow: hidden; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; min-height: 200px;">
+                    <div class="panel-title" style="font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-muted); margin-bottom: 16px; width: 100%;">RISK SCORE</div>
+                    <div class="risk-score" id="risk-score" style="font-size: 64px; font-weight: 700; font-family: 'JetBrains Mono', monospace; color: var(--danger);">-</div>
+                    <div class="risk-level" id="risk-level" style="font-size: 14px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; color: var(--danger);">-</div>
+                    <div class="risk-bar" style="width: 100%; height: 8px; background: var(--bg-primary); border-radius: 4px; overflow: hidden; margin-top: 8px;">
+                        <div class="risk-bar-fill" id="risk-bar-fill" style="height: 100%; background: var(--danger); transition: width 0.5s; width: 0%;"></div>
+                    </div>
+                </div>
+                
+                <!-- Recent Activity Log Panel (Bottom Left) -->
+                <div class="panel activity-panel" style="background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 12px; padding: 20px; position: relative; overflow: hidden;">
+                    <div class="panel-title" style="font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-muted); margin-bottom: 16px;">
+                        RECENT ACTIVITY LOG
+                    </div>
+                    <table class="activity-table" id="activity-table" style="width: 100%; font-size: 12px; margin-top: 12px;">
+                        <thead>
+                            <tr>
+                                <th style="text-align: left; padding: 8px; color: var(--text-muted); font-weight: 600; text-transform: uppercase; font-size: 10px; letter-spacing: 0.05em; border-bottom: 1px solid var(--border-subtle);">TIME (UTC)</th>
+                                <th style="text-align: left; padding: 8px; color: var(--text-muted); font-weight: 600; text-transform: uppercase; font-size: 10px; letter-spacing: 0.05em; border-bottom: 1px solid var(--border-subtle);">ACTION</th>
+                                <th style="text-align: left; padding: 8px; color: var(--text-muted); font-weight: 600; text-transform: uppercase; font-size: 10px; letter-spacing: 0.05em; border-bottom: 1px solid var(--border-subtle);">ASSET</th>
+                                <th style="text-align: left; padding: 8px; color: var(--text-muted); font-weight: 600; text-transform: uppercase; font-size: 10px; letter-spacing: 0.05em; border-bottom: 1px solid var(--border-subtle);">VALUE</th>
+                                <th style="text-align: left; padding: 8px; color: var(--text-muted); font-weight: 600; text-transform: uppercase; font-size: 10px; letter-spacing: 0.05em; border-bottom: 1px solid var(--border-subtle);">RISK</th>
+                            </tr>
+                        </thead>
+                        <tbody id="activity-tbody">
+                            <!-- Populated by JS -->
+                        </tbody>
+                    </table>
+                    <div class="view-full" style="text-align: center; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border-subtle);">
+                        <a href="#" id="view-full-link" target="_blank" style="color: var(--solana-green); text-decoration: none; font-size: 11px; font-weight: 600;">VIEW FULL HISTORY →</a>
+                    </div>
+                </div>
+                
+                <!-- Behavioral Anomalies Panel (Bottom Right) -->
+                <div class="panel behavioral-panel" style="background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 12px; padding: 20px; position: relative; overflow: hidden;">
+                    <div class="panel-title" style="font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-muted); margin-bottom: 16px;">
+                        BEHAVIORAL ANOMALIES
+                    </div>
+                    <div class="behavior-item" style="padding: 12px; background: var(--bg-primary); border: 1px solid var(--border-subtle); border-radius: 8px; margin-bottom: 12px;">
+                        <div class="behavior-label" style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); margin-bottom: 8px;">SLEEP SCHEDULE</div>
+                        <div class="behavior-value" id="sleep-schedule" style="font-size: 14px; font-weight: 600; color: var(--text-primary); margin-bottom: 4px;">-</div>
+                        <div class="behavior-detail" id="sleep-detail" style="font-size: 12px; color: var(--text-muted); font-family: 'JetBrains Mono', monospace;">-</div>
+                    </div>
+                    <div class="behavior-item" style="padding: 12px; background: var(--bg-primary); border: 1px solid var(--border-subtle); border-radius: 8px; margin-bottom: 12px;">
+                        <div class="behavior-label" style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); margin-bottom: 8px;">BATCH TXNS</div>
+                        <div class="behavior-value" id="batch-txns" style="font-size: 14px; font-weight: 600; color: var(--text-primary); margin-bottom: 4px;">-</div>
+                        <div class="behavior-detail" id="batch-detail" style="font-size: 12px; color: var(--text-muted); font-family: 'JetBrains Mono', monospace;">-</div>
+                    </div>
+                    <div class="behavior-item" style="padding: 12px; background: var(--bg-primary); border: 1px solid var(--border-subtle); border-radius: 8px; margin-bottom: 12px;">
+                        <div class="behavior-label" style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); margin-bottom: 8px;">WALLET AGE</div>
+                        <div class="behavior-value" id="wallet-age" style="font-size: 14px; font-weight: 600; color: var(--text-primary); margin-bottom: 4px;">-</div>
+                        <div class="behavior-detail" id="wallet-age-detail" style="font-size: 12px; color: var(--text-muted); font-family: 'JetBrains Mono', monospace;">-</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Educational Section (Existing panels below) -->
+            <div class="educational-section" id="educational-section" style="margin-top: 32px;">
+                <!-- Educational panels will be populated here by JavaScript -->
+            </div>
+        </div>
+        
+        <!-- Results (Educational panels - legacy support) -->
         <div id="results">
             <!-- Exposure Header -->
             <div class="exposure-header">
@@ -1981,22 +2225,24 @@
         
         // Display results
         function displayResults(data) {
-            document.getElementById('results').classList.add('active');
-            
-            // Address
+            // Update header
             const shortAddr = currentWallet.slice(0, 6) + '...' + currentWallet.slice(-4);
+            document.getElementById('header-address').textContent = '0x' + shortAddr;
+            document.getElementById('status-badge').style.display = 'inline-flex';
+            
+            // Show dashboard, hide search
+            document.getElementById('search-section').style.display = 'none';
+            document.getElementById('dashboard').style.display = 'block';
+            
+            // Populate dashboard panels
+            updateDashboardPanels(data);
+            
+            // First, populate the hidden results section with all the old display functions
+            // This ensures all educational content is created
+            document.getElementById('results').classList.add('active');
             document.getElementById('display-address').textContent = shortAddr;
             
-            // Update external links
-            document.getElementById('link-solscan').href = `https://solscan.io/account/${currentWallet}`;
-            document.getElementById('link-arkham').href = `https://platform.arkhamintelligence.com/explorer/address/${currentWallet}`;
-            document.getElementById('link-jupiter').href = `https://jup.ag/portfolio/${currentWallet}`;
-            document.getElementById('link-arkham-2').href = `https://platform.arkhamintelligence.com/explorer/address/${currentWallet}`;
-            document.getElementById('link-solscan-2').href = `https://solscan.io/account/${currentWallet}`;
-            document.getElementById('link-jup-2').href = `https://jup.ag/portfolio/${currentWallet}`;
-            displayIdentityLinks();
-            
-            // Exposure score
+            // Call all the old display functions to populate results section
             const score = calculateScore(data);
             displayScore(score, data);
             displaySnapshot(data, score);
@@ -2015,8 +2261,15 @@
             ].sort((a, b) => b.pct - a.pct);
             document.getElementById('stat-region').textContent = regions[0].pct > 40 ? regions[0].name : 'Unknown';
             
-            // What they know
+            // Populate all educational content
             displayKnowledge(data);
+            displayVectors(data);
+            displayHeatmap(data);
+            displayProfile(data);
+            displayProtocols(data);
+            displayArkham(data);
+            displayPortfolioInsights();
+            displayPrivacyMistakes(data);
             
             // Sleep window display
             if (data.sleep_window?.confidence > 30) {
@@ -2040,32 +2293,359 @@
             
             const botConf = data.reaction_speed?.bot_confidence || 0;
             document.getElementById('bot-badge').textContent = botConf > 60 ? 'Likely Bot' : botConf > 30 ? 'Mixed Signals' : 'Likely Human';
-            document.getElementById('bot-badge').style.background = botConf > 60 ? 'rgba(239,68,68,0.1)' : botConf > 30 ? 'rgba(245,158,11,0.1)' : 'rgba(34,197,94,0.1)';
-            document.getElementById('bot-badge').style.color = botConf > 60 ? 'var(--danger)' : botConf > 30 ? 'var(--warning)' : 'var(--success)';
             
-            // Vectors
-            displayVectors(data);
+            // Update external links
+            document.getElementById('link-solscan').href = `https://solscan.io/account/${currentWallet}`;
+            document.getElementById('link-arkham').href = `https://platform.arkhamintelligence.com/explorer/address/${currentWallet}`;
+            document.getElementById('link-jupiter').href = `https://jup.ag/portfolio/${currentWallet}`;
+            displayIdentityLinks();
             
-            // Heatmap
-            displayHeatmap(data);
+            // Now move educational content to dashboard
+            const educationalSection = document.getElementById('educational-section');
+            const resultsSection = document.getElementById('results');
+            if (resultsSection && educationalSection) {
+                // Clear existing
+                educationalSection.innerHTML = '';
+                // Clone all cards from results section (excluding exposure header and stats)
+                const cards = resultsSection.querySelectorAll('.card, .cta-section');
+                cards.forEach(card => {
+                    const clonedCard = card.cloneNode(true);
+                    educationalSection.appendChild(clonedCard);
+                });
+            }
             
-            // Profile
-            displayProfile(data);
+            // Hide old results section, show dashboard
+            document.getElementById('results').style.display = 'none';
             
-            // Protocols
-            displayProtocols(data);
+            // Scroll to top
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+        
+        // Update dashboard panels
+        function updateDashboardPanels(data) {
+            // Update Identity Panel
+            updateIdentityPanel(data);
             
-            // Arkham
-            displayArkham(data);
-
-            // Portfolio insights
-            displayPortfolioInsights();
-
-            // Privacy mistakes
-            displayPrivacyMistakes(data);
+            // Update Network Panel
+            updateNetworkPanel(data);
             
-            // Scroll to results
-            document.getElementById('results').scrollIntoView({ behavior: 'smooth' });
+            // Update Financial Panel
+            updateFinancialPanel(data);
+            
+            // Update Risk Score
+            updateRiskScore(data);
+            
+            // Update Activity Log
+            updateActivityLog(data);
+            
+            // Update Behavioral Anomalies
+            updateBehavioralAnomalies(data);
+        }
+        
+        // Update identity panel
+        function updateIdentityPanel(data) {
+            // Hardcoded placeholder data (as per user request)
+            document.getElementById('profile-handle').textContent = '@wallet_' + currentWallet.slice(0, 6);
+            document.getElementById('profile-uid').textContent = 'UID: ' + currentWallet.slice(0, 8).toUpperCase() + '-' + currentWallet.slice(8, 10).toUpperCase() + '-' + currentWallet.slice(10, 13);
+            document.getElementById('identity-confidence').textContent = '75% CONFIDENCE';
+            
+            const botConf = data.reaction_speed?.bot_confidence || 0;
+            const tags = [];
+            if (botConf > 60) {
+                tags.push('SUSPECTED DEV');
+                document.getElementById('tag-badge').style.display = 'inline-flex';
+            }
+            if (data.profile_classification?.whale > 50) tags.push('HIGH VALUE');
+            
+            if (tags.length > 0) {
+                document.getElementById('tag-badge').textContent = tags[0];
+            }
+            
+            const geo = data.geographic_origin || {};
+            const regions = [
+                { name: 'Asia', pct: geo.asia_pacific || 0 },
+                { name: 'Europe', pct: geo.europe || 0 },
+                { name: 'Americas', pct: geo.americas || 0 }
+            ].sort((a, b) => b.pct - a.pct);
+            
+            const likelyRegion = regions[0].pct > 40 ? regions[0].name : 'Unknown';
+            
+            let locationInfo = 'Unknown';
+            if (likelyRegion === 'Asia') locationInfo = 'Tokyo, JP';
+            else if (likelyRegion === 'Europe') locationInfo = 'Zurich, CH';
+            else if (likelyRegion === 'Americas') locationInfo = 'New York, US';
+            
+            const lastActive = data.most_recent_transaction ? 'Just Now' : 'Unknown';
+            
+            document.getElementById('identity-links').innerHTML = `
+                <div class="identity-link" style="display: flex; align-items: center; justify-content: space-between; padding: 10px; background: var(--bg-primary); border: 1px solid var(--border-subtle); border-radius: 8px;">
+                    <span style="font-size: 12px; color: var(--text-secondary);">Twitter/X</span>
+                    <span style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--text-primary);">NOT FOUND</span>
+                </div>
+                <div class="identity-link" style="display: flex; align-items: center; justify-content: space-between; padding: 10px; background: var(--bg-primary); border: 1px solid var(--border-subtle); border-radius: 8px;">
+                    <span style="font-size: 12px; color: var(--text-secondary);">Discord</span>
+                    <span style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--text-primary);">wallet_${currentWallet.slice(0, 6)}#0000</span>
+                </div>
+                <div class="identity-link" style="display: flex; align-items: center; justify-content: space-between; padding: 10px; background: var(--bg-primary); border: 1px solid var(--border-subtle); border-radius: 8px;">
+                    <span style="font-size: 12px; color: var(--text-secondary);">IP GEO</span>
+                    <span style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--text-primary);">${locationInfo}</span>
+                </div>
+                <div class="identity-link" style="display: flex; align-items: center; justify-content: space-between; padding: 10px; background: var(--bg-primary); border: 1px solid var(--border-subtle); border-radius: 8px;">
+                    <span style="font-size: 12px; color: var(--text-secondary);">LAST ACTIVE</span>
+                    <span style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--text-primary);">${lastActive}</span>
+                </div>
+            `;
+            
+            document.getElementById('intel-note').textContent = 
+                'On-chain activity patterns suggest automated behavior. Reaction time analysis indicates ' + 
+                Math.round(botConf) + '% bot probability. Geographic inference from temporal patterns.';
+        }
+        
+        // Update network panel
+        function updateNetworkPanel(data) {
+            const canvas = document.getElementById('network-canvas');
+            canvas.innerHTML = ''; // Clear existing
+            
+            const centerX = canvas.offsetWidth / 2;
+            const centerY = canvas.offsetHeight / 2;
+            
+            // Create target node (center)
+            const targetNode = document.createElement('div');
+            targetNode.style.position = 'absolute';
+            targetNode.style.left = (centerX - 20) + 'px';
+            targetNode.style.top = (centerY - 20) + 'px';
+            targetNode.style.width = '40px';
+            targetNode.style.height = '40px';
+            targetNode.style.borderRadius = '50%';
+            targetNode.style.background = 'rgba(255,255,255,0.1)';
+            targetNode.style.border = '2px solid var(--solana-green)';
+            targetNode.style.display = 'flex';
+            targetNode.style.alignItems = 'center';
+            targetNode.style.justifyContent = 'center';
+            targetNode.style.fontSize = '18px';
+            targetNode.style.fontWeight = '600';
+            targetNode.textContent = '●';
+            targetNode.title = 'TARGET ENTITY';
+            targetNode.style.boxShadow = '0 0 20px rgba(20, 241, 149, 0.5)';
+            canvas.appendChild(targetNode);
+            
+            // Create connected nodes
+            const nodes = [
+                { label: 'Binance\nDeposit', type: 'standard', angle: 180, offset: 120 },
+                { label: 'Uniswap V3', type: 'standard', angle: 0, offset: 120 },
+                { label: 'Unknown\nWallet', type: 'standard', angle: 270, offset: 120 },
+                { label: 'TORNADO\nCASH', type: 'high-risk', angle: 90, offset: 100 }
+            ];
+            
+            nodes.forEach(node => {
+                const x = centerX + Math.cos(node.angle * Math.PI / 180) * node.offset - 20;
+                const y = centerY + Math.sin(node.angle * Math.PI / 180) * node.offset - 20;
+                
+                const nodeEl = document.createElement('div');
+                nodeEl.style.position = 'absolute';
+                nodeEl.style.left = x + 'px';
+                nodeEl.style.top = y + 'px';
+                nodeEl.style.width = '40px';
+                nodeEl.style.height = '40px';
+                nodeEl.style.borderRadius = '50%';
+                nodeEl.style.border = '2px solid';
+                nodeEl.style.display = 'flex';
+                nodeEl.style.alignItems = 'center';
+                nodeEl.style.justifyContent = 'center';
+                nodeEl.style.fontSize = '18px';
+                nodeEl.style.fontWeight = '600';
+                nodeEl.style.cursor = 'pointer';
+                
+                if (node.type === 'high-risk') {
+                    nodeEl.style.background = 'rgba(239, 68, 68, 0.2)';
+                    nodeEl.style.borderColor = 'var(--danger)';
+                } else {
+                    nodeEl.style.background = 'var(--bg-tertiary)';
+                    nodeEl.style.borderColor = 'var(--border-color)';
+                }
+                
+                nodeEl.textContent = '●';
+                nodeEl.title = node.label.replace('\n', ' ');
+                canvas.appendChild(nodeEl);
+                
+                // Draw connection line
+                const line = document.createElement('div');
+                line.style.position = 'absolute';
+                line.style.left = centerX + 'px';
+                line.style.top = centerY + 'px';
+                line.style.width = node.offset + 'px';
+                line.style.height = '1px';
+                line.style.background = 'rgba(255,255,255,0.1)';
+                line.style.transformOrigin = '0 0';
+                line.style.transform = `rotate(${node.angle}deg)`;
+                line.style.borderTop = '1px dashed rgba(255,255,255,0.2)';
+                canvas.appendChild(line);
+            });
+            
+            const jitoTips = data.mempool_forensics?.statistics?.jito_tip_count || 0;
+            document.getElementById('network-intel-note').textContent = 
+                `${jitoTips > 0 ? jitoTips + ' Jito tips detected. ' : ''}Heuristic clustering indicates ` +
+                `${data.total_transactions || 0} transactions create linkable patterns. ` +
+                `High activity correlation with known protocols.`;
+        }
+        
+        // Update financial panel
+        function updateFinancialPanel(data) {
+            const portfolioValue = currentPortfolioSummary?.total || 0;
+            const estimatedValue = portfolioValue > 0 ? portfolioValue : (data.total_transactions || 0) * 100;
+            
+            document.getElementById('net-worth').textContent = '$' + fmt(estimatedValue);
+            document.getElementById('net-worth-change').textContent = '+$0 (24h)';
+            
+            // Generate PNL bars (mock data)
+            const pnlChart = document.getElementById('pnl-chart');
+            pnlChart.innerHTML = '';
+            for (let i = 0; i < 12; i++) {
+                const bar = document.createElement('div');
+                bar.style.flex = '1';
+                bar.style.height = (Math.random() * 70 + 10) + '%';
+                bar.style.background = 'linear-gradient(180deg, var(--solana-purple), var(--solana-green))';
+                bar.style.borderRadius = '4px 4px 0 0';
+                bar.style.transition = 'all 0.3s';
+                pnlChart.appendChild(bar);
+            }
+            
+            // Fund origins (hardcoded as placeholder)
+            const defiPct = 62;
+            const mixerPct = 0;
+            const cexPct = 38;
+            
+            document.getElementById('defi-pct').textContent = defiPct + '%';
+            document.getElementById('mixer-pct').textContent = mixerPct + '%';
+            document.getElementById('cex-pct').textContent = cexPct + '%';
+            
+            setTimeout(() => {
+                document.getElementById('defi-bar').style.width = defiPct + '%';
+                document.getElementById('mixer-bar').style.width = mixerPct + '%';
+                document.getElementById('cex-bar').style.width = cexPct + '%';
+            }, 100);
+            
+            const botConf = data.reaction_speed?.bot_confidence || 0;
+            document.getElementById('financial-intel-note').textContent = 
+                `On-chain volume suggests ${botConf > 60 ? 'automated ' : ''}trading patterns. ` +
+                `${data.total_transactions || 0} transactions analyzed. ` +
+                `Reaction time analysis indicates ${Math.round(botConf)}% automation confidence.`;
+        }
+        
+        // Update risk score
+        function updateRiskScore(data) {
+            const riskScore = data.risk_assessment?.score || calculateRiskScore(data);
+            const riskLevel = data.risk_assessment?.level || 'UNKNOWN';
+            
+            document.getElementById('risk-score').textContent = riskScore;
+            document.getElementById('risk-level').textContent = riskLevel.toUpperCase() + ' THREAT LEVEL';
+            
+            setTimeout(() => {
+                document.getElementById('risk-bar-fill').style.width = riskScore + '%';
+            }, 100);
+            
+            // Update color based on risk
+            const scoreEl = document.getElementById('risk-score');
+            const levelEl = document.getElementById('risk-level');
+            const barEl = document.getElementById('risk-bar-fill');
+            
+            if (riskScore >= 80) {
+                scoreEl.style.color = 'var(--danger)';
+                levelEl.style.color = 'var(--danger)';
+                barEl.style.background = 'var(--danger)';
+            } else if (riskScore >= 60) {
+                scoreEl.style.color = 'var(--warning)';
+                levelEl.style.color = 'var(--warning)';
+                barEl.style.background = 'var(--warning)';
+            } else {
+                scoreEl.style.color = 'var(--success)';
+                levelEl.style.color = 'var(--success)';
+                barEl.style.background = 'var(--success)';
+            }
+        }
+        
+        function calculateRiskScore(data) {
+            let score = 0;
+            if (data.sleep_window?.confidence > 70) score += 25;
+            if (data.reaction_speed?.bot_confidence > 60) score += 30;
+            if (data.total_transactions > 200) score += 25;
+            const geo = data.geographic_origin || {};
+            const maxGeo = Math.max(geo.asia_pacific || 0, geo.europe || 0, geo.americas || 0);
+            if (maxGeo > 70) score += 20;
+            return Math.min(100, score);
+        }
+        
+        // Update activity log
+        function updateActivityLog(data) {
+            const tbody = document.getElementById('activity-tbody');
+            
+            // Mock activity data (placeholder)
+            const activities = [
+                { time: new Date().toISOString().slice(0, 16).replace('T', ' '), action: 'SWAP', asset: 'SOL -> USDC', value: '$450,000', risk: 'low' },
+                { time: new Date(Date.now() - 3600000).toISOString().slice(0, 16).replace('T', ' '), action: 'BRIDGE', asset: 'SOL (Mainnet) -> ARB', value: '$1,200,000', risk: 'low' },
+                { time: new Date(Date.now() - 86400000).toISOString().slice(0, 16).replace('T', ' '), action: 'DEPOSIT', asset: 'Aave V3', value: '$50,000', risk: 'low' },
+                { time: new Date(Date.now() - 172800000).toISOString().slice(0, 16).replace('T', ' '), action: 'SWAP', asset: 'USDC -> JUP', value: '$25,000', risk: 'medium' }
+            ];
+            
+            tbody.innerHTML = activities.map(a => `
+                <tr>
+                    <td style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--text-muted); padding: 10px 8px; border-bottom: 1px solid var(--border-subtle);">${a.time}</td>
+                    <td style="padding: 10px 8px; border-bottom: 1px solid var(--border-subtle);"><span style="font-family: 'JetBrains Mono', monospace; font-weight: 600; color: var(--text-primary);">${a.action}</span></td>
+                    <td style="font-family: 'JetBrains Mono', monospace; font-size: 11px; padding: 10px 8px; border-bottom: 1px solid var(--border-subtle);">${a.asset}</td>
+                    <td style="padding: 10px 8px; border-bottom: 1px solid var(--border-subtle);"><span style="font-family: 'JetBrains Mono', monospace; color: var(--text-secondary);">${a.value}</span></td>
+                    <td style="padding: 10px 8px; border-bottom: 1px solid var(--border-subtle);"><span class="risk-dot ${a.risk}" style="width: 8px; height: 8px; border-radius: 50%; display: inline-block; background: ${a.risk === 'low' ? 'var(--success)' : a.risk === 'medium' ? 'var(--warning)' : 'var(--danger)'};"></span></td>
+                </tr>
+            `).join('');
+            
+            document.getElementById('view-full-link').href = `https://solscan.io/account/${currentWallet}`;
+        }
+        
+        // Update behavioral anomalies
+        function updateBehavioralAnomalies(data) {
+            const sleep = data.sleep_window || {};
+            if (sleep.confidence > 30) {
+                const s = String(sleep.start_hour || 0).padStart(2, '0');
+                const e = String(sleep.end_hour || 0).padStart(2, '0');
+                document.getElementById('sleep-schedule').textContent = `UTC+${sleep.start_hour < 12 ? '8' : '0'} Aligned`;
+                document.getElementById('sleep-detail').textContent = `Activity spikes between ${s}:00 - ${e}:00 UTC`;
+            } else {
+                document.getElementById('sleep-schedule').textContent = 'NO CLEAR PATTERN';
+                document.getElementById('sleep-detail').textContent = 'Possibly automated or VPN usage';
+            }
+            
+            const botConf = data.reaction_speed?.bot_confidence || 0;
+            if (botConf > 60) {
+                document.getElementById('batch-txns').textContent = 'Scripted Behavior';
+                document.getElementById('batch-detail').textContent = 'Repeated patterns detected. Exact same compute units used repeatedly.';
+            } else {
+                document.getElementById('batch-txns').textContent = 'Human-like Patterns';
+                document.getElementById('batch-detail').textContent = 'Varied transaction patterns suggest manual operation.';
+            }
+            
+            // Wallet age (placeholder - would need first transaction timestamp)
+            const ageYears = Math.floor((data.total_transactions || 0) / 100);
+            const ageMonths = Math.floor(((data.total_transactions || 0) % 100) / 8);
+            document.getElementById('wallet-age').textContent = `${ageYears} Years, ${ageMonths} Months`;
+            document.getElementById('wallet-age-detail').textContent = 'First seen: ' + 
+                new Date(Date.now() - (ageYears * 365 + ageMonths * 30) * 86400000).toISOString().slice(0, 10);
+        }
+        
+        // Export report
+        function exportReport() {
+            alert('Export functionality - would generate PDF report');
+        }
+        
+        // Escalate target
+        function escalateTarget() {
+            if (confirm('Mark this target for escalation?')) {
+                alert('Target escalated');
+            }
+        }
+        
+        function fmt(n) {
+            if (n >= 1000000) return (n / 1000000).toFixed(2) + 'M';
+            if (n >= 1000) return (n / 1000).toFixed(2) + 'K';
+            return n.toFixed(2);
         }
         
         // Calculate exposure score
@@ -2698,12 +3278,6 @@
                 return 'Unknown';
             }
         }
-
-        function fmt(n) {
-            if (n >= 1000000) return (n / 1000000).toFixed(2) + 'M';
-            if (n >= 1000) return (n / 1000).toFixed(2) + 'K';
-            return n.toFixed(2);
-        }
         
         function getIcon(s) {
             const icons = { SOL: '◎', USDC: '💵', USDT: '💵', JUP: '🪐', BONK: '🐕', WIF: '🐕', RAY: '💧' };
@@ -2711,15 +3285,34 @@
         }
         
         function copyAddress() {
+            if (!currentWallet) return;
             navigator.clipboard.writeText(currentWallet);
             const btn = document.querySelector('.copy-btn');
-            btn.textContent = '✓ Copied';
-            setTimeout(() => btn.textContent = '📋 Copy', 2000);
+            if (btn) {
+                btn.textContent = '✓ Copied';
+                setTimeout(() => btn.textContent = '📋 Copy', 2000);
+            }
         }
         
-        // Enter key
-        document.getElementById('wallet-input').addEventListener('keypress', e => {
-            if (e.key === 'Enter') analyzeWallet();
+        // Enter key handler - ensure input is accessible
+        window.addEventListener('DOMContentLoaded', function() {
+            const walletInput = document.getElementById('wallet-input');
+            if (walletInput) {
+                walletInput.addEventListener('keypress', e => {
+                    if (e.key === 'Enter') analyzeWallet();
+                });
+                console.log('✅ Wallet input initialized');
+            } else {
+                console.error('❌ Wallet input not found!');
+            }
+            
+            const searchSection = document.getElementById('search-section');
+            if (searchSection) {
+                searchSection.style.display = 'block';
+                console.log('✅ Search section visible');
+            } else {
+                console.error('❌ Search section not found!');
+            }
         });
     </script>
 </body>
