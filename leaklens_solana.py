@@ -36,8 +36,8 @@ from typing import Optional, List, Dict, Set, Tuple
 from collections import defaultdict
 import json
 from concurrent.futures import ThreadPoolExecutor, as_completed
-import time
 from dotenv import load_dotenv
+from decimal import Decimal
 
 # Load environment variables from .env file
 load_dotenv()
@@ -189,7 +189,6 @@ def fetch_transaction(signature: str) -> Optional[dict]:
 def fetch_transaction_worker(sig: str) -> tuple:
     """Worker function to fetch a single transaction (for parallel execution)"""
     try:
-        time.sleep(0.05)  # Small delay to avoid overwhelming the API
         result = fetch_transaction(sig)
         return (sig, result)
     except Exception as e:
@@ -449,12 +448,15 @@ def analyze_execution_profile(tx_details: dict) -> dict:
     return result
 
 
-def analyze_wallet_execution_profiles(wallet: str, limit: int = 100) -> dict:
+def analyze_wallet_execution_profiles(wallet: str, limit: int = 100, signatures: Optional[List[dict]] = None, tx_details_map: Optional[Dict[str, dict]] = None) -> dict:
     """
     Analyze wallet's execution profiles across multiple transactions.
-    Returns JSON-serializable dict with aggregated execution profile statistics.
+    Allows passing pre-fetched signatures and transaction details to avoid re-fetch.
     """
-    signatures = fetch_signatures(wallet, limit)
+    if signatures is None:
+        signatures = fetch_signatures(wallet, limit)
+    else:
+        signatures = signatures[:limit]
     
     if not signatures:
         return {
@@ -469,13 +471,13 @@ def analyze_wallet_execution_profiles(wallet: str, limit: int = 100) -> dict:
     total_jito_tips = 0.0
     jito_tip_count = 0
     
-    # Fetch all transactions in parallel
-    sig_strings = [sig_info["signature"] for sig_info in signatures]
-    tx_details_map = fetch_transactions_parallel(sig_strings, max_workers=10)
+    if tx_details_map is None:
+        sig_strings = [sig_info["signature"] for sig_info in signatures]
+        tx_details_map = fetch_transactions_parallel(sig_strings, max_workers=10)
     
     for sig_info in signatures:
         signature = sig_info["signature"]
-        tx_details = tx_details_map.get(signature)
+        tx_details = tx_details_map.get(signature) if tx_details_map else None
         
         if tx_details:
             profile_data = analyze_execution_profile(tx_details)
@@ -531,13 +533,13 @@ def analyze_wallet_execution_profiles(wallet: str, limit: int = 100) -> dict:
 # ═══════════════════════════════════════════════════════════════════════════════
 
 def analyze_wallet(wallet: str, limit: int = 100) -> tuple:
-    """Fetch and analyze wallet transactions - returns (DataFrame, tx_details_list)"""
+    """Fetch and analyze wallet transactions - returns (DataFrame, tx_details_list, tx_details_map, signatures)"""
     print(f"\n[*] Fetching last {limit} transactions...")
     
     signatures = fetch_signatures(wallet, limit)
     
     if not signatures:
-        return pd.DataFrame(), []
+        return pd.DataFrame(), [], {}, []
     
     print(f"[+] Found {len(signatures)} transactions")
     print(f"[-] Analyzing details...\n")
@@ -616,7 +618,212 @@ def analyze_wallet(wallet: str, limit: int = 100) -> tuple:
     
     print(f"\n[+] Analyzed {len(transactions)} transactions\n")
     
-    return pd.DataFrame(transactions), tx_details_list
+    return pd.DataFrame(transactions), tx_details_list, tx_details_map, signatures
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# OPSEC FAILURES - Deanonymization Surface Mapping
+# ═══════════════════════════════════════════════════════════════════════════════
+
+
+def _normalize_account_keys(msg: dict) -> List[str]:
+    """Extract a flat list of account keys from a transaction message."""
+    keys = msg.get("accountKeys", []) if msg else []
+    normalized = []
+    for key in keys:
+        if isinstance(key, dict):
+            normalized.append(key.get("pubkey", ""))
+        else:
+            normalized.append(str(key))
+    return normalized
+
+
+def _is_program_account(account: str) -> bool:
+    """Heuristic to filter out obvious program IDs from counterparty analysis."""
+    if not account or len(account) < 30:
+        return True
+    return account in KNOWN_LABELS or account == "ComputeBudget111111111111111111111111111111"
+
+
+def _detect_memo_usage(instructions: list, accounts: List[str]) -> int:
+    """Count memo occurrences in a transaction."""
+    memo_program = "MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr"
+    count = 0
+    for ix in instructions or []:
+        program_id = None
+        if isinstance(ix, dict):
+            if ix.get("programId"):
+                program_id = ix["programId"]
+            elif ix.get("programIdIndex") is not None and ix["programIdIndex"] < len(accounts):
+                program_id = accounts[ix["programIdIndex"]]
+            parsed = ix.get("parsed", {})
+            if parsed and parsed.get("type") == "memo":
+                count += 1
+        if program_id == memo_program:
+            count += 1
+    return count
+
+
+def analyze_opsec_failures(wallet: str, limit: int = 100, signatures: Optional[List[dict]] = None, tx_details_map: Optional[Dict[str, dict]] = None) -> dict:
+    """
+    Map operational security failures for a wallet.
+
+    Signals:
+    - Reused funding sources (same wallet topping up multiple times)
+    - Reused withdrawal targets (same exit wallet repeatedly used)
+    - Memo usage (human-readable breadcrumbs)
+    - Balance-change deltas to infer counterparties without labels
+    """
+    if signatures is None:
+        signatures = fetch_signatures(wallet, limit)
+    else:
+        signatures = signatures[:limit]
+    
+    if not signatures:
+        return {
+            "wallet": wallet,
+            "total_transactions": 0,
+            "critical_leaks": [],
+            "funding_sources": [],
+            "withdrawal_targets": [],
+            "memo_usage": 0,
+            "exposure_score": 0,
+            "cumulative_exposure": "UNKNOWN",
+            "weakest_link": "No on-chain activity found to analyze."
+        }
+
+    if tx_details_map is None:
+        sig_strings = [s["signature"] for s in signatures]
+        tx_details_map = fetch_transactions_parallel(sig_strings, max_workers=10)
+
+    funding_counterparties: Dict[str, Dict[str, float]] = defaultdict(lambda: {"count": 0, "lamports": 0})
+    withdrawal_counterparties: Dict[str, Dict[str, float]] = defaultdict(lambda: {"count": 0, "lamports": 0})
+    memo_hits = 0
+
+    for sig_info in signatures:
+        signature = sig_info["signature"]
+        tx_details = tx_details_map.get(signature)
+        if not tx_details or not tx_details.get("meta"):
+            continue
+
+        meta = tx_details["meta"]
+        msg = tx_details.get("transaction", {}).get("message", {})
+        accounts = _normalize_account_keys(msg)
+
+        # Skip if wallet not in account list
+        if wallet not in accounts:
+            continue
+
+        wallet_idx = accounts.index(wallet)
+        pre_balances = meta.get("preBalances", [])
+        post_balances = meta.get("postBalances", [])
+
+        if wallet_idx >= len(pre_balances) or wallet_idx >= len(post_balances):
+            continue
+
+        wallet_delta = (post_balances[wallet_idx] or 0) - (pre_balances[wallet_idx] or 0)
+
+        # Count memo usage
+        memo_hits += _detect_memo_usage(msg.get("instructions", []), accounts)
+
+        # We need a counterparty to attribute the movement to; pick the account with the largest opposite delta
+        deltas = []
+        for idx, acc in enumerate(accounts):
+            if idx >= len(pre_balances) or idx >= len(post_balances):
+                continue
+            if acc == wallet:
+                continue
+            delta = (post_balances[idx] or 0) - (pre_balances[idx] or 0)
+            deltas.append((acc, delta))
+
+        if wallet_delta > 0:
+            # Incoming funds: look for most negative delta as likely funder
+            possible_sources = [d for d in deltas if d[1] < 0 and not _is_program_account(d[0])]
+            if possible_sources:
+                source, amt = sorted(possible_sources, key=lambda x: x[1])[0]
+                funding_counterparties[source]["count"] += 1
+                funding_counterparties[source]["lamports"] += abs(amt)
+        elif wallet_delta < 0:
+            # Outgoing funds: look for most positive delta as likely receiver
+            possible_targets = [d for d in deltas if d[1] > 0 and not _is_program_account(d[0])]
+            if possible_targets:
+                target, amt = sorted(possible_targets, key=lambda x: x[1], reverse=True)[0]
+                withdrawal_counterparties[target]["count"] += 1
+                withdrawal_counterparties[target]["lamports"] += abs(amt)
+
+    def summarize(counter: Dict[str, Dict[str, float]]):
+        summary = []
+        for acc, stats in counter.items():
+            summary.append({
+                "wallet": acc,
+                "label": get_label(acc),
+                "count": int(stats["count"]),
+                "total_sol": float(Decimal(stats["lamports"]) / Decimal(1e9))
+            })
+        return sorted(summary, key=lambda x: (x["count"], x["total_sol"]), reverse=True)
+
+    funding_summary = summarize(funding_counterparties)
+    withdrawal_summary = summarize(withdrawal_counterparties)
+
+    critical_leaks = []
+    exposure_score = 10  # Base for simply being active
+
+    if funding_summary and funding_summary[0]["count"] >= 3:
+        leak = funding_summary[0]
+        critical_leaks.append({
+            "type": "repeat_funding_source",
+            "detail": f"Wallet funded {leak['count']}x by {leak['label']} (≈{leak['total_sol']:.3f} SOL)",
+            "deanon_impact": "Strong linkage to a single funding wallet"
+        })
+        exposure_score += 30
+
+    if withdrawal_summary and withdrawal_summary[0]["count"] >= 3:
+        leak = withdrawal_summary[0]
+        critical_leaks.append({
+            "type": "repeat_cashout_target",
+            "detail": f"Wallet frequently pays out to {leak['label']} ({leak['count']}x, ≈{leak['total_sol']:.3f} SOL)",
+            "deanon_impact": "Likely owned exit wallet; ties identity"
+        })
+        exposure_score += 30
+
+    if memo_hits > 0:
+        critical_leaks.append({
+            "type": "memo_breadcrumbs",
+            "detail": f"Found {memo_hits} memo instructions attached to transactions",
+            "deanon_impact": "Memos can carry human-readable identifiers"
+        })
+        exposure_score += 15
+
+    # If no critical leaks were found but there is activity, provide a softer note
+    if not critical_leaks and (funding_summary or withdrawal_summary or memo_hits > 0):
+        critical_leaks.append({
+            "type": "low_signal",
+            "detail": "Limited deanonymization signals detected; still review funding/withdrawal patterns.",
+            "deanon_impact": "Monitor reuse of sources/targets and memo usage."
+        })
+
+    # Clamp exposure score
+    exposure_score = min(100, exposure_score)
+    if exposure_score >= 70:
+        cumulative = "HIGH"
+    elif exposure_score >= 40:
+        cumulative = "MEDIUM"
+    else:
+        cumulative = "LOW"
+
+    weakest_link = critical_leaks[0]["detail"] if critical_leaks else "No critical exposure detected."
+
+    return {
+        "wallet": wallet,
+        "total_transactions": len(signatures),
+        "critical_leaks": critical_leaks,
+        "funding_sources": funding_summary[:5],
+        "withdrawal_targets": withdrawal_summary[:5],
+        "memo_usage": memo_hits,
+        "exposure_score": exposure_score,
+        "cumulative_exposure": cumulative,
+        "weakest_link": weakest_link
+    }
 
 
 def detect_sleep_window(hourly_counts: list) -> SleepWindow:
@@ -1666,7 +1873,7 @@ Examples:
     print_banner()
     
     if args.command == "profile":
-        df, tx_details_list = analyze_wallet(args.address, args.limit)
+        df, tx_details_list, _, _ = analyze_wallet(args.address, args.limit)
         
         if df.empty:
             print("[!] No data. Exiting.")
