@@ -10,11 +10,11 @@ import os
 
 if __name__ == "__main__":
     print("=" * 60)
-    print("🔍 LeakLens - See What Your Wallet Leaks")
-    print("   Built for encrypt.trade hackathon")
+    print(" LeakLens - See What Your Wallet Leaks")
+    print(" Built for encrypt.trade hackathon")
     print("=" * 60)
     print("\nStarting server...")
-    print("Frontend will be available at: http://localhost:8000")
+    print("API will be available at: http://localhost:8000")
     print("API docs will be available at: http://localhost:8000/docs")
     print("\nPress Ctrl+C to stop the server\n")
     

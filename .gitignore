@@ -54,3 +54,16 @@ Thumbs.db
 
 # Terminals folder (cursor specific)
 terminals/
+
+# Next.js
+frontend/.next/
+frontend/out/
+frontend/node_modules/
+frontend/.env*.local
+frontend/next-env.d.ts
+
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
