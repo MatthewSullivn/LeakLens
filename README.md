@@ -2,6 +2,7 @@
 
 **Blockchain surveillance exposure tool.** Discover how much your wallet reveals about you — timezone, behavior patterns, connections, and more.
 
+    
 Built for the [encrypt.trade](https://encrypt.trade) hackathon bounty: **Educate users about mass financial surveillance.**
 
 ---
