@@ -52,7 +52,9 @@ export default function AnalysisPage({ params }: { params: Promise<{ wallet: str
         const result = await response.json()
         setData(result)
       } catch (err: any) {
-        console.error('Analysis error:', err)
+        if (process.env.NODE_ENV === 'development') {
+          console.error('Analysis error:', err)
+        }
         setError(err.message || 'Failed to analyze wallet')
       } finally {
         setLoading(false)

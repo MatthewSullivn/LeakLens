@@ -11,10 +11,10 @@ export const InvestigationProcess = memo(function InvestigationProcess() {
       <div className="max-w-5xl mx-auto">
         <AnimatedWrapper direction="fade" delay={0}>
           <div className="text-center mb-12 sm:mb-16">
-            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-4">
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-semibold tracking-tight mb-6 text-foreground">
               Investigation Process
             </h2>
-            <p className="text-muted-foreground text-sm sm:text-base">
+            <p className="text-base sm:text-lg text-muted-foreground leading-relaxed">
               How LeakLens deconstructs on-chain data to find your vulnerabilities.
             </p>
           </div>

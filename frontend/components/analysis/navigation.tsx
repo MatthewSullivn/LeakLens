@@ -9,7 +9,7 @@ import {
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { shortenAddress, cn } from '@/lib/utils'
+import { shortenAddress, formatAddress, cn } from '@/lib/utils'
 import { getSeverityColor } from './utils'
 
 // ============================================================================
@@ -56,7 +56,7 @@ export const TopNavBar = memo(function TopNavBar({
               </Link>
               <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-card border border-border/60">
                 <Wallet className="w-4 h-4 text-muted-foreground" />
-                <span className="font-mono text-sm">{shortenAddress(wallet, 4)}</span>
+                <span className="font-mono text-sm">{formatAddress(wallet)}</span>
                 <button onClick={onCopy} className="text-muted-foreground hover:text-foreground transition-colors">
                   {copied ? <CheckCircle className="w-3 h-3 text-green-500" /> : <Copy className="w-3 h-3" />}
                 </button>
@@ -117,7 +117,7 @@ export const TopNavBar = memo(function TopNavBar({
             
             <div className="flex items-center gap-2">
               <div className="flex items-center gap-1.5 px-2 py-1 rounded bg-card border border-border/60">
-                <span className="font-mono text-xs">{shortenAddress(wallet, 3)}</span>
+                <span className="font-mono text-xs">{formatAddress(wallet)}</span>
                 <button onClick={onCopy} className="text-muted-foreground">
                   {copied ? <CheckCircle className="w-3 h-3 text-green-500" /> : <Copy className="w-3 h-3" />}
                 </button>
@@ -313,7 +313,7 @@ export const LoadingState = memo(function LoadingState({ wallet }: LoadingStateP
         <div className="space-y-2">
           <h2 className="text-lg sm:text-xl font-semibold">Analyzing Wallet</h2>
           <p className="text-muted-foreground font-mono text-xs sm:text-sm break-all max-w-xs mx-auto">
-            {shortenAddress(wallet, 6)}
+            {formatAddress(wallet)}
           </p>
           <p className="text-xs sm:text-sm text-muted-foreground">Cross-referencing 50+ data points...</p>
         </div>
@@ -344,7 +344,7 @@ export const ErrorState = memo(function ErrorState({ error, wallet }: ErrorState
         <div className="space-y-2">
           <h2 className="text-lg sm:text-xl font-semibold">Analysis Failed</h2>
           <p className="text-muted-foreground font-mono text-xs sm:text-sm break-all">
-            {shortenAddress(wallet, 6)}
+            {formatAddress(wallet)}
           </p>
           <p className="text-sm text-red-400">{error}</p>
         </div>

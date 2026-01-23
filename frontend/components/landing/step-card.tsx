@@ -32,10 +32,10 @@ export const StepCard = memo(function StepCard({
           </span>
         </div>
         
-        <h3 className="font-semibold text-xl mb-3 group-hover:text-primary transition-colors duration-300">
+        <h3 className="font-semibold text-lg mb-3 group-hover:text-primary transition-colors duration-300">
           {step.title}
         </h3>
-        <p className="text-sm text-muted-foreground leading-relaxed max-w-xs mx-auto">
+        <p className="text-base text-muted-foreground leading-relaxed max-w-xs mx-auto">
           {step.description}
         </p>
       </div>

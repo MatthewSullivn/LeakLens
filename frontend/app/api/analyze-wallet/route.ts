@@ -11,7 +11,7 @@ export async function POST(request: NextRequest) {
     const controller = new AbortController()
     const timeoutId = setTimeout(() => controller.abort(), 120000) // 2 minute timeout
     
-    const response = await fetch('http://127.0.0.1:8000/analyze-wallet', {
+    const response = await fetch('http://127.0.0.1:8001/analyze-wallet', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -34,7 +34,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(data)
     
   } catch (error: any) {
-    console.error('Proxy error:', error)
+    if (process.env.NODE_ENV === 'development') {
+      console.error('Proxy error:', error)
+    }
     
     if (error.name === 'AbortError') {
       return NextResponse.json(
