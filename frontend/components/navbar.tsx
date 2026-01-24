@@ -19,9 +19,9 @@ export function Navbar() {
           {/* Action Buttons */}
           <div className="flex items-center gap-2 sm:gap-3">
             {/* Mainnet Badge */}
-            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-green-500/10 border border-green-500/30">
-              <Globe className="w-3.5 h-3.5 text-green-500" />
-              <span className="text-xs font-medium text-green-500 uppercase tracking-wide">Mainnet</span>
+            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-cyan-500/10 border border-cyan-500/30">
+              <Globe className="w-3.5 h-3.5 text-cyan-400" />
+              <span className="text-xs font-medium text-cyan-400 uppercase tracking-wide">Mainnet</span>
             </div>
 
             {/* Source Button */}

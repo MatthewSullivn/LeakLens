@@ -232,7 +232,7 @@ export const NavbarLogo = () => {
       href="/"
       className="relative z-20 flex items-center gap-2 px-2 py-1"
     >
-      <ScanSearch className="w-5 h-5 text-cyan-600" />
+      <ScanSearch className="w-5 h-5 text-cyan-500" />
       <span className="font-bold text-lg tracking-tight text-foreground">
         LeakLens
       </span>
@@ -326,9 +326,9 @@ export function LeakLensNavbar() {
           onClose={() => setMobileMenuOpen(false)}
         >
           <div className="flex flex-col gap-4 w-full">
-            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-green-500/10 border border-green-500/30 w-fit">
-              <Globe className="w-3.5 h-3.5 text-green-500" />
-              <span className="text-xs font-medium text-green-500 uppercase tracking-wide">Mainnet</span>
+            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-cyan-500/10 border border-cyan-500/30 w-fit">
+              <Globe className="w-3.5 h-3.5 text-cyan-400" />
+              <span className="text-xs font-medium text-cyan-400 uppercase tracking-wide">Mainnet</span>
             </div>
             <a
               href="https://github.com"

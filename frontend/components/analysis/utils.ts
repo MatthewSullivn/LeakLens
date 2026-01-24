@@ -18,7 +18,7 @@ export function formatDate(dateStr: string): string {
 
 export function getSeverityColor(level: string): { bg: string; text: string; border: string } {
   const colors: Record<string, { bg: string; text: string; border: string }> = {
-    LOW: { bg: 'bg-green-500/20', text: 'text-green-400', border: 'border-green-500/30' },
+    LOW: { bg: 'bg-cyan-500/20', text: 'text-cyan-400', border: 'border-cyan-500/30' },
     MEDIUM: { bg: 'bg-yellow-500/20', text: 'text-yellow-400', border: 'border-yellow-500/30' },
     HIGH: { bg: 'bg-orange-500/20', text: 'text-orange-400', border: 'border-orange-500/30' },
     CRITICAL: { bg: 'bg-red-500/20', text: 'text-red-400', border: 'border-red-500/30' },
@@ -34,7 +34,7 @@ export function getRiskLevelFromScore(score: number): string {
 }
 
 export const STROKE_COLORS: Record<string, string> = {
-  LOW: '#22c55e',
+  LOW: '#22d3ee',
   MEDIUM: '#eab308',
   HIGH: '#f97316',
   CRITICAL: '#ef4444'

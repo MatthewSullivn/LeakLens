@@ -10,36 +10,20 @@ export * from './utils'
 
 // Shared Components
 export { 
-  Tooltip, 
-  CollapsibleSection, 
-  SignalItem, 
-  RiskBar, 
-  ClassificationBar, 
-  ProfileBar, 
-  StatCard,
   SolscanLink,
   AnimatedSection,
   Skeleton,
   SectionSkeleton,
-  WhyItMatters,
-  TrustSignal
 } from './shared'
 
 // Navigation Components
 export { TopNavBar, LoadingState, ErrorState } from './navigation'
 
-// Section Components
-export { WalletOverview } from './wallet-overview'
-export { KeyInsightsSection } from './key-insights'
-export { SurveillanceExposureSection } from './surveillance-exposure'
-export { RiskAssessmentSection } from './risk-assessment'
-export { TemporalFingerprintSection } from './temporal-fingerprint'
-export { GeographicSection } from './geographic'
-export { BehavioralClassificationSection } from './behavioral-classification'
-export { MempoolForensicsSection } from './mempool-forensics'
+// Educational Forensic Report Components
+export { ExposureSummary } from './exposure-summary'
+export { WhyTrackable } from './why-trackable'
+export { WalletLinkage } from './wallet-linkage'
 export { OpsecFailuresSection } from './opsec-failures'
-export { PortfolioSection } from './portfolio'
-export { TradingPnLSection } from './trading-pnl'
-export { IncomeSourcesSection } from './income-sources'
-export { EgoNetworkSection } from './ego-network'
-export { AdvancedDataSection } from './advanced-data'
+export { ExposureBreakdown } from './exposure-breakdown'
+export { FinancialContext } from './financial-context'
+export { ImplicationsSection, MitigationCTA } from './implications'

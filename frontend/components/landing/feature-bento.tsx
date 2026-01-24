@@ -115,7 +115,7 @@ export function FeatureBento() {
         <span className="text-base sm:text-lg text-muted-foreground font-medium">
           Why on-chain activity gives away more than you realize.
         </span>
-        <span className="block h-px w-12 bg-cyan-600/40 ml-3" />
+        <span className="block h-px w-12 bg-cyan-500/40 ml-3" />
       </div>
       <BentoGrid className="max-w-5xl mx-auto md:auto-rows-[22rem] gap-4">
         {items.map((item, i) => (

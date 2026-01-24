@@ -1,0 +1,123 @@
+'use client'
+
+import { memo } from 'react'
+import { Download, X, Search, ChevronRight } from 'lucide-react'
+import { cn } from '@/lib/utils'
+
+// ============================================================================
+// TYPES
+// ============================================================================
+
+interface MobileBottomSheetProps {
+  isOpen: boolean
+  onClose: () => void
+  wallet: string
+  onAnalyzeDifferent: () => void
+}
+
+interface BottomSheetActionProps {
+  icon: React.ReactNode
+  label: string
+  sublabel?: string
+  onClick?: () => void
+  primary?: boolean
+  disabled?: boolean
+}
+
+// ============================================================================
+// BOTTOM SHEET ACTION
+// ============================================================================
+
+const BottomSheetAction = memo(function BottomSheetAction({ 
+  icon, 
+  label, 
+  sublabel,
+  onClick, 
+  primary,
+  disabled 
+}: BottomSheetActionProps) {
+  return (
+    <button
+      onClick={onClick}
+      disabled={disabled}
+      className={cn(
+        "w-full flex items-center gap-3 p-3 rounded-lg transition-colors",
+        primary ? "bg-primary text-primary-foreground" : "bg-muted/30 hover:bg-muted/50",
+        disabled && "opacity-50 cursor-not-allowed"
+      )}
+    >
+      {icon}
+      <div className="flex-1 text-left">
+        <p className="font-medium">{label}</p>
+        {sublabel && <p className="text-xs opacity-70">{sublabel}</p>}
+      </div>
+      <ChevronRight className="w-4 h-4 opacity-50" />
+    </button>
+  )
+})
+
+// ============================================================================
+// MOBILE BOTTOM SHEET
+// ============================================================================
+
+export const MobileBottomSheet = memo(function MobileBottomSheet({ 
+  isOpen, 
+  onClose, 
+  wallet,
+  onAnalyzeDifferent 
+}: MobileBottomSheetProps) {
+  if (!isOpen) return null
+
+  return (
+    <>
+      {/* Backdrop */}
+      <div 
+        className="fixed inset-0 bg-black/60 z-50 md:hidden"
+        onClick={onClose}
+      />
+      
+      {/* Bottom Sheet */}
+      <div className="fixed bottom-0 left-0 right-0 z-50 bg-card border-t border-border rounded-t-2xl md:hidden animate-in slide-in-from-bottom duration-300">
+        <div className="p-4">
+          {/* Handle */}
+          <div className="w-12 h-1 bg-muted rounded-full mx-auto mb-4" />
+          
+          {/* Wallet Info */}
+          <div className="mb-4 p-3 bg-muted/30 rounded-lg">
+            <p className="text-xs text-muted-foreground mb-1">Analyzing wallet</p>
+            <p className="font-mono text-sm break-all">{wallet}</p>
+          </div>
+
+          {/* Actions */}
+          <div className="space-y-2">
+            <BottomSheetAction 
+              icon={<Search className="w-5 h-5" />}
+              label="Analyze Different Wallet"
+              onClick={() => {
+                onClose()
+                onAnalyzeDifferent()
+              }}
+              primary
+            />
+            <BottomSheetAction 
+              icon={<Download className="w-5 h-5" />}
+              label="Export Report"
+              sublabel="Coming soon"
+              disabled
+            />
+            <BottomSheetAction 
+              icon={<X className="w-5 h-5" />}
+              label="Close"
+              onClick={onClose}
+            />
+          </div>
+
+          {/* Trust Signal */}
+          <p className="text-[10px] text-muted-foreground text-center mt-4">
+            Read-only analysis • No wallet connection required
+          </p>
+        </div>
+      </div>
+    </>
+  )
+})

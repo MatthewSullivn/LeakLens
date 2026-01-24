@@ -56,7 +56,7 @@ export const HeroSection = memo(function HeroSection() {
             {/* Left Column - Text Content */}
             <div className="relative z-20">
               {/* Eyebrow */}
-              <div className="mb-6 inline-flex items-center gap-2.5 px-5 py-2.5 rounded-full border border-[var(--color-cyan-600)]/40 bg-[var(--color-cyan-600)]/15 backdrop-blur-sm shadow-[0_0_20px_rgba(8,145,178,0.15)] hover:border-[var(--color-cyan-600)]/60 hover:bg-[var(--color-cyan-600)]/20 transition-all duration-300">
+              <div className="mb-6 inline-flex items-center gap-2.5 px-5 py-2.5 backdrop-blur-sm shadow-[0_0_20px_rgba(8,145,178,0.15)] transition-all duration-300 rounded-full bg-transparent border border-transparent hover:border-cyan-600/40 hover:bg-cyan-600/15">
                 <span className="text-sm sm:text-base font-bold text-[var(--color-cyan-600)] tracking-wider uppercase">
                   LeakLens
                 </span>
