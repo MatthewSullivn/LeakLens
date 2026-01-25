@@ -1868,8 +1868,8 @@ def analyze_wallet_comprehensive(request: WalletAnalysisRequest):
         # Calculate probabilities
         probs = calculate_probabilities_solana(df, hourly_counts, daily_counts, sleep)
         
-        # Analyze execution profiles
-        mempool_limit = min(80, len(signatures))
+        # Analyze execution profiles (reduced limit for speed)
+        mempool_limit = min(50, len(signatures))
         mempool_data = analyze_wallet_execution_profiles(
             request.wallet,
             limit=mempool_limit,
@@ -1877,10 +1877,10 @@ def analyze_wallet_comprehensive(request: WalletAnalysisRequest):
             tx_details_map=tx_details_map
         )
         
-        # Opsec failures using already-fetched data to avoid refetch
+        # Opsec failures using already-fetched data to avoid refetch (reduced limit for speed)
         opsec_data = analyze_opsec_failures(
             request.wallet,
-            limit=min(120, request.limit),
+            limit=min(80, request.limit),
             signatures=signatures,
             tx_details_map=tx_details_map
         )

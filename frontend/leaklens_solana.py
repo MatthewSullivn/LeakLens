@@ -164,7 +164,7 @@ def rpc_call(method: str, params: list) -> Optional[dict]:
     }
     
     try:
-        response = requests.post(RPC_URL, json=payload, timeout=30)
+        response = requests.post(RPC_URL, json=payload, timeout=15)
         data = response.json()
         
         if "error" in data:
@@ -186,8 +186,8 @@ def fetch_transaction(signature: str) -> Optional[dict]:
     return rpc_call("getTransaction", [signature, {"encoding": "jsonParsed", "maxSupportedTransactionVersion": 0}])
 
 
-def fetch_transaction_worker(sig: str) -> tuple:
-    """Worker function to fetch a single transaction (for parallel execution)"""
+def fetch_transaction_worker(sig: str, retries: int = 0) -> tuple:
+    """Worker function to fetch a single transaction (for parallel execution) - no retries for speed"""
     try:
         result = fetch_transaction(sig)
         return (sig, result)
@@ -195,7 +195,7 @@ def fetch_transaction_worker(sig: str) -> tuple:
         return (sig, None)
 
 
-def fetch_transactions_parallel(signatures: List[str], max_workers: int = 10) -> Dict[str, Optional[dict]]:
+def fetch_transactions_parallel(signatures: List[str], max_workers: int = 12) -> Dict[str, Optional[dict]]:
     """
     Fetch multiple transactions in parallel using ThreadPoolExecutor.
     More reliable than batch RPC calls for rate-limited endpoints.
@@ -473,7 +473,7 @@ def analyze_wallet_execution_profiles(wallet: str, limit: int = 100, signatures:
     
     if tx_details_map is None:
         sig_strings = [sig_info["signature"] for sig_info in signatures]
-        tx_details_map = fetch_transactions_parallel(sig_strings, max_workers=10)
+        tx_details_map = fetch_transactions_parallel(sig_strings, max_workers=12)
     
     for sig_info in signatures:
         signature = sig_info["signature"]
@@ -549,7 +549,7 @@ def analyze_wallet(wallet: str, limit: int = 100) -> tuple:
     
     # Fetch transactions in parallel (faster and more reliable)
     print(f"    [*] Fetching {len(sig_strings)} transactions in parallel...")
-    tx_details_map = fetch_transactions_parallel(sig_strings, max_workers=10)
+    tx_details_map = fetch_transactions_parallel(sig_strings, max_workers=12)
     
     # Check if batch fetch worked - if too many failures, warn user
     valid_results = sum(1 for v in tx_details_map.values() if v is not None)
@@ -563,11 +563,13 @@ def analyze_wallet(wallet: str, limit: int = 100) -> tuple:
     tx_details_list = []
     
     for idx, sig_info in enumerate(signatures):
-        progress = (idx + 1) / len(signatures)
-        bar_len = 40
-        filled = int(bar_len * progress)
-        bar = '█' * filled + '░' * (bar_len - filled)
-        print(f"\r    [{bar}] {idx + 1}/{len(signatures)}", end="", flush=True)
+        # Reduced progress bar updates for speed (update every 10 transactions)
+        if idx % 10 == 0 or idx == len(signatures) - 1:
+            progress = (idx + 1) / len(signatures)
+            bar_len = 40
+            filled = int(bar_len * progress)
+            bar = '█' * filled + '░' * (bar_len - filled)
+            print(f"\r    [{bar}] {idx + 1}/{len(signatures)}", end="", flush=True)
         
         signature = sig_info["signature"]
         block_time = sig_info.get("blockTime")
@@ -694,7 +696,7 @@ def analyze_opsec_failures(wallet: str, limit: int = 100, signatures: Optional[L
 
     if tx_details_map is None:
         sig_strings = [s["signature"] for s in signatures]
-        tx_details_map = fetch_transactions_parallel(sig_strings, max_workers=10)
+        tx_details_map = fetch_transactions_parallel(sig_strings, max_workers=12)
 
     funding_counterparties: Dict[str, Dict[str, float]] = defaultdict(lambda: {"count": 0, "lamports": 0})
     withdrawal_counterparties: Dict[str, Dict[str, float]] = defaultdict(lambda: {"count": 0, "lamports": 0})
@@ -1594,7 +1596,7 @@ def find_connections(wallets: List[str], limit: int = 100) -> Dict[Tuple[str, st
         
         # Fetch all transactions in parallel (MUCH FASTER!)
         sig_strings = [sig_info["signature"] for sig_info in signatures]
-        tx_details_map = fetch_transactions_parallel(sig_strings, max_workers=10)
+        tx_details_map = fetch_transactions_parallel(sig_strings, max_workers=12)
         
         for idx, sig_info in enumerate(signatures):
             progress = (idx + 1) / len(signatures)
@@ -1784,7 +1786,7 @@ def scan_network(wallet: str, depth: int = 1, limit: int = 50):
             
             # Fetch transactions in parallel
             sig_strings = [sig_info["signature"] for sig_info in signatures[:limit]]
-            tx_details_map = fetch_transactions_parallel(sig_strings, max_workers=10)
+            tx_details_map = fetch_transactions_parallel(sig_strings, max_workers=12)
             
             for sig_info in signatures[:limit]:
                 tx_details = tx_details_map.get(sig_info["signature"])
