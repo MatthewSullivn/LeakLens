@@ -48,6 +48,20 @@ export async function POST(request: NextRequest) {
       )
     }
     
+    // Check for connection refused errors (backend not running)
+    if (error.code === 'ECONNREFUSED' || error.message?.includes('ECONNREFUSED')) {
+      const backendUrl = process.env.BACKEND_URL || 'http://127.0.0.1:8000'
+      return NextResponse.json(
+        { 
+          error: `Backend server is not running. Please start the Python backend at ${backendUrl}`,
+          details: process.env.NODE_ENV === 'development' 
+            ? 'Run START_SERVER.bat or python run_server.py to start the backend'
+            : undefined
+        },
+        { status: 503 }
+      )
+    }
+    
     return NextResponse.json(
       { error: error.message || 'Internal server error' },
       { status: 500 }
