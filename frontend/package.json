@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
+    "prebuild": "node -e \"const fs=require('fs'); const p=require('path'); const cwd=process.cwd(); const root=p.join(cwd,'..'); fs.copyFileSync(p.join(root,'leaklens_solana.py'), p.join(cwd,'leaklens_solana.py')); fs.copyFileSync(p.join(root,'backend_api.py'), p.join(cwd,'backend_api.py'));\"",
     "dev": "next dev",
     "build": "next build",
     "start": "next start",

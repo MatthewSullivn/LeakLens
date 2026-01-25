@@ -1,8 +1,8 @@
 import sys
 from pathlib import Path
 
-# Add parent directory to path to import backend modules
-sys.path.insert(0, str(Path(__file__).parent.parent))
+# Use backend modules from frontend root (copied from project root at build via package.json prebuild)
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from backend_api import app as fastapi_app
 

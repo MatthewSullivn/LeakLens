@@ -62,6 +62,9 @@ frontend/out/
 frontend/node_modules/
 frontend/.env*.local
 frontend/next-env.d.ts
+# Copied from root at build (single source: root leaklens_solana.py, backend_api.py)
+frontend/leaklens_solana.py
+frontend/backend_api.py
 
 # Node
 node_modules/

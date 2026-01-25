@@ -35,6 +35,7 @@ from dataclasses import dataclass, field
 from typing import Optional, List, Dict, Set, Tuple
 from collections import defaultdict
 import json
+import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dotenv import load_dotenv
 from decimal import Decimal
@@ -186,41 +187,56 @@ def fetch_transaction(signature: str) -> Optional[dict]:
     return rpc_call("getTransaction", [signature, {"encoding": "jsonParsed", "maxSupportedTransactionVersion": 0}])
 
 
-def fetch_transaction_worker(sig: str, retries: int = 0) -> tuple:
-    """Worker function to fetch a single transaction (for parallel execution) - no retries for speed"""
-    try:
-        result = fetch_transaction(sig)
-        return (sig, result)
-    except Exception as e:
-        return (sig, None)
+def fetch_transaction_worker(sig: str, retries: int = 2) -> tuple:
+    """Worker function to fetch a single transaction. Retries on failure (helps on Vercel/serverless rate limits)."""
+    for attempt in range(retries + 1):
+        try:
+            result = fetch_transaction(sig)
+            return (sig, result)
+        except Exception:
+            if attempt < retries:
+                time.sleep(0.25 * (attempt + 1))
+            else:
+                return (sig, None)
+    return (sig, None)
 
 
 def fetch_transactions_parallel(signatures: List[str], max_workers: int = 12) -> Dict[str, Optional[dict]]:
     """
     Fetch multiple transactions in parallel using ThreadPoolExecutor.
     More reliable than batch RPC calls for rate-limited endpoints.
+    On Vercel/serverless, uses lower concurrency to avoid RPC rate limits.
     Returns dict mapping signature -> transaction data
     """
+    # Lower concurrency on Vercel to avoid Helius RPC rate limits (fewer failed fetches)
+    if os.getenv("VERCEL") == "1":
+        max_workers = min(max_workers, 4)
     results = {}
     total_fetched = 0
-    
-    # Use ThreadPoolExecutor for parallel fetching with controlled concurrency
+
     with ThreadPoolExecutor(max_workers=max_workers) as executor:
-        # Submit all tasks
         future_to_sig = {executor.submit(fetch_transaction_worker, sig): sig for sig in signatures}
-        
-        # Process completed tasks
         completed = 0
         for future in as_completed(future_to_sig):
             sig, result = future.result()
             results[sig] = result
             if result is not None:
                 total_fetched += 1
-            
             completed += 1
-            if completed % 20 == 0:  # Progress update every 20 transactions
+            if completed % 20 == 0:
                 print(f"\r    [{completed}/{len(signatures)}] fetched...", end="", flush=True)
-    
+
+    # Retry failed fetches with low concurrency (helps on Vercel rate limits)
+    failed = [s for s in signatures if results.get(s) is None]
+    if failed:
+        retry_workers = 2 if os.getenv("VERCEL") == "1" else 4
+        with ThreadPoolExecutor(max_workers=retry_workers) as executor:
+            futures = {executor.submit(fetch_transaction_worker, s, retries=3): s for s in failed}
+            for future in as_completed(futures):
+                sig, result = future.result()
+                if result is not None:
+                    results[sig] = result
+    total_fetched = sum(1 for s in signatures if results.get(s) is not None)
     print(f"\r    [+] Successfully fetched {total_fetched}/{len(signatures)} transactions")
     return results
 

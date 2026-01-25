@@ -43,7 +43,7 @@ export default function AnalysisPage({ params }: { params: Promise<{ wallet: str
         const response = await fetch('/api/analyze-wallet', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ wallet, limit: 200 }),
+          body: JSON.stringify({ wallet, limit: 100 }),
           signal: abortController.signal,
         })
 
