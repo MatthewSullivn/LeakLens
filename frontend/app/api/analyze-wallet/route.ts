@@ -7,11 +7,14 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
     
+    // Get backend URL from environment variable, fallback to localhost for development
+    const backendUrl = process.env.BACKEND_URL || 'http://127.0.0.1:8000'
+    
     // Forward request to Python backend with extended timeout
     const controller = new AbortController()
     const timeoutId = setTimeout(() => controller.abort(), 120000) // 2 minute timeout
     
-    const response = await fetch('http://127.0.0.1:8000/analyze-wallet', {
+    const response = await fetch(`${backendUrl}/analyze-wallet`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
