@@ -33,6 +33,7 @@ from leaklens_solana import (
     analyze_execution_profile,
     fetch_transaction,
     fetch_signatures,
+    fetch_transactions_parallel,
     analyze_wallet as analyze_wallet_solana,
     detect_sleep_window as detect_sleep_window_solana,
     calculate_probabilities as calculate_probabilities_solana,
@@ -903,6 +904,85 @@ def detect_swaps_delta(wallet: str, tx_details_map: Dict[str, dict]) -> List[dic
         import logging
         logging.debug(f"detect_swaps_delta: found {len(swaps)} swaps, skipped_no_deltas={skipped_no_deltas}, skipped_no_swap_pattern={skipped_no_swap_pattern}")
     
+    return swaps
+
+
+def _token_amount_from_enhanced(tt: dict) -> float:
+    """Parse token amount from Helius enhanced tokenTransfers (amount/decimals or uiAmount)."""
+    raw = tt.get("tokenAmount")
+    if raw is None:
+        return _safe_float(tt.get("amount"), 0.0)
+    if isinstance(raw, (int, float)):
+        return float(raw)
+    if isinstance(raw, dict):
+        ui = raw.get("uiAmount")
+        if ui is not None:
+            return _safe_float(ui, 0.0)
+        amt = _safe_float(raw.get("amount"), 0.0)
+        dec = int(raw.get("decimals") or 0)
+        return amt / (10 ** dec) if dec else amt
+    return 0.0
+
+
+def detect_swaps_delta_from_enhanced(wallet: str, enhanced_txs: List[dict]) -> List[dict]:
+    """
+    Delta-based swap detection from Helius Enhanced (nativeTransfers + tokenTransfers).
+    Use when Helius parsed swap events are empty and tx_details_map is unavailable (Vercel path).
+    Same output shape as detect_swaps_delta for FIFO PnL.
+    """
+    swaps = []
+    for tx in enhanced_txs or []:
+        if not isinstance(tx, dict):
+            continue
+        sig = tx.get("signature") or tx.get("transactionSignature") or ""
+        ts = tx.get("timestamp") or tx.get("blockTime") or 0
+        all_deltas: Dict[str, float] = {}
+
+        for nt in tx.get("nativeTransfers") or []:
+            fr = nt.get("fromUserAccount") or nt.get("from")
+            to = nt.get("toUserAccount") or nt.get("to")
+            amt_lamports = _safe_float(nt.get("amount"), 0.0)
+            if amt_lamports <= 0 or not fr or not to:
+                continue
+            amt_sol = amt_lamports / 1e9
+            if to == wallet and fr != wallet:
+                all_deltas[WSOL_MINT] = all_deltas.get(WSOL_MINT, 0.0) + amt_sol
+            elif fr == wallet and to != wallet:
+                all_deltas[WSOL_MINT] = all_deltas.get(WSOL_MINT, 0.0) - amt_sol
+
+        for tt in tx.get("tokenTransfers") or []:
+            fr = tt.get("fromUserAccount") or tt.get("from")
+            to = tt.get("toUserAccount") or tt.get("to")
+            mint = tt.get("mint") or ""
+            if not mint:
+                continue
+            amt = _token_amount_from_enhanced(tt)
+            if amt <= 0:
+                continue
+            if to == wallet and fr != wallet:
+                all_deltas[mint] = all_deltas.get(mint, 0.0) + amt
+            elif fr == wallet and to != wallet:
+                all_deltas[mint] = all_deltas.get(mint, 0.0) - amt
+
+        nz = [(m, d) for m, d in all_deltas.items() if abs(d) > 1e-12]
+        if not nz:
+            continue
+        negs = [(m, d) for m, d in nz if d < 0]
+        poss = [(m, d) for m, d in nz if d > 0]
+        if not negs or not poss:
+            continue
+        token_in, delta_in = min(negs, key=lambda x: x[1])
+        token_out, delta_out = max(poss, key=lambda x: x[1])
+        if token_in == WSOL_MINT and token_out == WSOL_MINT:
+            continue
+        swaps.append({
+            "signature": sig,
+            "token_in": token_in,
+            "amount_in": abs(delta_in),
+            "token_out": token_out,
+            "amount_out": delta_out,
+            "timestamp": ts
+        })
     return swaps
 
 
@@ -1969,13 +2049,23 @@ def analyze_wallet_comprehensive(request: WalletAnalysisRequest):
         # Calculate probabilities
         probs = calculate_probabilities_solana(df, hourly_counts, daily_counts, sleep)
         
-        # Analyze execution profiles (reduced limit for speed)
+        # Analyze execution profiles (reduced limit for speed).
+        # On Vercel: tx_details_map is empty (enhanced-only). Fetch RPC for a subset with
+        # low concurrency so we get real compute units / priority fee / Jito. Use 50 tx:
+        # 2× sample of 25 → more representative profile; half of 100 → lower rate-limit risk.
         mempool_limit = min(50, len(signatures))
+        mempool_tx_map = tx_details_map
+        if use_helius_primary and enhanced_all and not tx_details_map:
+            subset_n = min(50, len(signatures))
+            sig_strings = [s["signature"] for s in signatures[:subset_n]]
+            rpc_map = fetch_transactions_parallel(sig_strings, max_workers=2)
+            mempool_tx_map = {k: v for k, v in (rpc_map or {}).items() if v is not None}
+            mempool_limit = subset_n
         mempool_data = analyze_wallet_execution_profiles(
             request.wallet,
             limit=mempool_limit,
-            signatures=signatures,
-            tx_details_map=tx_details_map
+            signatures=signatures[:mempool_limit],
+            tx_details_map=mempool_tx_map
         )
         
         # Opsec: use enhanced-based when Helius-primary (Vercel) for full data; else RPC
@@ -2120,9 +2210,13 @@ def analyze_wallet_comprehensive(request: WalletAnalysisRequest):
         # Detect swaps: prefer Helius parsed events, fallback to delta-based detection
         swap_events = detect_swaps_from_helius(enhanced_all)
         if not swap_events:
-            # Fallback to protocol-agnostic delta detection (handles multi-hop, WSOL, fees)
-            swap_events = detect_swaps_delta(request.wallet, tx_details_map)
-            all_dbg["swap_method"] = "delta_based"
+            # Fallback: enhanced delta when Vercel (no RPC tx_details_map), else RPC delta
+            if use_helius_primary and enhanced_all:
+                swap_events = detect_swaps_delta_from_enhanced(request.wallet, enhanced_all)
+                all_dbg["swap_method"] = "enhanced_delta"
+            else:
+                swap_events = detect_swaps_delta(request.wallet, tx_details_map)
+                all_dbg["swap_method"] = "delta_based"
         else:
             all_dbg["swap_method"] = "helius_parsed"
         
