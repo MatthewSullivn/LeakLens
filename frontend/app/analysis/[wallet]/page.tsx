@@ -23,6 +23,7 @@ const ExposureBreakdown = lazy(() => import('@/components/analysis/exposure-brea
 const FinancialContext = lazy(() => import('@/components/analysis/financial-context').then(m => ({ default: m.FinancialContext })))
 const ImplicationsSection = lazy(() => import('@/components/analysis/implications').then(m => ({ default: m.ImplicationsSection })))
 const MitigationCTA = lazy(() => import('@/components/analysis/implications').then(m => ({ default: m.MitigationCTA })))
+const SearchWalletElsewhere = lazy(() => import('@/components/analysis/search-wallet-elsewhere').then(m => ({ default: m.SearchWalletElsewhere })))
 
 export default function AnalysisPage({ params }: { params: Promise<{ wallet: string }> }) {
   const resolvedParams = use(params)
@@ -119,6 +120,13 @@ export default function AnalysisPage({ params }: { params: Promise<{ wallet: str
         <AnimatedSection delay={200}>
           <Suspense fallback={<SectionSkeleton />}>
             <OpsecFailuresSection data={data.opsec_failures} />
+          </Suspense>
+        </AnimatedSection>
+
+        {/* 4b. Search wallet on Arkham / X */}
+        <AnimatedSection delay={225}>
+          <Suspense fallback={<SectionSkeleton />}>
+            <SearchWalletElsewhere wallet={wallet} />
           </Suspense>
         </AnimatedSection>
 
