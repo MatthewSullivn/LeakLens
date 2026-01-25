@@ -1,7 +1,7 @@
 'use client'
 
 import { memo } from 'react'
-import { Download, X, Search, ChevronRight } from 'lucide-react'
+import { X, Search, ChevronRight, FileText, FileJson, Table } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 // ============================================================================
@@ -13,6 +13,9 @@ interface MobileBottomSheetProps {
   onClose: () => void
   wallet: string
   onAnalyzeDifferent: () => void
+  onExportPDF?: () => void
+  onExportJSON?: () => void
+  onExportCSV?: () => void
 }
 
 interface BottomSheetActionProps {
@@ -64,9 +67,17 @@ export const MobileBottomSheet = memo(function MobileBottomSheet({
   isOpen, 
   onClose, 
   wallet,
-  onAnalyzeDifferent 
+  onAnalyzeDifferent,
+  onExportPDF,
+  onExportJSON,
+  onExportCSV,
 }: MobileBottomSheetProps) {
   if (!isOpen) return null
+
+  const runAndClose = (fn?: () => void) => {
+    fn?.()
+    onClose()
+  }
 
   return (
     <>
@@ -100,10 +111,22 @@ export const MobileBottomSheet = memo(function MobileBottomSheet({
               primary
             />
             <BottomSheetAction 
-              icon={<Download className="w-5 h-5" />}
-              label="Export Report"
-              sublabel="Coming soon"
-              disabled
+              icon={<FileText className="w-5 h-5" />}
+              label="Export PDF Report"
+              onClick={() => runAndClose(onExportPDF)}
+              disabled={!onExportPDF}
+            />
+            <BottomSheetAction 
+              icon={<FileJson className="w-5 h-5" />}
+              label="Export JSON Data"
+              onClick={() => runAndClose(onExportJSON)}
+              disabled={!onExportJSON}
+            />
+            <BottomSheetAction 
+              icon={<Table className="w-5 h-5" />}
+              label="Export CSV"
+              onClick={() => runAndClose(onExportCSV)}
+              disabled={!onExportCSV}
             />
             <BottomSheetAction 
               icon={<X className="w-5 h-5" />}

@@ -11,7 +11,9 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { formatAddress, cn } from '@/lib/utils'
 import { getSeverityColor } from '../utils'
+import { exportJSON, exportCSV, exportPDF } from '@/lib/export'
 import { MobileBottomSheet } from './mobile-menu'
+import type { AnalysisResult } from '../types'
 
 // ============================================================================
 // TYPES
@@ -23,6 +25,7 @@ interface TopNavBarProps {
   onCopy: () => void
   confidence: string
   riskLevel?: string
+  data?: AnalysisResult | null
 }
 
 interface ExportMenuItemProps {
@@ -64,7 +67,8 @@ export const TopNavBar = memo(function TopNavBar({
   copied, 
   onCopy, 
   confidence,
-  riskLevel = 'MEDIUM'
+  riskLevel = 'MEDIUM',
+  data = null
 }: TopNavBarProps) {
   const router = useRouter()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
@@ -74,7 +78,31 @@ export const TopNavBar = memo(function TopNavBar({
     router.push('/')
   }, [router])
 
+  const closeExport = useCallback(() => setExportMenuOpen(false), [])
+
+  const handleExportPDF = useCallback(() => {
+    if (data) {
+      exportPDF(data, wallet)
+      closeExport()
+    }
+  }, [data, wallet, closeExport])
+
+  const handleExportJSON = useCallback(() => {
+    if (data) {
+      exportJSON(data, wallet)
+      closeExport()
+    }
+  }, [data, wallet, closeExport])
+
+  const handleExportCSV = useCallback(() => {
+    if (data) {
+      exportCSV(data, wallet)
+      closeExport()
+    }
+  }, [data, wallet, closeExport])
+
   const riskColors = getSeverityColor(riskLevel)
+  const canExport = !!data
 
   return (
     <>
@@ -123,9 +151,9 @@ export const TopNavBar = memo(function TopNavBar({
                       onClick={() => setExportMenuOpen(false)} 
                     />
                     <div className="absolute right-0 mt-2 w-48 bg-card border border-border rounded-lg shadow-lg z-50 py-1">
-                      <ExportMenuItem icon={<FileText className="w-4 h-4" />} label="PDF Report" status="coming-soon" />
-                      <ExportMenuItem icon={<FileJson className="w-4 h-4" />} label="JSON Data" status="coming-soon" />
-                      <ExportMenuItem icon={<Table className="w-4 h-4" />} label="CSV Export" status="coming-soon" />
+                      <ExportMenuItem icon={<FileText className="w-4 h-4" />} label="PDF Report" status={canExport ? 'available' : 'coming-soon'} onClick={handleExportPDF} />
+                      <ExportMenuItem icon={<FileJson className="w-4 h-4" />} label="JSON Data" status={canExport ? 'available' : 'coming-soon'} onClick={handleExportJSON} />
+                      <ExportMenuItem icon={<Table className="w-4 h-4" />} label="CSV Export" status={canExport ? 'available' : 'coming-soon'} onClick={handleExportCSV} />
                     </div>
                   </>
                 )}
@@ -177,6 +205,9 @@ export const TopNavBar = memo(function TopNavBar({
         onClose={() => setMobileMenuOpen(false)}
         wallet={wallet}
         onAnalyzeDifferent={handleAnalyzeDifferent}
+        onExportPDF={handleExportPDF}
+        onExportJSON={handleExportJSON}
+        onExportCSV={handleExportCSV}
       />
     </>
   )

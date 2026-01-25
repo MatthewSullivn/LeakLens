@@ -42,7 +42,7 @@ export function Navbar() {
               rel="noopener noreferrer"
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-violet-500/20 border border-violet-500/40 hover:bg-violet-500/30 transition-colors"
             >
-              <span className="text-xs font-medium text-violet-400 uppercase tracking-wide">Encrypt Trade</span>
+              <span className="text-xs font-medium text-violet-400 uppercase tracking-wide">encrypt.trade</span>
               <ExternalLink className="w-3 h-3 text-violet-400" />
             </a>
           </div>

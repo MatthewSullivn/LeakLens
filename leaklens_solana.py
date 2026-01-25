@@ -790,7 +790,7 @@ def analyze_opsec_failures(wallet: str, limit: int = 100, signatures: Optional[L
         leak = funding_summary[0]
         critical_leaks.append({
             "type": "repeat_funding_source",
-            "detail": f"Wallet funded {leak['count']}x by {leak['label']} (≈{leak['total_sol']:.3f} SOL)",
+            "detail": f"Wallet funded {leak['count']}x by {leak['wallet']} (≈{leak['total_sol']:.3f} SOL)",
             "deanon_impact": "Strong linkage to a single funding wallet"
         })
         exposure_score += 30
@@ -799,7 +799,7 @@ def analyze_opsec_failures(wallet: str, limit: int = 100, signatures: Optional[L
         leak = withdrawal_summary[0]
         critical_leaks.append({
             "type": "repeat_cashout_target",
-            "detail": f"Wallet frequently pays out to {leak['label']} ({leak['count']}x, ≈{leak['total_sol']:.3f} SOL)",
+            "detail": f"Wallet frequently pays out to {leak['wallet']} ({leak['count']}x, ≈{leak['total_sol']:.3f} SOL)",
             "deanon_impact": "Likely owned exit wallet; ties identity"
         })
         exposure_score += 30
@@ -891,7 +891,7 @@ def analyze_opsec_failures_from_enhanced(wallet: str, enhanced_txs: List[dict]) 
         leak = funding_summary[0]
         critical_leaks.append({
             "type": "repeat_funding_source",
-            "detail": f"Wallet funded {leak['count']}x by {leak['label']} (≈{leak['total_sol']:.3f} SOL)",
+            "detail": f"Wallet funded {leak['count']}x by {leak['wallet']} (≈{leak['total_sol']:.3f} SOL)",
             "deanon_impact": "Strong linkage to a single funding wallet"
         })
         exposure_score += 30
@@ -899,7 +899,7 @@ def analyze_opsec_failures_from_enhanced(wallet: str, enhanced_txs: List[dict]) 
         leak = withdrawal_summary[0]
         critical_leaks.append({
             "type": "repeat_cashout_target",
-            "detail": f"Wallet frequently pays out to {leak['label']} ({leak['count']}x, ≈{leak['total_sol']:.3f} SOL)",
+            "detail": f"Wallet frequently pays out to {leak['wallet']} ({leak['count']}x, ≈{leak['total_sol']:.3f} SOL)",
             "deanon_impact": "Likely owned exit wallet; ties identity"
         })
         exposure_score += 30
