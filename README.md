@@ -1,6 +1,6 @@
 # LeakLens - See What Your Wallet Leaks
 
-A blockchain surveillance exposure tool for Solana. Built for the [encrypt.trade](https://encrypt.trade) hackathon.
+Solana wallet surveillance exposure tool. Built for the Solana Privacy Hackathon and submitted for the [encrypt.trade](https://encrypt.trade) Track 1 bounty (Educate users about mass financial surveillance, $500).
 
 <div align="center">
   <a href="https://www.youtube.com/watch?v=PLACEHOLDER">
@@ -13,60 +13,52 @@ A blockchain surveillance exposure tool for Solana. Built for the [encrypt.trade
 
 ## Project Description
 
-LeakLens analyzes Solana wallets to show how much on-chain activity reveals about you: timezone and sleep patterns, bot-like vs human behavior, funding and withdrawal links, and execution style. The goal is to educate users about mass financial surveillance. Classification is the first step in the surveillance pipeline; once a wallet is classified, it can be tracked, labeled, and profiled.
+Most people assume crypto wallets are anonymous. They’re not—on-chain activity gets tracked, clustered, and labeled. A single public tx can permanently tie you to a pattern. LeakLens shows you how exposed your wallet already is using real behavior: funding sources, cashout targets, linked addresses, memecoin trading, net worth, income sources. We also look at things like reaction speed between receives and sends; if you move tokens almost instantly, that can signal bot-like behavior or sloppy use of privacy tools (e.g. no time delays). The idea is to make surveillance visible so users get why tools like [encrypt.trade](https://encrypt.trade) exist—selective privacy that cuts exposure without killing usability.
 
 ## Technical Overview
 
-- **Solana + Helius**: Transaction data via Helius RPC and Enhanced Transactions API. On Vercel we use Enhanced for the main 100-tx list to avoid rate limits; execution profiles use a 50-tx RPC subset.
-- **Python backend**: FastAPI (`backend_api.py`) plus analysis logic in `leaklens_solana.py`. Handles wallet fetch, reaction-speed analysis, opsec failures, ego network, mempool forensics, swap detection, and PnL.
-- **Next.js frontend**: React app in `frontend/` with wallet analysis UI, exposure breakdown, and linked-wallet graph. Proxies analyze requests to the Python backend or to Vercel serverless.
-- **Deployment**: Local runs FastAPI + Next.js dev; Vercel runs Next.js with Python serverless for `/api/analyze-wallet`.
+We use Helius for Solana data (RPC + Enhanced Transactions). On Vercel, the main tx list comes from Enhanced only (avoids rate limits); execution profiles still hit RPC for a 50-tx subset. Backend is FastAPI + `leaklens_solana.py` (fetch, reaction-speed, opsec, ego network, mempool forensics, swaps, PnL). Frontend is Next.js in `frontend/`, with a wallet analysis UI and linked-wallet graph. Local dev: FastAPI + Next dev. Production: Vercel runs Next.js and Python serverless for `/api/analyze-wallet`.
 
 ## Features
 
-1. **Wallet analysis**: Enter any Solana address to run a full surveillance-exposure analysis.
-2. **Surveillance score**: Risk level and exposure score from timing, counterparties, execution style, and swap patterns.
-3. **Temporal fingerprint**: Inferred timezone and sleep window from transaction timing.
-4. **Bot detection**: Reaction-speed analysis between token receives and subsequent actions.
-5. **OpSec failures**: Funding sources, withdrawal targets, and memo usage that weaken anonymity.
-6. **Ego network**: Linked wallets and connection reasons from transfer patterns.
-7. **Mempool forensics**: Execution profiles (RETAIL, PRO_TRADER, MEV-style) from compute units and priority fees.
-8. **Financial context**: Trading PnL and income sources from detected swaps and transfers.
+- Enter any Solana address and run a full exposure analysis.
+- Surveillance score + risk level from timing, counterparties, execution style, swap patterns.
+- Inferred timezone / sleep window from tx timing.
+- Bot-style detection via reaction speed (receive → action).
+- OpSec failures: funding sources, withdrawal targets, memo usage.
+- Ego network: linked wallets and why they’re connected.
+- Mempool forensics: execution profiles (RETAIL, PRO_TRADER, MEV-style) from compute units and priority fees.
+- Financial context: trading PnL and income from swaps/transfers.
 
 ## How to Get Started
 
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/MatthewSullivn/LeakLens.git
-   cd LeakLens
-   ```
+Clone, then run backend and frontend:
 
-2. Set up the Python backend:
-   ```bash
-   pip install -r requirements.txt
-   export HELIUS_API_KEY="your_helius_api_key"
-   ```
+```bash
+git clone https://github.com/MatthewSullivn/LeakLens.git
+cd LeakLens
+```
 
-3. Start the backend server:
-   ```bash
-   python run_server.py
-   ```
-   API runs at `http://localhost:8000`. Docs at `http://localhost:8000/docs`.
+Backend:
 
-4. Set up and run the frontend:
-   ```bash
-   cd frontend
-   npm install
-   npm run dev
-   ```
-   App runs at `http://localhost:3000`.
+```bash
+pip install -r requirements.txt
+export HELIUS_API_KEY="your_helius_api_key"
+python run_server.py
+```
 
-5. Optional: use `START_DEV.bat` (Windows) to run both backend and frontend.
+API is at `http://localhost:8000`; docs at `/docs`.
 
-6. Enter a Solana wallet address on the landing page to run an analysis.
+Frontend:
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+App at `http://localhost:3000`. Paste a Solana address on the landing page to analyze. On Windows you can use `START_DEV.bat` to run both.
 
 ## Acknowledgments
 
-- **Helius** for Solana RPC and Enhanced Transactions API.
-- **Jupiter** for price and portfolio data.
-- **encrypt.trade** for the hackathon and privacy-education focus.
+Solana Privacy Hackathon, [encrypt.trade](https://encrypt.trade) (Track 1 sponsor), Helius, Jupiter.

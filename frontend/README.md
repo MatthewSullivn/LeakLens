@@ -1,46 +1,42 @@
 # LeakLens Frontend
 
-Next.js 15 + React 19 + TypeScript app for the LeakLens wallet surveillance-exposure UI. Part of [LeakLens](https://github.com/MatthewSullivn/LeakLens).
+Next.js 15 + React 19 + TypeScript UI for [LeakLens](https://github.com/MatthewSullivn/LeakLens). Landing page + wallet analysis view.
 
 ## Project Description
 
-The frontend provides the landing page (wallet input, demo CTA) and the analysis view. Users enter a Solana address, and the app calls the analyze API, then renders surveillance score, temporal fingerprint, bot detection, opsec failures, ego network, mempool forensics, and financial context. The UI is responsive and uses a dark theme with Tailwind and Radix primitives.
+You enter a Solana address; the app hits the analyze API and renders surveillance score, temporal fingerprint, bot detection, opsec failures, ego network, mempool forensics, and financial context. Dark theme, Tailwind + Radix, responsive.
 
 ## Technical Overview
 
-- **Next.js 15**: App Router, `app/page.tsx` (landing), `app/analysis/[wallet]/page.tsx` (analysis).
-- **API proxy**: `app/api/analyze-wallet/route.ts` forwards POST requests to the Python backend (`http://127.0.0.1:8000/analyze-wallet` locally) or to Vercel serverless when deployed. Request body: `{ wallet, limit }`.
-- **Components**: `components/landing/` (hero, features, process), `components/analysis/` (overview, exposure, opsec, ego network, etc.), `components/ui/` (button, card, badge, etc.). Navbar and footer live in `components/` and `components/ui/resizable-navbar.tsx`.
-- **Styling**: Tailwind CSS, `globals.css`. No separate CSS framework config beyond PostCSS.
+- App Router: `app/page.tsx` (landing), `app/analysis/[wallet]/page.tsx` (analysis).
+- `app/api/analyze-wallet/route.ts` proxies POST to the Python backend (`http://127.0.0.1:8000/analyze-wallet` locally) or to Vercel’s Python serverless when deployed. Body: `{ wallet, limit }`.
+- Components: `landing/` (hero, features, process), `analysis/` (overview, exposure, opsec, ego, etc.), `ui/` (button, card, badge, …). Navbar in `components/ui/resizable-navbar.tsx`.
+- Styling: Tailwind, `globals.css`, PostCSS.
 
 ## Features
 
-1. **Landing page**: Hero with wallet input, feature highlights, investigation process, links to Source (GitHub) and Encrypt Trade.
-2. **Analysis page**: Dynamic route by wallet address. Fetches analysis, shows loading/error states, then renders exposure overview, why-trackable, ego network, opsec failures, mempool forensics, financial context, and implications.
-3. **Export**: UI for PDF/JSON/CSV export (currently coming-soon placeholders).
-4. **Mobile**: Responsive layout and mobile nav (LeakLensNavbar).
+Landing has the hero, wallet input, feature highlights, and links to Source (GitHub) and Encrypt Trade. Analysis page is a dynamic route by wallet: fetch → loading/error states → exposure overview, why-trackable, ego network, opsec, mempool, financial context, implications. Export (PDF/JSON/CSV) is wired in the UI but still coming-soon. Mobile nav via LeakLensNavbar.
 
 ## How to Get Started
 
-1. Ensure the Python backend is running (see root [README](https://github.com/MatthewSullivn/LeakLens#how-to-get-started)).
-2. From the repo root:
-   ```bash
-   cd frontend
-   npm install
-   npm run dev
-   ```
-3. Open `http://localhost:3000`. Enter a Solana address on the landing page to run an analysis.
+Backend has to be up first (see root README). Then:
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+Open `http://localhost:3000` and run an analysis from the landing page.
 
 ## For developers
 
-- **Backend**: Must run on port 8000. Start with `python run_server.py` (or `START_SERVER.bat`) **before** `npm run dev`. "Connection refused" or 503 from the app means the backend is not running.
-- **API route**: `app/api/analyze-wallet/route.ts`. Locally it POSTs to `http://127.0.0.1:8000/analyze-wallet`. On Vercel it calls the Python serverless function (`api/analyze-wallet.py`). Request body: `{ wallet: string, limit?: number }`. Timeout 120s (`maxDuration` and AbortController).
-- **Types**: `components/analysis/types.ts` defines the analysis response types. Use it when adding UI for new API fields or debugging.
-- **Build / Vercel**: `npm run build` runs a `prebuild` script that copies `leaklens_solana.py` and `backend_api.py` from the repo root into `frontend/`. The Python serverless function (`frontend/api/analyze-wallet.py`) imports those. The copies are gitignored. On Vercel, set `HELIUS_API_KEY` in project env.
-- **Troubleshooting**: Connection refused → start backend. 504 / "Request timeout" → analysis exceeded 2 minutes; try a lower `limit` or check backend logs.
+- Backend on port 8000. Start it with `python run_server.py` or `START_SERVER.bat` before `npm run dev`. Connection refused / 503 = backend not running.
+- API route: `app/api/analyze-wallet/route.ts`. Local → `http://127.0.0.1:8000/analyze-wallet`; Vercel → Python serverless `api/analyze-wallet.py`. Body `{ wallet, limit? }`, 120s timeout.
+- Types live in `components/analysis/types.ts`. Use them when adding new API-driven UI or debugging.
+- `npm run build` runs a prebuild that copies `leaklens_solana.py` and `backend_api.py` from the repo root into `frontend/`. The Python serverless imports those. The copies are gitignored. Set `HELIUS_API_KEY` on Vercel.
+- Connection refused → start backend. 504 / timeout → analysis took too long; lower `limit` or check backend logs.
 
 ## Acknowledgments
 
-- **Next.js** and **React** for the frontend framework.
-- **Tailwind**, **Radix UI**, and **Lucide** for styling and components.
-- **LeakLens** backend and [encrypt.trade](https://encrypt.trade) for the hackathon context.
+Next.js, React, Tailwind, Radix, Lucide. LeakLens backend, Solana Privacy Hackathon, [encrypt.trade](https://encrypt.trade) (Track 1 bounty sponsor).
