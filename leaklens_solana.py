@@ -844,6 +844,89 @@ def analyze_opsec_failures(wallet: str, limit: int = 100, signatures: Optional[L
     }
 
 
+def analyze_opsec_failures_from_enhanced(wallet: str, enhanced_txs: List[dict]) -> dict:
+    """
+    Opsec signals from Helius Enhanced (nativeTransfers). No memo (enhanced lacks instructions).
+    Same return shape as analyze_opsec_failures for API compatibility.
+    """
+    funding_counterparties: Dict[str, Dict[str, float]] = defaultdict(lambda: {"count": 0, "lamports": 0})
+    withdrawal_counterparties: Dict[str, Dict[str, float]] = defaultdict(lambda: {"count": 0, "lamports": 0})
+
+    for tx in enhanced_txs or []:
+        if not isinstance(tx, dict):
+            continue
+        for nt in tx.get("nativeTransfers") or []:
+            fr = nt.get("fromUserAccount") or nt.get("from")
+            to = nt.get("toUserAccount") or nt.get("to")
+            amt_lamports = int(float(nt.get("amount") or 0))
+            if not fr or not to or amt_lamports <= 0:
+                continue
+            if _is_program_account(fr) or _is_program_account(to):
+                continue
+            if to == wallet and fr != wallet:
+                funding_counterparties[fr]["count"] += 1
+                funding_counterparties[fr]["lamports"] += amt_lamports
+            elif fr == wallet and to != wallet:
+                withdrawal_counterparties[to]["count"] += 1
+                withdrawal_counterparties[to]["lamports"] += amt_lamports
+
+    def summarize(counter: Dict[str, Dict[str, float]]):
+        out = []
+        for acc, st in counter.items():
+            out.append({
+                "wallet": acc,
+                "label": get_label(acc),
+                "count": int(st["count"]),
+                "total_sol": float(Decimal(st["lamports"]) / Decimal(1e9))
+            })
+        return sorted(out, key=lambda x: (x["count"], x["total_sol"]), reverse=True)
+
+    funding_summary = summarize(funding_counterparties)
+    withdrawal_summary = summarize(withdrawal_counterparties)
+    memo_hits = 0
+    critical_leaks = []
+    exposure_score = 10
+
+    if funding_summary and funding_summary[0]["count"] >= 3:
+        leak = funding_summary[0]
+        critical_leaks.append({
+            "type": "repeat_funding_source",
+            "detail": f"Wallet funded {leak['count']}x by {leak['label']} (≈{leak['total_sol']:.3f} SOL)",
+            "deanon_impact": "Strong linkage to a single funding wallet"
+        })
+        exposure_score += 30
+    if withdrawal_summary and withdrawal_summary[0]["count"] >= 3:
+        leak = withdrawal_summary[0]
+        critical_leaks.append({
+            "type": "repeat_cashout_target",
+            "detail": f"Wallet frequently pays out to {leak['label']} ({leak['count']}x, ≈{leak['total_sol']:.3f} SOL)",
+            "deanon_impact": "Likely owned exit wallet; ties identity"
+        })
+        exposure_score += 30
+    if not critical_leaks and (funding_summary or withdrawal_summary):
+        critical_leaks.append({
+            "type": "low_signal",
+            "detail": "Limited deanonymization signals detected; still review funding/withdrawal patterns.",
+            "deanon_impact": "Monitor reuse of sources/targets and memo usage."
+        })
+
+    exposure_score = min(100, exposure_score)
+    cumulative = "HIGH" if exposure_score >= 70 else "MEDIUM" if exposure_score >= 40 else "LOW"
+    weakest = critical_leaks[0]["detail"] if critical_leaks else "No critical exposure detected."
+
+    return {
+        "wallet": wallet,
+        "total_transactions": len(enhanced_txs) if enhanced_txs else 0,
+        "critical_leaks": critical_leaks,
+        "funding_sources": funding_summary[:5],
+        "withdrawal_targets": withdrawal_summary[:5],
+        "memo_usage": memo_hits,
+        "exposure_score": exposure_score,
+        "cumulative_exposure": cumulative,
+        "weakest_link": weakest
+    }
+
+
 def detect_sleep_window(hourly_counts: list) -> SleepWindow:
     min_sum = float('inf')
     sleep_start = 0
@@ -963,11 +1046,33 @@ def analyze_reaction_speed(wallet: str, tx_details_list: list) -> ReactionSpeedA
     )
 
 
+def _is_enhanced_tx(tx: dict) -> bool:
+    """Helius Enhanced format has nativeTransfers/tokenTransfers, not meta."""
+    return bool(tx and (tx.get("nativeTransfers") is not None or tx.get("tokenTransfers") is not None) and not tx.get("meta"))
+
+
 def has_token_receive(tx_details: dict, wallet: str) -> bool:
-    """Check if transaction involves receiving tokens"""
-    if not tx_details or not tx_details.get("meta"):
+    """Check if transaction involves receiving tokens. Supports RPC meta and Helius enhanced."""
+    if not tx_details:
         return False
-    
+    # Helius enhanced: tokenTransfers/nativeTransfers
+    if _is_enhanced_tx(tx_details):
+        try:
+            for tt in tx_details.get("tokenTransfers") or []:
+                if (tt.get("toUserAccount") or tt.get("to")) == wallet:
+                    amt = float(tt.get("tokenAmount") or tt.get("amount") or 0)
+                    if amt > 0:
+                        return True
+            for nt in tx_details.get("nativeTransfers") or []:
+                if (nt.get("toUserAccount") or nt.get("to")) == wallet:
+                    amt = float(nt.get("amount") or 0)
+                    if amt > 0:
+                        return True
+        except Exception:
+            pass
+        return False
+    if not tx_details.get("meta"):
+        return False
     try:
         # Check post token balances - if balance increased, tokens were received
         post_balances = tx_details["meta"].get("postTokenBalances", [])
@@ -1011,10 +1116,27 @@ def has_token_receive(tx_details: dict, wallet: str) -> bool:
 
 
 def has_token_action(tx_details: dict, wallet: str) -> bool:
-    """Check if transaction involves sending/swapping tokens"""
-    if not tx_details or not tx_details.get("meta"):
+    """Check if transaction involves sending/swapping tokens. Supports RPC meta and Helius enhanced."""
+    if not tx_details:
         return False
-    
+    # Helius enhanced: feePayer + tokenTransfers/nativeTransfers
+    if _is_enhanced_tx(tx_details):
+        try:
+            if (tx_details.get("feePayer") or tx_details.get("fee_payer")) != wallet:
+                return False
+            for tt in tx_details.get("tokenTransfers") or []:
+                if (tt.get("fromUserAccount") or tt.get("from")) == wallet:
+                    return True
+            for nt in tx_details.get("nativeTransfers") or []:
+                fr = nt.get("fromUserAccount") or nt.get("from")
+                to = nt.get("toUserAccount") or nt.get("to")
+                if fr == wallet and to != wallet and float(nt.get("amount") or 0) > 0:
+                    return True
+        except Exception:
+            pass
+        return False
+    if not tx_details.get("meta"):
+        return False
     try:
         # Check if wallet initiated the transaction (is signer)
         account_keys = tx_details.get("transaction", {}).get("message", {}).get("accountKeys", [])

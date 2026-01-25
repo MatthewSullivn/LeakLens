@@ -13,6 +13,7 @@ from fastapi.responses import FileResponse
 from pydantic import BaseModel
 from typing import Optional, Dict, Set, List, Any, Tuple
 import sys
+import pandas as pd
 import os
 import traceback
 import asyncio
@@ -36,7 +37,8 @@ from leaklens_solana import (
     detect_sleep_window as detect_sleep_window_solana,
     calculate_probabilities as calculate_probabilities_solana,
     analyze_reaction_speed as analyze_reaction_speed_solana,
-    analyze_opsec_failures
+    analyze_opsec_failures,
+    analyze_opsec_failures_from_enhanced,
 )
 
 # Solana-only for encrypt.trade hackathon
@@ -101,6 +103,48 @@ def helius_get_transactions(wallet: str, limit: int = 200) -> Tuple[List[dict], 
         return [], {"error": "helius_tx_unexpected_shape"}
     except Exception as e:
         return [], {"error": f"helius_tx_exception_{str(e)[:120]}"}
+
+
+def _build_df_and_lists_from_helius_enhanced(enhanced_txs: List[dict]) -> Tuple[pd.DataFrame, List[dict], Dict[str, dict], List[dict]]:
+    """
+    Build df, tx_details_list, tx_details_map, signatures from Helius Enhanced Transactions.
+    Used on Vercel to avoid 100x getTransaction RPC rate limits; one Helius API call gives stable count.
+    Enhanced tx have signature, timestamp, fee, slot, type; we use compute_units=0, instructions=0.
+    """
+    transactions = []
+    tx_details_list = []
+    signatures = []
+    tx_details_map: Dict[str, dict] = {}  # empty; opsec/mempool/notable get minimal results
+
+    for tx in enhanced_txs or []:
+        if not isinstance(tx, dict):
+            continue
+        sig = tx.get("signature") or tx.get("transactionSignature") or ""
+        ts = tx.get("timestamp") or tx.get("blockTime") or tx.get("block_time") or 0
+        if not sig or not ts:
+            continue
+        fee = _safe_float(tx.get("fee"), 0.0)
+        slot = int(tx.get("slot") or 0)
+        utc_time = datetime.fromtimestamp(ts, tz=timezone.utc)
+        transactions.append({
+            "signature": sig,
+            "timestamp": utc_time,
+            "hour": utc_time.hour,
+            "day_of_week": utc_time.weekday(),
+            "day_name": utc_time.strftime("%A"),
+            "compute_units": 0,
+            "fee_lamports": fee,
+            "fee_sol": fee / 1e9,
+            "instructions": 0,
+            "success": True,
+            "slot": slot,
+            "block_time": ts,
+        })
+        tx_details_list.append({"timestamp": ts, "details": tx})
+        signatures.append({"signature": sig, "blockTime": ts})
+
+    df = pd.DataFrame(transactions)
+    return df, tx_details_list, tx_details_map, signatures
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -1449,6 +1493,48 @@ def get_notable_transactions(wallet: str, tx_details_map: Dict[str, dict], signa
     }
 
 
+def get_notable_transactions_from_enhanced(wallet: str, enhanced_txs: List[dict]) -> dict:
+    """Notable (large SOL) tx from Helius Enhanced nativeTransfers. Same return shape as get_notable_transactions."""
+    notable_txs = []
+    for tx in enhanced_txs or []:
+        if not isinstance(tx, dict):
+            continue
+        sig = tx.get("signature") or tx.get("transactionSignature") or ""
+        ts = tx.get("timestamp") or tx.get("blockTime") or 0
+        if not sig or not ts:
+            continue
+        sol_in = 0.0
+        sol_out = 0.0
+        for nt in tx.get("nativeTransfers") or []:
+            fr = nt.get("fromUserAccount") or nt.get("from")
+            to = nt.get("toUserAccount") or nt.get("to")
+            amt = _safe_float(nt.get("amount"), 0.0) / 1e9
+            if to == wallet and fr != wallet:
+                sol_in += amt
+            elif fr == wallet and to != wallet:
+                sol_out += amt
+        delta = sol_in - sol_out
+        if abs(delta) > 1.0:
+            notable_txs.append({
+                "signature": sig,
+                "amount": abs(delta),
+                "timestamp": ts,
+                "type": "large_transfer" if delta > 0 else "large_withdrawal",
+                "delta": delta
+            })
+    if notable_txs:
+        notable_txs.sort(key=lambda x: x["amount"], reverse=True)
+        top = notable_txs[:10]
+        return {
+            "count": len(top),
+            "transactions": [
+                {"signature": t["signature"], "amount": f"{t['amount']:.4f} SOL", "amount_raw": t["amount"], "type": t["type"], "timestamp": t["timestamp"], "delta": t["delta"]}
+                for t in top
+            ]
+        }
+    return {"count": 0, "transactions": []}
+
+
 def analyze_ego_network(wallet: str, tx_details_map: Dict[str, dict], limit: int = 100) -> dict:
     """
     Analyze ego-network of linked wallets using heuristic inference.
@@ -1843,12 +1929,27 @@ def analyze_wallet_comprehensive(request: WalletAnalysisRequest):
     """
     Comprehensive Solana wallet analysis for surveillance exposure detection.
     Built for encrypt.trade hackathon.
+    On Vercel, use Helius Enhanced Transactions for main tx list (1 API call) to avoid RPC
+    rate limits; local uses RPC (fetch_signatures + getTransaction) for full meta/compute data.
     """
     try:
         # Solana only
-        df, tx_details_list, tx_details_map, signatures = analyze_wallet_solana(request.wallet, limit=request.limit)
+        use_helius_primary = os.getenv("VERCEL") == "1"
+        limit = request.limit or 100
+        enhanced_all: List[dict] = []
+        all_dbg: dict = {}
+
+        if use_helius_primary:
+            enhanced_all, all_dbg = helius_get_transactions(request.wallet, limit=min(limit, 100))
+            if enhanced_all:
+                df, tx_details_list, tx_details_map, signatures = _build_df_and_lists_from_helius_enhanced(enhanced_all)
+            else:
+                df, tx_details_list, tx_details_map, signatures = analyze_wallet_solana(request.wallet, limit=limit)
+        else:
+            df, tx_details_list, tx_details_map, signatures = analyze_wallet_solana(request.wallet, limit=limit)
+
         compute_unit_field = "compute_units"
-        
+
         if df.empty:
             raise HTTPException(status_code=404, detail="No transactions found for this wallet")
         
@@ -1877,13 +1978,16 @@ def analyze_wallet_comprehensive(request: WalletAnalysisRequest):
             tx_details_map=tx_details_map
         )
         
-        # Opsec failures using already-fetched data to avoid refetch (reduced limit for speed)
-        opsec_data = analyze_opsec_failures(
-            request.wallet,
-            limit=min(80, request.limit),
-            signatures=signatures,
-            tx_details_map=tx_details_map
-        )
+        # Opsec: use enhanced-based when Helius-primary (Vercel) for full data; else RPC
+        if use_helius_primary and enhanced_all:
+            opsec_data = analyze_opsec_failures_from_enhanced(request.wallet, enhanced_all)
+        else:
+            opsec_data = analyze_opsec_failures(
+                request.wallet,
+                limit=min(80, request.limit),
+                signatures=signatures,
+                tx_details_map=tx_details_map
+            )
         
         # Prepare transaction complexity data
         complexity_data = []
@@ -2008,8 +2112,10 @@ def analyze_wallet_comprehensive(request: WalletAnalysisRequest):
         networth = compute_networth_breakdown(request.wallet)
 
         # Exact(ish) trading PnL and income sources from Helius Enhanced Transactions (parsed)
-        helius_limit = min(max(request.limit, 100), 100)  # cap at 100 per Helius docs
-        enhanced_all, all_dbg = helius_get_transactions(request.wallet, limit=helius_limit)
+        # Reuse enhanced_all when we already fetched it (Vercel Helius-primary path)
+        if not enhanced_all:
+            helius_limit = min(max(request.limit, 100), 100)  # cap at 100 per Helius docs
+            enhanced_all, all_dbg = helius_get_transactions(request.wallet, limit=helius_limit)
 
         # Detect swaps: prefer Helius parsed events, fallback to delta-based detection
         swap_events = detect_swaps_from_helius(enhanced_all)
@@ -2060,8 +2166,11 @@ def analyze_wallet_comprehensive(request: WalletAnalysisRequest):
         # Ego-network analysis (linked wallets)
         ego_network = analyze_ego_network(request.wallet, tx_details_map, limit=min(100, request.limit))
 
-        # Notable transactions (large transfers)
-        notable_transactions = get_notable_transactions(request.wallet, tx_details_map, signatures)
+        # Notable transactions: use enhanced-based when Helius-primary (Vercel) for full data
+        if use_helius_primary and enhanced_all:
+            notable_transactions = get_notable_transactions_from_enhanced(request.wallet, enhanced_all)
+        else:
+            notable_transactions = get_notable_transactions(request.wallet, tx_details_map, signatures)
 
         return {
             "wallet": request.wallet,
