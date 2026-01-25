@@ -289,7 +289,7 @@ export function LeakLensNavbar() {
         <div className="flex items-center gap-2 sm:gap-3">
           {/* Source Button */}
           <a
-            href="https://github.com"
+            href="https://github.com/MatthewSullivn/LeakLens"
             target="_blank"
             rel="noopener noreferrer"
             className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-muted/50 border border-border/60 hover:bg-muted/80 transition-colors"
@@ -329,7 +329,7 @@ export function LeakLensNavbar() {
               <span className="text-xs font-medium text-cyan-400 uppercase tracking-wide">Mainnet</span>
             </div>
             <a
-              href="https://github.com"
+              href="https://github.com/MatthewSullivn/LeakLens"
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-muted/50 border border-border/60 hover:bg-muted/80 transition-colors w-fit"

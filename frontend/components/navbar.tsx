@@ -26,7 +26,7 @@ export function Navbar() {
 
             {/* Source Button */}
             <a
-              href="https://github.com"
+              href="https://github.com/MatthewSullivn/LeakLens"
               target="_blank"
               rel="noopener noreferrer"
               className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-muted/50 border border-border/60 hover:bg-muted/80 transition-colors"
