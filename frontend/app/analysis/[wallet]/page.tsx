@@ -33,28 +33,45 @@ export default function AnalysisPage({ params }: { params: Promise<{ wallet: str
   const [copied, setCopied] = useState(false)
 
   useEffect(() => {
+    const abortController = new AbortController()
+    let aborted = false
+
     const fetchAnalysis = async () => {
       try {
         setLoading(true)
+        setError('')
         const response = await fetch('/api/analyze-wallet', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ wallet, limit: 100 }),
+          signal: abortController.signal,
         })
 
+        if (aborted) return
         if (!response.ok) throw new Error(`Analysis failed: ${response.statusText}`)
         const result = await response.json()
+        if (aborted) return
         setData(result)
       } catch (err: any) {
+        if (err.name === 'AbortError') {
+          aborted = true
+          return
+        }
+        if (aborted) return
         if (process.env.NODE_ENV === 'development') {
           console.error('Analysis error:', err)
         }
         setError(err.message || 'Failed to analyze wallet')
       } finally {
-        setLoading(false)
+        if (!aborted) setLoading(false)
       }
     }
     fetchAnalysis()
+
+    return () => {
+      aborted = true
+      abortController.abort()
+    }
   }, [wallet])
 
   const copyAddress = useCallback(() => {

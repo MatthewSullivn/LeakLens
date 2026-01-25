@@ -544,7 +544,12 @@ if os.path.exists(static_dir):
         index_path = os.path.join(static_dir, "index.html")
         if os.path.exists(index_path):
             return FileResponse(index_path)
-        return {"message": "Frontend not found. API is running."}
+        return {"message": "LeakLens API - See what your wallet leaks", "version": "2.0.0", "hackathon": "encrypt.trade", "docs": "/docs"}
+else:
+    @app.get("/")
+    def root():
+        """Root endpoint - returns API info"""
+        return {"message": "LeakLens API - See what your wallet leaks", "version": "2.0.0", "hackathon": "encrypt.trade", "docs": "/docs"}
 
 
 class MempoolForensicsRequest(BaseModel):
@@ -565,11 +570,6 @@ class TransactionAnalysisRequest(BaseModel):
 class OpsecAnalysisRequest(BaseModel):
     wallet: str
     limit: Optional[int] = 120
-
-
-@app.get("/")
-def root():
-    return {"message": "LeakLens API - See what your wallet leaks", "version": "2.0.0", "hackathon": "encrypt.trade"}
 
 
 @app.post("/mempool-forensics")

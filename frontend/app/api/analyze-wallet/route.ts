@@ -5,8 +5,29 @@ export const maxDuration = 120
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json()
-    
+    let body: { wallet?: string; limit?: number }
+    try {
+      const raw = await request.text()
+      if (!raw || !raw.trim()) {
+        return NextResponse.json(
+          { error: 'Request body is required' },
+          { status: 400 }
+        )
+      }
+      body = JSON.parse(raw) as { wallet?: string; limit?: number }
+    } catch {
+      return NextResponse.json(
+        { error: 'Invalid JSON in request body' },
+        { status: 400 }
+      )
+    }
+    if (!body?.wallet || typeof body.wallet !== 'string') {
+      return NextResponse.json(
+        { error: 'Missing or invalid "wallet" field' },
+        { status: 400 }
+      )
+    }
+
     // In local development, proxy to the Python backend running on localhost
     // In production (Vercel), this route shouldn't be hit (Python function handles it)
     // But if it is, we'll proxy to the Python function
