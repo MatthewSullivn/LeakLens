@@ -479,10 +479,10 @@ const Scene6 = memo(function Scene6() {
           {/* Right: Selective privacy */}
           <div className="p-6 rounded-xl bg-primary/5 border border-primary/30">
             <h3 className="text-sm font-semibold text-primary mb-2 uppercase tracking-wider">
-              Tools that let you hide
+              Selective privacy tools
             </h3>
             <p className="text-xs text-muted-foreground mb-4">
-              Break links and control what&apos;s visible
+              Break on-chain linkability without breaking usability
             </p>
             <div className="flex flex-wrap gap-2">
               <a 
