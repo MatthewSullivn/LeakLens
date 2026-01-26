@@ -446,23 +446,39 @@ const Scene6 = memo(function Scene6() {
           </div>
         </div>
         
-        {/* Mentions */}
-        <div className="flex flex-wrap items-center justify-center gap-4 mt-8 mb-8">
-          <a 
-            href="https://encrypt.trade" 
-            target="_blank" 
-            rel="noopener noreferrer"
-            className="px-4 py-2 rounded-full bg-primary/10 border border-primary/30 text-sm text-primary hover:bg-primary/20 transition-colors"
-          >
-            encrypt.trade
-          </a>
-          <span className="text-muted-foreground/50">vs</span>
-          <span className="px-4 py-2 rounded-full bg-muted text-sm text-muted-foreground">
-            Arkham
-          </span>
-          <span className="px-4 py-2 rounded-full bg-muted text-sm text-muted-foreground">
-            Block scanners
-          </span>
+        {/* Comparison: Surveillance stack vs Selective privacy */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8 mb-8">
+          {/* Left: Surveillance stack */}
+          <div className="p-6 rounded-xl bg-card/30 border border-border/40">
+            <h3 className="text-sm font-semibold text-foreground mb-4 uppercase tracking-wider">
+              Surveillance stack
+            </h3>
+            <div className="flex flex-wrap gap-2">
+              <span className="px-3 py-1.5 rounded-full bg-muted text-xs text-muted-foreground">
+                Arkham
+              </span>
+              <span className="px-3 py-1.5 rounded-full bg-muted text-xs text-muted-foreground">
+                Block scanners
+              </span>
+            </div>
+          </div>
+          
+          {/* Right: Selective privacy */}
+          <div className="p-6 rounded-xl bg-primary/5 border border-primary/30">
+            <h3 className="text-sm font-semibold text-primary mb-4 uppercase tracking-wider">
+              Selective privacy
+            </h3>
+            <div className="flex flex-wrap gap-2">
+              <a 
+                href="https://encrypt.trade" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="px-3 py-1.5 rounded-full bg-primary/10 border border-primary/30 text-xs text-primary hover:bg-primary/20 transition-colors"
+              >
+                encrypt.trade
+              </a>
+            </div>
+          </div>
         </div>
         
         {/* Final CTA */}
