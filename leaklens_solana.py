@@ -177,9 +177,25 @@ def rpc_call(method: str, params: list) -> Optional[dict]:
 
 
 def fetch_signatures(wallet: str, limit: int = 100) -> list:
-    """Fetch transaction signatures for a wallet"""
+    """Fetch transaction signatures for a wallet. Normalizes to list of dicts."""
     result = rpc_call("getSignaturesForAddress", [wallet, {"limit": limit}])
-    return result if result else []
+    if not result:
+        return []
+    out = []
+    for item in result:
+        if isinstance(item, dict):
+            sig = item.get("signature") or item.get("transactionSignature") or ""
+            bt = item.get("blockTime") or item.get("block_time") or 0
+            if not sig:
+                continue
+            rec = {"signature": sig, "blockTime": bt}
+            for k in ("err", "slot", "blockHeight", "memo"):
+                if k in item:
+                    rec[k] = item[k]
+            out.append(rec)
+        elif isinstance(item, str):
+            out.append({"signature": item, "blockTime": 0})
+    return out
 
 
 def fetch_transaction(signature: str) -> Optional[dict]:
@@ -488,14 +504,25 @@ def analyze_wallet_execution_profiles(wallet: str, limit: int = 100, signatures:
     jito_tip_count = 0
     
     if tx_details_map is None:
-        sig_strings = [sig_info["signature"] for sig_info in signatures]
-        tx_details_map = fetch_transactions_parallel(sig_strings, max_workers=12)
+        sig_strings = []
+        for si in signatures:
+            if isinstance(si, dict):
+                s = si.get("signature") or si.get("transactionSignature")
+                if s:
+                    sig_strings.append(s)
+            elif isinstance(si, str):
+                sig_strings.append(si)
+        tx_details_map = fetch_transactions_parallel(sig_strings, max_workers=12) if sig_strings else {}
     
     for sig_info in signatures:
-        signature = sig_info["signature"]
+        if not isinstance(sig_info, dict):
+            continue
+        signature = sig_info.get("signature") or sig_info.get("transactionSignature") or ""
+        if not signature:
+            continue
         tx_details = tx_details_map.get(signature) if tx_details_map else None
         
-        if tx_details:
+        if tx_details and isinstance(tx_details, dict):
             profile_data = analyze_execution_profile(tx_details)
             profile = profile_data["execution_profile"]
             profile_counts[profile] = profile_counts.get(profile, 0) + 1
@@ -561,7 +588,14 @@ def analyze_wallet(wallet: str, limit: int = 100) -> tuple:
     print(f"[-] Analyzing details...\n")
     
     # Extract signature strings for batch fetching
-    sig_strings = [sig_info["signature"] for sig_info in signatures]
+    sig_strings = []
+    for si in signatures:
+        if isinstance(si, dict):
+            s = si.get("signature") or si.get("transactionSignature")
+            if s:
+                sig_strings.append(s)
+        elif isinstance(si, str):
+            sig_strings.append(si)
     
     # Fetch transactions in parallel (faster and more reliable)
     print(f"    [*] Fetching {len(sig_strings)} transactions in parallel...")
@@ -579,6 +613,8 @@ def analyze_wallet(wallet: str, limit: int = 100) -> tuple:
     tx_details_list = []
     
     for idx, sig_info in enumerate(signatures):
+        if not isinstance(sig_info, dict):
+            continue
         # Reduced progress bar updates for speed (update every 10 transactions)
         if idx % 10 == 0 or idx == len(signatures) - 1:
             progress = (idx + 1) / len(signatures)
@@ -587,16 +623,16 @@ def analyze_wallet(wallet: str, limit: int = 100) -> tuple:
             bar = '█' * filled + '░' * (bar_len - filled)
             print(f"\r    [{bar}] {idx + 1}/{len(signatures)}", end="", flush=True)
         
-        signature = sig_info["signature"]
-        block_time = sig_info.get("blockTime")
+        signature = sig_info.get("signature") or sig_info.get("transactionSignature") or ""
+        block_time = sig_info.get("blockTime") or sig_info.get("block_time")
         
-        if not block_time:
+        if not block_time or not signature:
             continue
         
         tx_details = tx_details_map.get(signature)
         
         # Skip if transaction details couldn't be fetched
-        if not tx_details:
+        if not tx_details or not isinstance(tx_details, dict):
             continue
         
         compute_units = 0
@@ -711,17 +747,28 @@ def analyze_opsec_failures(wallet: str, limit: int = 100, signatures: Optional[L
         }
 
     if tx_details_map is None:
-        sig_strings = [s["signature"] for s in signatures]
-        tx_details_map = fetch_transactions_parallel(sig_strings, max_workers=12)
+        sig_strings = []
+        for s in signatures:
+            if isinstance(s, dict):
+                x = s.get("signature") or s.get("transactionSignature")
+                if x:
+                    sig_strings.append(x)
+            elif isinstance(s, str):
+                sig_strings.append(s)
+        tx_details_map = fetch_transactions_parallel(sig_strings, max_workers=12) if sig_strings else {}
 
     funding_counterparties: Dict[str, Dict[str, float]] = defaultdict(lambda: {"count": 0, "lamports": 0})
     withdrawal_counterparties: Dict[str, Dict[str, float]] = defaultdict(lambda: {"count": 0, "lamports": 0})
     memo_hits = 0
 
     for sig_info in signatures:
-        signature = sig_info["signature"]
+        if not isinstance(sig_info, dict):
+            continue
+        signature = sig_info.get("signature") or sig_info.get("transactionSignature") or ""
+        if not signature:
+            continue
         tx_details = tx_details_map.get(signature)
-        if not tx_details or not tx_details.get("meta"):
+        if not tx_details or not isinstance(tx_details, dict) or not tx_details.get("meta"):
             continue
 
         meta = tx_details["meta"]
@@ -856,6 +903,8 @@ def analyze_opsec_failures_from_enhanced(wallet: str, enhanced_txs: List[dict]) 
         if not isinstance(tx, dict):
             continue
         for nt in tx.get("nativeTransfers") or []:
+            if not isinstance(nt, dict):
+                continue
             fr = nt.get("fromUserAccount") or nt.get("from")
             to = nt.get("toUserAccount") or nt.get("to")
             amt_lamports = int(float(nt.get("amount") or 0))
@@ -956,11 +1005,20 @@ def analyze_reaction_speed(wallet: str, tx_details_list: list) -> ReactionSpeedA
     """
     print(f"\n[*] Analyzing reaction speed for bot detection...")
     
-    if not tx_details_list:
+    if not tx_details_list or not isinstance(tx_details_list, list):
+        return ReactionSpeedAnalysis()
+    
+    # Filter to only dict items with required fields
+    valid_txs = []
+    for tx in tx_details_list:
+        if isinstance(tx, dict) and "timestamp" in tx and "details" in tx:
+            valid_txs.append(tx)
+    
+    if len(valid_txs) < 2:
         return ReactionSpeedAnalysis()
     
     # Sort by timestamp (oldest first)
-    transactions = sorted(tx_details_list, key=lambda x: x["timestamp"])
+    transactions = sorted(valid_txs, key=lambda x: x.get("timestamp", 0))
     
     reaction_times = []
     instant_count = 0
@@ -982,13 +1040,24 @@ def analyze_reaction_speed(wallet: str, tx_details_list: list) -> ReactionSpeedA
         current_tx = transactions[i]
         next_tx = transactions[i + 1]
         
+        if not isinstance(current_tx, dict) or not isinstance(next_tx, dict):
+            continue
+        
         # Calculate time delta in seconds
-        time_delta = next_tx["timestamp"] - current_tx["timestamp"]
+        current_ts = current_tx.get("timestamp", 0)
+        next_ts = next_tx.get("timestamp", 0)
+        if not current_ts or not next_ts:
+            continue
+        time_delta = next_ts - current_ts
         
         # Check if current transaction involves receiving tokens
         # and next transaction involves sending/swapping
-        current_has_receive = has_token_receive(current_tx["details"], wallet)
-        next_has_action = has_token_action(next_tx["details"], wallet)
+        current_details = current_tx.get("details")
+        next_details = next_tx.get("details")
+        if not current_details or not next_details:
+            continue
+        current_has_receive = has_token_receive(current_details, wallet)
+        next_has_action = has_token_action(next_details, wallet)
         
         # If pattern detected: receive -> action
         if current_has_receive and next_has_action and time_delta <= 300:  # Within 5 minutes
@@ -1059,11 +1128,15 @@ def has_token_receive(tx_details: dict, wallet: str) -> bool:
     if _is_enhanced_tx(tx_details):
         try:
             for tt in tx_details.get("tokenTransfers") or []:
+                if not isinstance(tt, dict):
+                    continue
                 if (tt.get("toUserAccount") or tt.get("to")) == wallet:
                     amt = float(tt.get("tokenAmount") or tt.get("amount") or 0)
                     if amt > 0:
                         return True
             for nt in tx_details.get("nativeTransfers") or []:
+                if not isinstance(nt, dict):
+                    continue
                 if (nt.get("toUserAccount") or nt.get("to")) == wallet:
                     amt = float(nt.get("amount") or 0)
                     if amt > 0:
@@ -1125,9 +1198,13 @@ def has_token_action(tx_details: dict, wallet: str) -> bool:
             if (tx_details.get("feePayer") or tx_details.get("fee_payer")) != wallet:
                 return False
             for tt in tx_details.get("tokenTransfers") or []:
+                if not isinstance(tt, dict):
+                    continue
                 if (tt.get("fromUserAccount") or tt.get("from")) == wallet:
                     return True
             for nt in tx_details.get("nativeTransfers") or []:
+                if not isinstance(nt, dict):
+                    continue
                 fr = nt.get("fromUserAccount") or nt.get("from")
                 to = nt.get("toUserAccount") or nt.get("to")
                 if fr == wallet and to != wallet and float(nt.get("amount") or 0) > 0:
