@@ -4,7 +4,7 @@ import { memo, useRef, useEffect, useState } from 'react'
 import { 
   Wallet, ArrowRight, RefreshCcw, Clock, Users, Link2, 
   Eye, EyeOff, Shield, AlertTriangle, ArrowDown,
-  Fingerprint, Network, Lock, Unlock, ScanSearch
+  Fingerprint, Network, Lock, Unlock, ScanSearch, X
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
@@ -406,95 +406,226 @@ const Scene5 = memo(function Scene5() {
 // ============================================================================
 
 const Scene6 = memo(function Scene6() {
+  const [stage, setStage] = useState<'before' | 'transition' | 'after'>('before')
+  const [hasAnimated, setHasAnimated] = useState(false)
+
+  useEffect(() => {
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    if (prefersReducedMotion) {
+      setStage('after')
+      setHasAnimated(true)
+      return
+    }
+
+    const timer = setTimeout(() => {
+      if (!hasAnimated) {
+        setHasAnimated(true)
+        setTimeout(() => setStage('transition'), 1000)
+        setTimeout(() => setStage('after'), 2500)
+      }
+    }, 800)
+
+    return () => clearTimeout(timer)
+  }, [hasAnimated])
+
   return (
-    <Scene className="min-h-[55vh] flex items-center justify-center py-12 border-t border-border/20" delay={100}>
-      <div className="max-w-3xl mx-auto px-4">
-        <div className="text-center mb-8">
+    <Scene className="min-h-[80vh] flex items-center justify-center py-12 border-t border-border/20" delay={100}>
+      <div className="max-w-4xl mx-auto px-4">
+        <div className="text-center mb-12">
           <h2 className="text-3xl sm:text-4xl md:text-5xl font-semibold tracking-tight mb-6 text-foreground">
-            What selective privacy actually changes.
+            What just happened to my privacy?
           </h2>
-          <p className="text-lg text-muted-foreground max-w-xl mx-auto">
-            Not hiding forever. Breaking specific links. Reducing surveillance surface area.
+        </div>
+        
+        {/* Before section */}
+        <div className="mb-12">
+          <h3 className="text-lg font-semibold text-foreground mb-4 text-center">
+            Before, tracking was easy.
+          </h3>
+          <p className="text-sm text-muted-foreground mb-6 text-center max-w-2xl mx-auto">
+            Your wallet was connected to:
+          </p>
+          
+          {/* Connected items */}
+          <div className="flex items-center justify-center gap-8 mb-8 flex-wrap">
+            <div className="flex flex-col items-center gap-2">
+              <div className="w-14 h-14 rounded-xl bg-card border-2 border-primary/40 flex items-center justify-center">
+                <Wallet className="w-6 h-6 text-primary" />
+              </div>
+              <span className="text-xs text-muted-foreground">other wallets</span>
+            </div>
+            <ArrowRight className="w-5 h-5 text-muted-foreground/50" />
+            <div className="flex flex-col items-center gap-2">
+              <div className="w-14 h-14 rounded-xl bg-muted border border-border/50 flex items-center justify-center">
+                <div className="w-6 h-6 rounded bg-muted-foreground/40" />
+              </div>
+              <span className="text-xs text-muted-foreground">exchanges</span>
+            </div>
+            <ArrowRight className="w-5 h-5 text-muted-foreground/50" />
+            <div className="flex flex-col items-center gap-2">
+              <div className="w-14 h-14 rounded-xl bg-card border border-border/50 flex items-center justify-center">
+                <Fingerprint className="w-6 h-6 text-muted-foreground" />
+              </div>
+              <span className="text-xs text-muted-foreground">your past behavior</span>
+            </div>
+          </div>
+          
+          <p className="text-sm text-foreground text-center max-w-xl mx-auto">
+            Those links made it easy to guess who you are.
           </p>
         </div>
         
-        {/* Flow diagram: Wallet → Privacy layer → Clean output */}
-        <div className="flex items-center justify-center gap-4 sm:gap-6 my-8">
-          <div className="flex flex-col items-center gap-2">
-            <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl bg-card border border-border/50 flex items-center justify-center">
-              <Wallet className="w-6 h-6 sm:w-7 sm:h-7 text-muted-foreground" />
-            </div>
-            <span className="text-xs text-muted-foreground">Wallet</span>
+        {/* Transition: Privacy layer */}
+        <div className="mb-12 p-6 rounded-xl bg-primary/5 border border-primary/30">
+          <p className="text-sm text-foreground mb-2 text-center">
+            Then a privacy layer was used <span className="text-primary">(encrypt.trade)</span>
+          </p>
+          <div className="text-center space-y-2 text-sm text-muted-foreground mb-4">
+            <p>Nothing was hidden.</p>
+            <p>Nothing was erased.</p>
           </div>
-          
-          <ArrowRight className="w-5 h-5 text-muted-foreground/50" />
-          
-          <div className="flex flex-col items-center gap-2">
-            <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl bg-primary/10 border-2 border-primary/40 flex items-center justify-center">
-              <Shield className="w-6 h-6 sm:w-7 sm:h-7 text-primary" />
-            </div>
-            <span className="text-xs text-primary">Privacy layer</span>
-          </div>
-          
-          <ArrowRight className="w-5 h-5 text-muted-foreground/50" />
-          
-          <div className="flex flex-col items-center gap-2">
-            <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl bg-card border border-primary/30 flex items-center justify-center">
-              <EyeOff className="w-6 h-6 sm:w-7 sm:h-7 text-foreground" />
-            </div>
-            <span className="text-xs text-muted-foreground">Clean output</span>
-          </div>
+          <p className="text-sm text-foreground text-center">
+            Some links were simply broken.
+          </p>
         </div>
         
-        {/* Comparison: Surveillance stack vs Selective privacy */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8 mb-8">
-          {/* Left: Surveillance stack */}
-          <div className="p-6 rounded-xl bg-card/30 border border-border/40">
-            <h3 className="text-sm font-semibold text-foreground mb-2 uppercase tracking-wider">
-              Tools that expose everything
-            </h3>
-            <p className="text-xs text-muted-foreground mb-4">
-              View and track all wallet activity
-            </p>
-            <div className="flex flex-wrap gap-2">
-              <a 
-                href="https://arkhamintelligence.com" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="px-3 py-1.5 rounded-full bg-muted text-xs text-muted-foreground hover:bg-muted/80 transition-colors"
-              >
-                Arkham
-              </a>
-              <a 
-                href="https://solscan.io" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="px-3 py-1.5 rounded-full bg-muted text-xs text-muted-foreground hover:bg-muted/80 transition-colors"
-              >
-                Solscan
-              </a>
+        {/* After section with animated graph */}
+        <div className="mb-12">
+          <h3 className="text-lg font-semibold text-foreground mb-6 text-center">
+            After that
+          </h3>
+          
+          {/* Animated graph visualization */}
+          <div className="p-8 rounded-xl bg-card/30 border border-border/40 mb-6">
+            <div className="relative h-64 flex items-center justify-center">
+              <div className="relative w-full h-full">
+                {/* Central wallet */}
+                <div className="absolute left-1/2 top-8 transform -translate-x-1/2">
+                  <div className="w-14 h-14 rounded-xl bg-card border-2 border-primary/40 flex items-center justify-center">
+                    <Wallet className="w-7 h-7 text-primary" />
+                  </div>
+                  <span className="text-xs text-muted-foreground mt-1 block text-center">Your wallet</span>
+                </div>
+                
+                {/* Other wallets */}
+                <div className="absolute right-1/4 top-32">
+                  <div className={cn(
+                    "w-12 h-12 rounded-xl bg-card border flex items-center justify-center transition-all duration-1000",
+                    stage === 'after' ? "border-border/30 opacity-50" : "border-border/50"
+                  )}>
+                    <Wallet className="w-5 h-5 text-muted-foreground" />
+                  </div>
+                </div>
+                
+                <div className="absolute left-1/4 top-32">
+                  <div className="w-12 h-12 rounded-xl bg-card border border-border/50 flex items-center justify-center">
+                    <Wallet className="w-5 h-5 text-muted-foreground" />
+                  </div>
+                </div>
+                
+                {/* Exchange */}
+                <div className={cn(
+                  "absolute right-1/4 bottom-8 transition-all duration-1000",
+                  stage === 'after' && "opacity-40"
+                )}>
+                  <div className="w-12 h-12 rounded-xl bg-muted border border-border/50 flex items-center justify-center">
+                    <div className="w-5 h-5 rounded bg-muted-foreground/40" />
+                  </div>
+                </div>
+                
+                {/* Connection lines */}
+                <svg className="absolute inset-0 w-full h-full pointer-events-none">
+                  {/* Links that break */}
+                  <line 
+                    x1="50%" 
+                    y1="36" 
+                    x2="75%" 
+                    y2="80" 
+                    stroke="currentColor" 
+                    strokeWidth="2" 
+                    className={cn(
+                      "transition-all duration-1000",
+                      stage === 'before' ? "text-border/60" : 
+                      stage === 'transition' ? "text-destructive/60 stroke-dasharray-4" :
+                      "text-destructive/30 stroke-dasharray-4 opacity-40"
+                    )}
+                  />
+                  {stage === 'transition' && (
+                    <X className="w-5 h-5 text-destructive absolute left-[62.5%] top-[58%] transform -translate-x-1/2 -translate-y-1/2 bg-background animate-pulse" />
+                  )}
+                  {stage === 'after' && (
+                    <X className="w-5 h-5 text-destructive/50 absolute left-[62.5%] top-[58%] transform -translate-x-1/2 -translate-y-1/2 bg-background" />
+                  )}
+                  
+                  <line 
+                    x1="75%" 
+                    y1="104" 
+                    x2="75%" 
+                    y2="152" 
+                    stroke="currentColor" 
+                    strokeWidth="2" 
+                    className={cn(
+                      "transition-all duration-1000",
+                      stage === 'before' ? "text-border/60" : 
+                      stage === 'transition' ? "text-destructive/60 stroke-dasharray-4" :
+                      "text-destructive/30 stroke-dasharray-4 opacity-40"
+                    )}
+                  />
+                  
+                  {/* Link that stays */}
+                  <line 
+                    x1="50%" 
+                    y1="36" 
+                    x2="25%" 
+                    y2="80" 
+                    stroke="currentColor" 
+                    strokeWidth="2" 
+                    className="text-border/60"
+                  />
+                </svg>
+              </div>
             </div>
           </div>
           
-          {/* Right: Selective privacy */}
-          <div className="p-6 rounded-xl bg-primary/5 border border-primary/30">
-            <h3 className="text-sm font-semibold text-primary mb-2 uppercase tracking-wider">
-              Selective privacy tools
-            </h3>
-            <p className="text-xs text-muted-foreground mb-4">
-              Break on-chain linkability without breaking usability
-            </p>
-            <div className="flex flex-wrap gap-2">
-              <a 
-                href="https://encrypt.trade" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="px-3 py-1.5 rounded-full bg-primary/10 border border-primary/30 text-xs text-primary hover:bg-primary/20 transition-colors"
-              >
-                encrypt.trade
-              </a>
-            </div>
+          <p className="text-sm text-foreground mb-4 text-center">
+            Tracking still works — just worse.
+          </p>
+          
+          <div className="space-y-3 text-sm text-muted-foreground max-w-xl mx-auto">
+            <p className="text-center">• wallets don&apos;t cluster as cleanly</p>
+            <p className="text-center">• labels are less confident</p>
+            <p className="text-center">• profiles become incomplete</p>
           </div>
+          
+          <p className="text-sm text-foreground mt-4 text-center">
+            Surveillance loses accuracy.
+          </p>
+        </div>
+        
+        {/* Important part */}
+        <div className="mb-8 p-6 rounded-xl bg-card/30 border border-border/40">
+          <h3 className="text-sm font-semibold text-foreground mb-4 text-center">
+            The important part
+          </h3>
+          <p className="text-sm text-foreground mb-2 text-center">
+            Your old history is still public.
+          </p>
+          <p className="text-sm text-muted-foreground text-center">
+            But future tracking becomes harder.
+          </p>
+          <p className="text-sm text-foreground mt-4 text-center">
+            That&apos;s what selective privacy does.
+          </p>
+        </div>
+        
+        {/* One sentence */}
+        <div className="mb-12 p-6 rounded-xl bg-primary/5 border border-primary/30">
+          <p className="text-sm font-medium text-foreground mb-2 text-center">
+            In one sentence
+          </p>
+          <p className="text-base text-foreground text-center max-w-2xl mx-auto">
+            encrypt.trade reduces how much others can reliably learn from your on-chain activity.
+          </p>
         </div>
         
         {/* Final CTA */}
