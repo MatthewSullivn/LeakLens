@@ -64,12 +64,12 @@ const Scene = memo(function Scene({ children, className, delay = 0 }: SceneProps
 
 const Scene1 = memo(function Scene1() {
   return (
-    <Scene className="min-h-[60vh] flex items-center justify-center py-20">
+    <Scene className="min-h-[45vh] flex items-center justify-center py-12">
       <div className="max-w-2xl mx-auto text-center px-4">
         <h2 className="text-3xl sm:text-4xl md:text-5xl font-semibold tracking-tight mb-6 text-foreground">
           Most of the time, privacy doesn&apos;t matter.
         </h2>
-        <p className="text-lg text-muted-foreground mb-12">
+        <p className="text-lg text-muted-foreground mb-8">
           You trade. You swap. Nothing bad happens.
         </p>
         
@@ -101,7 +101,7 @@ const Scene1 = memo(function Scene1() {
           </div>
         </div>
         
-        <div className="mt-16 opacity-0 animate-[fadeIn_0.6s_ease-out_1.5s_forwards]">
+        <div className="mt-8 opacity-0 animate-[fadeIn_0.6s_ease-out_1.5s_forwards]">
           <ArrowDown className="w-5 h-5 mx-auto text-muted-foreground/30 animate-bounce" />
         </div>
       </div>
@@ -115,9 +115,9 @@ const Scene1 = memo(function Scene1() {
 
 const Scene2 = memo(function Scene2() {
   return (
-    <Scene className="min-h-[70vh] flex items-center justify-center py-20 border-t border-border/20" delay={100}>
+    <Scene className="min-h-[50vh] flex items-center justify-center py-12 border-t border-border/20" delay={100}>
       <div className="max-w-3xl mx-auto px-4">
-        <div className="text-center mb-12">
+        <div className="text-center mb-8">
           <h2 className="text-3xl sm:text-4xl md:text-5xl font-semibold tracking-tight mb-6 text-foreground">
             But everything you do is public.
           </h2>
@@ -127,7 +127,7 @@ const Scene2 = memo(function Scene2() {
         </div>
         
         {/* Timeline visualization */}
-        <div className="relative mt-16">
+        <div className="relative mt-8">
           {/* Timeline line */}
           <div className="absolute left-1/2 top-0 bottom-0 w-px bg-gradient-to-b from-border/50 via-primary/50 to-border/50 transform -translate-x-1/2" />
           
@@ -169,7 +169,7 @@ const Scene2 = memo(function Scene2() {
           </div>
         </div>
         
-        <div className="mt-16 text-center opacity-0 animate-[fadeIn_0.6s_ease-out_0.8s_forwards]">
+        <div className="mt-8 text-center opacity-0 animate-[fadeIn_0.6s_ease-out_0.8s_forwards]">
           <ArrowDown className="w-5 h-5 mx-auto text-muted-foreground/30 animate-bounce" />
         </div>
       </div>
@@ -183,15 +183,15 @@ const Scene2 = memo(function Scene2() {
 
 const Scene3 = memo(function Scene3() {
   return (
-    <Scene className="min-h-[80vh] flex items-center justify-center py-20 border-t border-border/20" delay={100}>
+    <Scene className="min-h-[55vh] flex items-center justify-center py-12 border-t border-border/20" delay={100}>
       <div className="max-w-4xl mx-auto px-4">
-        <div className="text-center mb-12">
+        <div className="text-center mb-8">
           <h2 className="text-3xl sm:text-4xl md:text-5xl font-semibold tracking-tight mb-6 text-foreground">
             Patterns are where identity leaks.
           </h2>
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <div className="p-6 rounded-xl bg-card/50 border border-border/40">
             <Clock className="w-8 h-8 text-primary mb-4" />
             <h3 className="text-foreground font-semibold mb-2">Timing</h3>
@@ -272,7 +272,7 @@ const Scene3 = memo(function Scene3() {
           Patterns alone are enough to identify you.
         </p>
         
-        <div className="mt-12 text-center">
+        <div className="mt-8 text-center">
           <ArrowDown className="w-5 h-5 mx-auto text-muted-foreground/30 animate-bounce" />
         </div>
       </div>
@@ -286,9 +286,9 @@ const Scene3 = memo(function Scene3() {
 
 const Scene4 = memo(function Scene4() {
   return (
-    <Scene className="min-h-[70vh] flex items-center justify-center py-20 border-t border-border/20" delay={100}>
+    <Scene className="min-h-[50vh] flex items-center justify-center py-12 border-t border-border/20" delay={100}>
       <div className="max-w-4xl mx-auto px-4">
-        <div className="text-center mb-12">
+        <div className="text-center mb-8">
           <h2 className="text-3xl sm:text-4xl md:text-5xl font-semibold tracking-tight mb-6 text-foreground">
             One action can permanently reduce privacy.
           </h2>
@@ -300,7 +300,7 @@ const Scene4 = memo(function Scene4() {
         </div>
         
         {/* Before / After split */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-12">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-8">
           {/* Before */}
           <div className="p-8 rounded-xl bg-card/30 border border-border/40 text-center">
             <div className="mb-6">
@@ -336,11 +336,11 @@ const Scene4 = memo(function Scene4() {
           </div>
         </div>
         
-        <p className="text-center text-foreground font-medium mt-10">
+        <p className="text-center text-foreground font-medium mt-8">
           Some links cannot be undone.
         </p>
         
-        <div className="mt-12 text-center">
+        <div className="mt-8 text-center">
           <ArrowDown className="w-5 h-5 mx-auto text-muted-foreground/30 animate-bounce" />
         </div>
       </div>
@@ -354,15 +354,15 @@ const Scene4 = memo(function Scene4() {
 
 const Scene5 = memo(function Scene5() {
   return (
-    <Scene className="min-h-[60vh] flex items-center justify-center py-20 border-t border-border/20" delay={100}>
+    <Scene className="min-h-[45vh] flex items-center justify-center py-12 border-t border-border/20" delay={100}>
       <div className="max-w-3xl mx-auto px-4">
-        <div className="text-center mb-12">
+        <div className="text-center mb-8">
           <h2 className="text-3xl sm:text-4xl md:text-5xl font-semibold tracking-tight mb-6 text-foreground">
             Why starting fresh doesn&apos;t fully work.
           </h2>
         </div>
         
-        <div className="space-y-6 max-w-xl mx-auto">
+        <div className="space-y-4 max-w-xl mx-auto">
           <div className="flex items-start gap-4">
             <AlertTriangle className="w-5 h-5 text-amber-500 mt-0.5 shrink-0" />
             <p className="text-muted-foreground">New wallets inherit behavioral patterns</p>
@@ -378,7 +378,7 @@ const Scene5 = memo(function Scene5() {
         </div>
         
         {/* Two wallets with faded connection */}
-        <div className="flex items-center justify-center gap-8 mt-12">
+        <div className="flex items-center justify-center gap-8 mt-8">
           <div className="w-14 h-14 rounded-xl bg-card border border-border/50 flex items-center justify-center">
             <Wallet className="w-6 h-6 text-muted-foreground" />
           </div>
@@ -393,7 +393,7 @@ const Scene5 = memo(function Scene5() {
         </div>
         <p className="text-center text-xs text-muted-foreground/60 mt-4">Connection still visible to analysis</p>
         
-        <div className="mt-12 text-center">
+        <div className="mt-8 text-center">
           <ArrowDown className="w-5 h-5 mx-auto text-muted-foreground/30 animate-bounce" />
         </div>
       </div>
@@ -407,9 +407,9 @@ const Scene5 = memo(function Scene5() {
 
 const Scene6 = memo(function Scene6() {
   return (
-    <Scene className="min-h-[80vh] flex items-center justify-center py-20 border-t border-border/20" delay={100}>
+    <Scene className="min-h-[55vh] flex items-center justify-center py-12 border-t border-border/20" delay={100}>
       <div className="max-w-3xl mx-auto px-4">
-        <div className="text-center mb-12">
+        <div className="text-center mb-8">
           <h2 className="text-3xl sm:text-4xl md:text-5xl font-semibold tracking-tight mb-6 text-foreground">
             What selective privacy actually changes.
           </h2>
@@ -419,7 +419,7 @@ const Scene6 = memo(function Scene6() {
         </div>
         
         {/* Flow diagram: Wallet → Privacy layer → Clean output */}
-        <div className="flex items-center justify-center gap-4 sm:gap-6 my-12">
+        <div className="flex items-center justify-center gap-4 sm:gap-6 my-8">
           <div className="flex flex-col items-center gap-2">
             <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl bg-card border border-border/50 flex items-center justify-center">
               <Wallet className="w-6 h-6 sm:w-7 sm:h-7 text-muted-foreground" />
@@ -447,7 +447,7 @@ const Scene6 = memo(function Scene6() {
         </div>
         
         {/* Mentions */}
-        <div className="flex flex-wrap items-center justify-center gap-4 mt-8 mb-12">
+        <div className="flex flex-wrap items-center justify-center gap-4 mt-8 mb-8">
           <a 
             href="https://encrypt.trade" 
             target="_blank" 
@@ -466,7 +466,7 @@ const Scene6 = memo(function Scene6() {
         </div>
         
         {/* Final CTA */}
-        <div className="text-center mt-16 pt-12 border-t border-border/20">
+        <div className="text-center mt-12 pt-8 border-t border-border/20">
           <p className="text-lg text-muted-foreground mb-8">
             See what your wallet already reveals.
           </p>
