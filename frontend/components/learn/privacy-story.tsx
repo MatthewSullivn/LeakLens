@@ -450,24 +450,40 @@ const Scene6 = memo(function Scene6() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8 mb-8">
           {/* Left: Surveillance stack */}
           <div className="p-6 rounded-xl bg-card/30 border border-border/40">
-            <h3 className="text-sm font-semibold text-foreground mb-4 uppercase tracking-wider">
-              Surveillance stack
+            <h3 className="text-sm font-semibold text-foreground mb-2 uppercase tracking-wider">
+              Tools that expose everything
             </h3>
+            <p className="text-xs text-muted-foreground mb-4">
+              View and track all wallet activity
+            </p>
             <div className="flex flex-wrap gap-2">
-              <span className="px-3 py-1.5 rounded-full bg-muted text-xs text-muted-foreground">
+              <a 
+                href="https://arkhamintelligence.com" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="px-3 py-1.5 rounded-full bg-muted text-xs text-muted-foreground hover:bg-muted/80 transition-colors"
+              >
                 Arkham
-              </span>
-              <span className="px-3 py-1.5 rounded-full bg-muted text-xs text-muted-foreground">
-                Block scanners
-              </span>
+              </a>
+              <a 
+                href="https://solscan.io" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="px-3 py-1.5 rounded-full bg-muted text-xs text-muted-foreground hover:bg-muted/80 transition-colors"
+              >
+                Solscan
+              </a>
             </div>
           </div>
           
           {/* Right: Selective privacy */}
           <div className="p-6 rounded-xl bg-primary/5 border border-primary/30">
-            <h3 className="text-sm font-semibold text-primary mb-4 uppercase tracking-wider">
-              Selective privacy
+            <h3 className="text-sm font-semibold text-primary mb-2 uppercase tracking-wider">
+              Tools that let you hide
             </h3>
+            <p className="text-xs text-muted-foreground mb-4">
+              Break links and control what&apos;s visible
+            </p>
             <div className="flex flex-wrap gap-2">
               <a 
                 href="https://encrypt.trade" 
