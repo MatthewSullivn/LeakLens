@@ -27,6 +27,13 @@ from dotenv import load_dotenv
 # Load environment variables before any API key usage
 load_dotenv()
 
+# Helper function to safely get values from dicts
+def safe_get(obj, key, default=None):
+    """Safely get a value from an object, handling both dict and non-dict types."""
+    if isinstance(obj, dict):
+        return obj.get(key, default)
+    return default
+
 # Import LeakLens analysis functions
 from leaklens_solana import (
     analyze_wallet_execution_profiles,
@@ -267,6 +274,8 @@ def helius_token_prices(wallet: str, mints: List[str]) -> Dict[str, float]:
             # Check tokens - Helius balances API doesn't include USD values per token
             # But we can log the structure for debugging
             for token in tokens:
+                if not isinstance(token, dict):
+                    continue
                 mint = token.get("mint", "")
                 if mint in mints:
                     # Helius balances API doesn't provide USD values in token objects
@@ -565,6 +574,8 @@ def compute_income_sources_from_enhanced(wallet: str, enhanced_txs: List[dict]) 
 
         # Native transfers
         for nt in tx.get("nativeTransfers") or []:
+            if not isinstance(nt, dict):
+                continue
             if nt.get("toUserAccount") == wallet:
                 amt = _safe_float(nt.get("amount"), 0.0) / 1e9
                 if amt > 0:
@@ -573,6 +584,8 @@ def compute_income_sources_from_enhanced(wallet: str, enhanced_txs: List[dict]) 
 
         # Token transfers
         for tt in tx.get("tokenTransfers") or []:
+            if not isinstance(tt, dict):
+                continue
             if tt.get("toUserAccount") != wallet:
                 continue
             mint = tt.get("mint") or ""
@@ -964,6 +977,8 @@ def detect_swaps_delta_from_enhanced(wallet: str, enhanced_txs: List[dict]) -> L
         all_deltas: Dict[str, float] = {}
 
         for nt in tx.get("nativeTransfers") or []:
+            if not isinstance(nt, dict):
+                continue
             fr = nt.get("fromUserAccount") or nt.get("from")
             to = nt.get("toUserAccount") or nt.get("to")
             amt_lamports = _safe_float(nt.get("amount"), 0.0)
@@ -976,6 +991,8 @@ def detect_swaps_delta_from_enhanced(wallet: str, enhanced_txs: List[dict]) -> L
                 all_deltas[WSOL_MINT] = all_deltas.get(WSOL_MINT, 0.0) - amt_sol
 
         for tt in tx.get("tokenTransfers") or []:
+            if not isinstance(tt, dict):
+                continue
             fr = tt.get("fromUserAccount") or tt.get("from")
             to = tt.get("toUserAccount") or tt.get("to")
             mint = tt.get("mint") or ""
@@ -1261,31 +1278,37 @@ def compute_surveillance_exposure_score(
     
     # 4. Repeated counterparties (count unique repeated sources/targets)
     repeated_count = 0
-    if opsec_data:
+    if opsec_data and isinstance(opsec_data, dict):
         funding = opsec_data.get("funding_sources", [])
         withdrawals = opsec_data.get("withdrawal_targets", [])
         # Count sources/targets that appear 2+ times
-        repeated_count += sum(1 for f in funding if f.get("count", 0) >= 2)
-        repeated_count += sum(1 for w in withdrawals if w.get("count", 0) >= 2)
+        if isinstance(funding, list):
+            repeated_count += sum(1 for f in funding if isinstance(f, dict) and f.get("count", 0) >= 2)
+        if isinstance(withdrawals, list):
+            repeated_count += sum(1 for w in withdrawals if isinstance(w, dict) and w.get("count", 0) >= 2)
     # Normalize: 0-2 repeated = 0-1 signal (very sensitive, cap at 2)
     # Even 1 repeated counterparty = 0.5 signal = 7.5 points
     counterparty_signal = min(repeated_count / 2.0, 1.0)
     
     # 5. MEV execution detected (boolean)
     mev_detected = 0
-    if mempool_data:
+    if mempool_data and isinstance(mempool_data, dict):
         profiles = mempool_data.get("profiles", {})
-        mev_count = profiles.get("MEV_STYLE", 0)
-        mev_detected = 1.0 if mev_count > 0 else 0.0
+        if isinstance(profiles, dict):
+            mev_count = profiles.get("MEV_STYLE", 0)
+            mev_detected = 1.0 if mev_count > 0 else 0.0
     
     # 6. Stablecoin income detected (boolean)
     stable_income_detected = 0.0
-    if income_sources:
+    if income_sources and isinstance(income_sources, dict):
         stable_rec = income_sources.get("stable_received", {})
-        stable_income_detected = 1.0 if (stable_rec.get("count", 0) > 0 or stable_rec.get("total_stable", 0) > 0) else 0.0
+        if isinstance(stable_rec, dict):
+            stable_income_detected = 1.0 if (stable_rec.get("count", 0) > 0 or stable_rec.get("total_stable", 0) > 0) else 0.0
     
     # 7. Portfolio concentration (already 0-100, normalize to 0-1)
-    concentration = portfolio_summary.get("topConcentration", 0) if portfolio_summary else 0
+    concentration = 0
+    if portfolio_summary and isinstance(portfolio_summary, dict):
+        concentration = portfolio_summary.get("topConcentration", 0)
     concentration_signal = concentration / 100.0 if concentration else 0.0
     
     # Compute composite score using weighted formula
@@ -1413,6 +1436,8 @@ def classify_node_type(addr: str, enhanced_txs: List[dict] = None) -> dict:
         for tx in enhanced_txs[:50]:  # Check recent transactions
             token_transfers = tx.get("tokenTransfers") or []
             for transfer in token_transfers:
+                if not isinstance(transfer, dict):
+                    continue
                 mint = transfer.get("mint") or ""
                 if any(symbol in str(mint).upper() for symbol in KNOWN_MEME_SYMBOLS):
                     meme_indicators += 1
@@ -1535,42 +1560,42 @@ def get_notable_transactions(wallet: str, tx_details_map: Dict[str, dict], signa
     
     if signatures:
         for sig_info in signatures[:50]:
-            sig = sig_info.get("signature", "")
-            block_time = sig_info.get("blockTime")
+            if not isinstance(sig_info, dict):
+                continue
+            sig = sig_info.get("signature") or sig_info.get("transactionSignature") or ""
+            block_time = sig_info.get("blockTime") or sig_info.get("block_time")
             if not sig or not block_time:
                 continue
             
             # Check if this is a notable transaction (large amounts)
             tx_details = tx_details_map.get(sig)
-            if tx_details:
-                meta = tx_details.get("meta") or {}
-                # Check for large SOL transfers
-                pre_balances = meta.get("preBalances") or []
-                post_balances = meta.get("postBalances") or []
-                if pre_balances and post_balances:
-                    # Find wallet index
-                    msg = (tx_details.get("transaction") or {}).get("message") or {}
-                    keys = msg.get("accountKeys") or []
-                    wallet_idx = None
-                    for i, k in enumerate(keys):
-                        if isinstance(k, dict):
-                            addr = k.get("pubkey", "")
-                        else:
-                            addr = str(k)
-                        if addr == wallet:
-                            wallet_idx = i
-                            break
-                    
-                    if wallet_idx is not None and wallet_idx < len(pre_balances) and wallet_idx < len(post_balances):
-                        delta = (post_balances[wallet_idx] - pre_balances[wallet_idx]) / 1e9
-                        if abs(delta) > 1.0:  # Notable SOL amount
-                            notable_txs.append({
-                                "signature": sig,
-                                "amount": abs(delta),
-                                "timestamp": block_time,
-                                "type": "large_transfer" if delta > 0 else "large_withdrawal",
-                                "delta": delta
-                            })
+            if not tx_details or not isinstance(tx_details, dict):
+                continue
+            meta = tx_details.get("meta") or {}
+            pre_balances = meta.get("preBalances") or []
+            post_balances = meta.get("postBalances") or []
+            if pre_balances and post_balances:
+                msg = (tx_details.get("transaction") or {}).get("message") or {}
+                keys = msg.get("accountKeys") or []
+                wallet_idx = None
+                for i, k in enumerate(keys):
+                    if isinstance(k, dict):
+                        addr = k.get("pubkey", "")
+                    else:
+                        addr = str(k)
+                    if addr == wallet:
+                        wallet_idx = i
+                        break
+                if wallet_idx is not None and wallet_idx < len(pre_balances) and wallet_idx < len(post_balances):
+                    delta = (post_balances[wallet_idx] - pre_balances[wallet_idx]) / 1e9
+                    if abs(delta) > 1.0:
+                        notable_txs.append({
+                            "signature": sig,
+                            "amount": abs(delta),
+                            "timestamp": block_time,
+                            "type": "large_transfer" if delta > 0 else "large_withdrawal",
+                            "delta": delta
+                        })
         
         if notable_txs:
             # Sort by amount, take top 10
@@ -1611,6 +1636,8 @@ def get_notable_transactions_from_enhanced(wallet: str, enhanced_txs: List[dict]
         sol_in = 0.0
         sol_out = 0.0
         for nt in tx.get("nativeTransfers") or []:
+            if not isinstance(nt, dict):
+                continue
             fr = nt.get("fromUserAccount") or nt.get("from")
             to = nt.get("toUserAccount") or nt.get("to")
             amt = _safe_float(nt.get("amount"), 0.0) / 1e9
@@ -1664,6 +1691,8 @@ def analyze_ego_network(wallet: str, tx_details_map: Dict[str, dict], limit: int
         # Extract counterparties from native transfers
         native_transfers = tx.get("nativeTransfers") or []
         for transfer in native_transfers:
+            if not isinstance(transfer, dict):
+                continue
             from_addr = transfer.get("fromUserAccount") or transfer.get("from")
             to_addr = transfer.get("toUserAccount") or transfer.get("to")
             amount = _safe_float(transfer.get("amount") or 0, 0.0) / 1e9
@@ -1713,9 +1742,11 @@ def analyze_ego_network(wallet: str, tx_details_map: Dict[str, dict], limit: int
         # Also check token transfers
         token_transfers = tx.get("tokenTransfers") or []
         for transfer in token_transfers:
+            if not isinstance(transfer, dict):
+                continue
             from_addr = transfer.get("fromUserAccount") or transfer.get("from")
             to_addr = transfer.get("toUserAccount") or transfer.get("to")
-            
+
             if not from_addr or not to_addr:
                 continue
             
@@ -2038,6 +2069,11 @@ def analyze_wallet_comprehensive(request: WalletAnalysisRequest):
     rate limits; local uses RPC (fetch_signatures + getTransaction) for full meta/compute data.
     """
     try:
+        # Ensure request.wallet is a string
+        if not isinstance(request.wallet, str):
+            raise HTTPException(status_code=400, detail="Wallet must be a string")
+        if not isinstance(request.limit, (int, type(None))):
+            request.limit = 100
         # Solana only
         use_helius_primary = os.getenv("VERCEL") == "1"
         limit = request.limit or 100
@@ -2046,12 +2082,20 @@ def analyze_wallet_comprehensive(request: WalletAnalysisRequest):
 
         if use_helius_primary:
             enhanced_all, all_dbg = helius_get_transactions(request.wallet, limit=min(limit, 100))
-            if enhanced_all:
+            if enhanced_all and isinstance(enhanced_all, list):
                 df, tx_details_list, tx_details_map, signatures = _build_df_and_lists_from_helius_enhanced(enhanced_all)
             else:
                 df, tx_details_list, tx_details_map, signatures = analyze_wallet_solana(request.wallet, limit=limit)
         else:
             df, tx_details_list, tx_details_map, signatures = analyze_wallet_solana(request.wallet, limit=limit)
+        
+        # Validate return types
+        if not isinstance(tx_details_list, list):
+            tx_details_list = []
+        if not isinstance(tx_details_map, dict):
+            tx_details_map = {}
+        if not isinstance(signatures, list):
+            signatures = []
 
         compute_unit_field = "compute_units"
 
@@ -2082,8 +2126,15 @@ def analyze_wallet_comprehensive(request: WalletAnalysisRequest):
         mempool_tx_map = tx_details_map
         if use_helius_primary and enhanced_all and not tx_details_map:
             subset_n = min(50, len(signatures))
-            sig_strings = [s["signature"] for s in signatures[:subset_n]]
-            rpc_map = fetch_transactions_parallel(sig_strings, max_workers=2)
+            sig_strings = []
+            for s in signatures[:subset_n]:
+                if isinstance(s, dict):
+                    x = s.get("signature") or s.get("transactionSignature")
+                    if x:
+                        sig_strings.append(x)
+                elif isinstance(s, str):
+                    sig_strings.append(s)
+            rpc_map = fetch_transactions_parallel(sig_strings, max_workers=2) if sig_strings else {}
             mempool_tx_map = {k: v for k, v in (rpc_map or {}).items() if v is not None}
             mempool_limit = subset_n
         mempool_data = analyze_wallet_execution_profiles(
@@ -2183,18 +2234,18 @@ def analyze_wallet_comprehensive(request: WalletAnalysisRequest):
         
         # Find most recent transaction timestamp
         most_recent_timestamp = None
-        if tx_details_list and len(tx_details_list) > 0:
+        if tx_details_list and isinstance(tx_details_list, list) and len(tx_details_list) > 0:
             # tx_details_list should be sorted with most recent first
             # Format: [{"timestamp": unix_timestamp, "details": {...}}, ...]
             first_tx = tx_details_list[0]
-            
-            # Get the timestamp field (already a Unix timestamp int)
-            most_recent_timestamp = first_tx.get('timestamp')
-            
-            # Convert to ISO format if it's a unix timestamp
-            if most_recent_timestamp and isinstance(most_recent_timestamp, (int, float)):
-                from datetime import datetime
-                most_recent_timestamp = datetime.utcfromtimestamp(most_recent_timestamp).isoformat() + 'Z'
+            if isinstance(first_tx, dict):
+                # Get the timestamp field (already a Unix timestamp int)
+                most_recent_timestamp = first_tx.get('timestamp')
+                
+                # Convert to ISO format if it's a unix timestamp
+                if most_recent_timestamp and isinstance(most_recent_timestamp, (int, float)):
+                    from datetime import datetime
+                    most_recent_timestamp = datetime.utcfromtimestamp(most_recent_timestamp).isoformat() + 'Z'
         
         # Portfolio (best-effort; attach summary and debug info)
         portfolio_data = {"tokens": [], "totalValue": 0}
@@ -2256,8 +2307,10 @@ def analyze_wallet_comprehensive(request: WalletAnalysisRequest):
         # Compute surveillance exposure score
         swap_count = len(swap_events)
         # Get memecoin ratio from portfolio or networth
-        memecoin_ratio = portfolio_summary.get("memePct", 0) if portfolio_summary else 0
-        if memecoin_ratio == 0:
+        memecoin_ratio = 0
+        if isinstance(portfolio_summary, dict):
+            memecoin_ratio = portfolio_summary.get("memePct", 0)
+        if memecoin_ratio == 0 and isinstance(networth, dict):
             # Fallback to token count ratio if portfolio data unavailable
             total_tokens = networth.get("token_count", 0)
             meme_tokens = networth.get("meme_token_count", 0)
@@ -2268,19 +2321,24 @@ def analyze_wallet_comprehensive(request: WalletAnalysisRequest):
             swap_count=swap_count,
             memecoin_ratio=memecoin_ratio,
             hourly_counts=hourly_counts,
-            opsec_data=opsec_data,
-            mempool_data=mempool_data,
-            income_sources=income_sources,
-            portfolio_summary=portfolio_summary
+            opsec_data=opsec_data if isinstance(opsec_data, dict) else {},
+            mempool_data=mempool_data if isinstance(mempool_data, dict) else {},
+            income_sources=income_sources if isinstance(income_sources, dict) else {},
+            portfolio_summary=portfolio_summary if isinstance(portfolio_summary, dict) else {}
         )
         
+        # Ensure surveillance_score is a dict
+        if not isinstance(surveillance_score, dict):
+            surveillance_score = {"surveillance_score": 0, "risk_level": "UNKNOWN", "top_leak_vectors": []}
+        
         # Add surveillance exposure insight
-        if surveillance_score["surveillance_score"] >= 70:
-            insights.append(f"🔍 Surveillance Exposure: {surveillance_score['surveillance_score']:.0f}/100 (HIGH) - Wallet leaks enough behavioral data to be uniquely fingerprinted")
-        elif surveillance_score["surveillance_score"] >= 40:
-            insights.append(f"🔍 Surveillance Exposure: {surveillance_score['surveillance_score']:.0f}/100 (MEDIUM) - Moderate behavioral fingerprinting risk")
+        score_value = surveillance_score.get("surveillance_score", 0) if isinstance(surveillance_score, dict) else 0
+        if score_value >= 70:
+            insights.append(f"🔍 Surveillance Exposure: {score_value:.0f}/100 (HIGH) - Wallet leaks enough behavioral data to be uniquely fingerprinted")
+        elif score_value >= 40:
+            insights.append(f"🔍 Surveillance Exposure: {score_value:.0f}/100 (MEDIUM) - Moderate behavioral fingerprinting risk")
         else:
-            insights.append(f"🔍 Surveillance Exposure: {surveillance_score['surveillance_score']:.0f}/100 (LOW) - Limited exposure signals detected")
+            insights.append(f"🔍 Surveillance Exposure: {score_value:.0f}/100 (LOW) - Limited exposure signals detected")
 
         # Ego-network analysis (linked wallets)
         ego_network = analyze_ego_network(request.wallet, tx_details_map, limit=min(100, request.limit))
@@ -2335,14 +2393,14 @@ def analyze_wallet_comprehensive(request: WalletAnalysisRequest):
             "portfolio_summary": portfolio_summary,
             "portfolio_debug": portfolio_debug,
             "net_worth": {
-                "sol_balance": networth.get("sol_balance", 0),
-                "token_count": networth.get("token_count", 0),
-                "stable_token_count": networth.get("stable_token_count", 0),
-                "meme_token_count": networth.get("meme_token_count", 0),
-                "top_tokens": networth.get("top_tokens", []),
-                "total_usd": networth.get("total_usd", 0.0),
-                "sol_price": networth.get("sol_price", 0.0),
-                "debug": networth.get("debug", {})
+                "sol_balance": networth.get("sol_balance", 0) if isinstance(networth, dict) else 0,
+                "token_count": networth.get("token_count", 0) if isinstance(networth, dict) else 0,
+                "stable_token_count": networth.get("stable_token_count", 0) if isinstance(networth, dict) else 0,
+                "meme_token_count": networth.get("meme_token_count", 0) if isinstance(networth, dict) else 0,
+                "top_tokens": networth.get("top_tokens", []) if isinstance(networth, dict) else [],
+                "total_usd": networth.get("total_usd", 0.0) if isinstance(networth, dict) else 0.0,
+                "sol_price": networth.get("sol_price", 0.0) if isinstance(networth, dict) else 0.0,
+                "debug": networth.get("debug", {}) if isinstance(networth, dict) else {}
             },
             "token_trading_pnl": trading_pnl,
             "income_sources": income_sources,
@@ -2366,6 +2424,18 @@ def analyze_wallet_comprehensive(request: WalletAnalysisRequest):
         }
     except HTTPException:
         raise
+    except AttributeError as e:
+        # Catch 'str' object has no attribute 'get' and similar
+        print("\n" + "="*60)
+        print("ATTRIBUTE ERROR IN /analyze-wallet:")
+        print("="*60)
+        traceback.print_exc()
+        print("="*60 + "\n")
+        # Try to provide more context
+        error_msg = str(e)
+        if "'str' object has no attribute 'get'" in error_msg:
+            error_msg = f"Data type mismatch: Expected dict but got string. {error_msg}"
+        raise HTTPException(status_code=500, detail=f"Analysis failed: {error_msg}")
     except Exception as e:
         # Print full traceback for debugging
         print("\n" + "="*60)
@@ -2383,7 +2453,7 @@ def health():
 
 def summarize_portfolio(tokens: list, total_value: float = 0) -> dict:
     """Lightweight server-side portfolio summary to avoid extra client work."""
-    filtered = [t for t in (tokens or []) if (t.get("usdValue") or 0) > 0]
+    filtered = [t for t in (tokens or []) if isinstance(t, dict) and (t.get("usdValue") or 0) > 0]
     total_tokens = sum(t.get("usdValue", 0) for t in filtered)
     total = total_tokens if total_tokens > 0 else (total_value or 0)
     if total <= 0:
@@ -2438,6 +2508,8 @@ def helius_portfolio_summary(wallet: str) -> tuple:
     # Collect symbols (and include SOL for pricing)
     symbols = set()
     for t in tokens:
+        if not isinstance(t, dict):
+            continue
         sym = t.get("symbol")
         if sym:
             symbols.add(sym)
@@ -2472,6 +2544,8 @@ def helius_portfolio_summary(wallet: str) -> tuple:
             if not prices:
                 price_status = "price_all_failed"
     for t in tokens:
+        if not isinstance(t, dict):
+            continue
         symbol = t.get("symbol", "")
         ui_amt = t.get("uiAmount", 0) or 0
         price_entry = prices.get(symbol) or {}

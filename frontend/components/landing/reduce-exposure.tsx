@@ -1,7 +1,8 @@
 'use client'
 
 import { memo} from 'react'
-import { Wallet, GitBranch, Clock, ArrowRight, Shield, Eye, EyeOff, X, Check, Link2, Lock } from 'lucide-react'
+import Link from 'next/link'
+import { Wallet, GitBranch, Clock, ArrowRight, Shield, Eye, EyeOff, X, Check, Link2, Lock, BookOpen } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button' 
 
@@ -292,6 +293,17 @@ export const ReduceExposure = memo(function ReduceExposure() {
                 Use encrypt.trade
                 <ArrowRight className="w-4 h-4" />
               </a>
+            </Button>
+            
+            <Button
+              asChild
+              size="lg"
+              className="h-12 px-6 rounded-md border border-[var(--color-cyan-600)]/40 bg-background hover:bg-background/90 text-[var(--color-cyan-600)] font-medium"
+            >
+              <Link href="/learn" className="flex items-center gap-2">
+                Learn why wallets aren&apos;t private
+                <ArrowRight className="w-4 h-4" />
+              </Link>
             </Button>
             
             <Button

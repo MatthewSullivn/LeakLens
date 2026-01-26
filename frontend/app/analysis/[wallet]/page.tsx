@@ -51,7 +51,26 @@ export default function AnalysisPage({ params }: { params: Promise<{ wallet: str
         })
 
         if (aborted) return
-        if (!response.ok) throw new Error(`Analysis failed: ${response.statusText}`)
+        if (!response.ok) {
+          let message = `Analysis failed: ${response.statusText}`
+          try {
+            const body = await response.json() as { error?: string; details?: string }
+            let msg = body?.error ?? ''
+            if (msg && typeof msg === 'string' && (msg.startsWith('{') || msg.startsWith('['))) {
+              try {
+                const parsed = JSON.parse(msg) as { detail?: string; error?: string }
+                msg = parsed.detail ?? parsed.error ?? msg
+              } catch {
+                /* keep msg as-is */
+              }
+            }
+            if (msg) message = msg
+            if (body?.details) message += ` — ${body.details}`
+          } catch {
+            /* body not JSON, use statusText */
+          }
+          throw new Error(message)
+        }
         const result = await response.json()
         if (aborted) return
         setData(result)
@@ -61,10 +80,22 @@ export default function AnalysisPage({ params }: { params: Promise<{ wallet: str
           return
         }
         if (aborted) return
+        
+        // Log full error details in development
         if (process.env.NODE_ENV === 'development') {
           console.error('Analysis error:', err)
+          console.error('Error name:', err.name)
+          console.error('Error message:', err.message)
+          console.error('Error stack:', err.stack)
         }
-        setError(err.message || 'Failed to analyze wallet')
+        
+        // Provide more helpful error messages
+        let errorMessage = err.message || 'Failed to analyze wallet'
+        if (err.message === 'fetch failed' || err.name === 'TypeError') {
+          errorMessage = 'Backend server is not responding. Please ensure the Python backend is running on http://localhost:8000'
+        }
+        
+        setError(errorMessage)
       } finally {
         if (!aborted) setLoading(false)
       }
