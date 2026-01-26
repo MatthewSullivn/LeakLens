@@ -162,7 +162,7 @@ export const ReduceExposure = memo(function ReduceExposure() {
         </div>
 
         {/* Selective Privacy Comparison */}
-        <div className="mb-16 sm:mb-20">
+        <div id="privacy-concepts" className="mb-16 sm:mb-20 scroll-mt-24">
           <h3 className="text-xl sm:text-2xl font-semibold mb-3 text-foreground">
             Selective Privacy Outcomes
           </h3>

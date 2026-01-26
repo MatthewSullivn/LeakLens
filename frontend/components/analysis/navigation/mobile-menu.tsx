@@ -1,7 +1,8 @@
 'use client'
 
 import { memo } from 'react'
-import { X, Search, ChevronRight, FileText, FileJson, Table } from 'lucide-react'
+import Link from 'next/link'
+import { X, Search, ChevronRight, FileText, FileJson, Table, Home, BookOpen, ScanSearch } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 // ============================================================================
@@ -97,6 +98,19 @@ export const MobileBottomSheet = memo(function MobileBottomSheet({
           <div className="mb-4 p-3 bg-muted/30 rounded-lg">
             <p className="text-xs text-muted-foreground mb-1">Analyzing wallet</p>
             <p className="font-mono text-sm break-all">{wallet}</p>
+          </div>
+
+          {/* Nav links — Analysis not clickable on analysis page */}
+          <div className="flex flex-wrap gap-2 mb-4 pb-4 border-b border-border/40">
+            <Link href="/" onClick={onClose} className="flex items-center gap-2 px-3 py-2 rounded-lg bg-muted/30 hover:bg-muted/50 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+              <Home className="w-4 h-4" /> Home
+            </Link>
+            <span className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-foreground cursor-default" aria-current="page">
+              <ScanSearch className="w-4 h-4" /> Analysis
+            </span>
+            <Link href="/learn" onClick={onClose} className="flex items-center gap-2 px-3 py-2 rounded-lg bg-muted/30 hover:bg-muted/50 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+              <BookOpen className="w-4 h-4" /> Learn
+            </Link>
           </div>
 
           {/* Actions */}

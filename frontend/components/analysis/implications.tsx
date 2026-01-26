@@ -131,7 +131,7 @@ export const MitigationCTA = memo(function MitigationCTA() {
       {/* Primary CTA with glow */}
       <div className="flex flex-col sm:flex-row gap-3 justify-center pt-2">
         <Link
-          href="/learn/reduce-exposure"
+          href="/learn"
           className={cn(
             "inline-flex items-center justify-center gap-2",
             "px-6 py-3 rounded-lg",
@@ -152,7 +152,7 @@ export const MitigationCTA = memo(function MitigationCTA() {
       {/* Secondary Link */}
       <div>
         <Link
-          href="/learn/privacy-concepts"
+          href="/learn#privacy-concepts"
           className="text-xs text-muted-foreground hover:text-primary transition-colors underline-offset-4 hover:underline"
         >
           Explore selective privacy concepts

@@ -8,6 +8,7 @@ import {
   useMotionValueEvent,
 } from "motion/react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { Globe, Github, ExternalLink, ScanSearch } from "lucide-react";
 import React, { useRef, useState } from "react";
 
@@ -86,7 +87,7 @@ export const NavBody = ({ children, className, visible }: NavBodyProps) => {
     <motion.div
       animate={{
         backdropFilter: visible ? "blur(10px)" : "blur(0px)",
-        width: visible ? "40%" : "100%",
+        width: visible ? "70%" : "100%",
         y: visible ? 20 : 0,
       }}
       transition={{
@@ -278,14 +279,44 @@ export const NavbarButton = ({
   );
 };
 
+const NAV_LINKS = [
+  { name: "Home", href: "/" },
+  { name: "Analysis", href: "/#analyze" },
+  { name: "Learn", href: "/learn" },
+] as const;
+
 // Main Navbar component using LeakLens content
 export function LeakLensNavbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const pathname = usePathname();
 
   return (
     <Navbar>
       <NavBody>
         <NavbarLogo />
+        <nav className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 hidden lg:flex items-center gap-1">
+          {NAV_LINKS.map(({ name, href }) => {
+            const isHome = href === "/" && !href.includes("#");
+            const isAnalysis = href === "/#analyze";
+            const isLearn = href === "/learn";
+            const active =
+              (isHome && pathname === "/") ||
+              (isAnalysis && pathname?.startsWith("/analysis")) ||
+              (isLearn && pathname === "/learn");
+            return (
+              <Link
+                key={name}
+                href={href}
+                className={cn(
+                  "px-3 py-2 rounded-md text-sm font-medium transition-colors",
+                  active ? "text-foreground" : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                )}
+              >
+                {name}
+              </Link>
+            );
+          })}
+        </nav>
         <div className="flex items-center gap-2 sm:gap-3">
           {/* Source Button */}
           <a
@@ -324,6 +355,30 @@ export function LeakLensNavbar() {
           onClose={() => setMobileMenuOpen(false)}
         >
           <div className="flex flex-col gap-4 w-full">
+            <div className="flex flex-col gap-2 pb-4 border-b border-border/40">
+              {NAV_LINKS.map(({ name, href }) => {
+                const isHome = href === "/" && !href.includes("#");
+                const isAnalysis = href === "/#analyze";
+                const isLearn = href === "/learn";
+                const active =
+                  (isHome && pathname === "/") ||
+                  (isAnalysis && pathname?.startsWith("/analysis")) ||
+                  (isLearn && pathname === "/learn");
+                return (
+                  <Link
+                    key={name}
+                    href={href}
+                    onClick={() => setMobileMenuOpen(false)}
+                    className={cn(
+                      "px-3 py-2 rounded-md text-sm font-medium transition-colors w-fit",
+                      active ? "text-foreground" : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                    )}
+                  >
+                    {name}
+                  </Link>
+                );
+              })}
+            </div>
             <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-cyan-500/10 border border-cyan-500/30 w-fit">
               <Globe className="w-3.5 h-3.5 text-cyan-400" />
               <span className="text-xs font-medium text-cyan-400 uppercase tracking-wide">Mainnet</span>

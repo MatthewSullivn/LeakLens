@@ -1,11 +1,11 @@
 'use client'
 
-import { memo, useState, useCallback } from 'react'
+import { memo, useState, useCallback, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { 
   Copy, Download, Wallet, CheckCircle, 
-  Menu, Search, FileJson, FileText, Table
+  Menu, Search, FileJson, FileText, Table, ScanSearch
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -104,40 +104,49 @@ export const TopNavBar = memo(function TopNavBar({
   const riskColors = getSeverityColor(riskLevel)
   const canExport = !!data
 
+  const [scrolled, setScrolled] = useState(false)
+  useEffect(() => {
+    const check = () => setScrolled(typeof window !== 'undefined' ? window.scrollY > 100 : false)
+    check()
+    window.addEventListener('scroll', check, { passive: true })
+    return () => window.removeEventListener('scroll', check)
+  }, [])
+
   return (
     <>
-      <nav className="sticky top-0 z-50 border-b border-border/40 bg-background/95 backdrop-blur-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center justify-between h-16">
-            <div className="flex items-center gap-4">
-              <Link href="/" className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-lg bg-primary/20 flex items-center justify-center">
-                  <div className="w-4 h-4 rounded-full bg-primary" />
-                </div>
-                <span className="font-bold text-lg">LeakLens</span>
+      <header className="fixed inset-x-0 top-0 z-50 w-full">
+        {/* Desktop: centered pill (same style as home/learn) */}
+        <div className="hidden md:flex justify-center px-4 sm:px-6 lg:px-8">
+          <nav
+            className="relative z-[60] mx-auto flex w-full max-w-7xl flex-row items-center justify-between self-start rounded-full border border-border/40 bg-background/95 px-4 sm:px-6 lg:px-8 py-2 h-14 transition-[transform,backdrop-filter,width,min-width] duration-300 ease-out"
+            style={{
+              width: scrolled ? '70%' : '100%',
+              minWidth: '800px',
+              transform: `translateY(${scrolled ? 20 : 0}px)`,
+              backdropFilter: scrolled ? 'blur(10px)' : 'blur(0px)',
+            }}
+            aria-label="Main"
+          >
+            <Link href="/" className="relative z-10 flex items-center gap-2 px-2 py-1 shrink-0">
+              <ScanSearch className="w-5 h-5 text-cyan-500" />
+              <span className="font-bold text-lg tracking-tight text-foreground">LeakLens</span>
+            </Link>
+            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center gap-2">
+              <Link href="/" className="px-3 py-2 rounded-md text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors">
+                Home
               </Link>
-              <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-card border border-border/60">
-                <Wallet className="w-4 h-4 text-muted-foreground" />
-                <span className="font-mono text-sm">{formatAddress(wallet)}</span>
-                <button onClick={onCopy} className="text-muted-foreground hover:text-foreground transition-colors">
-                  {copied ? <CheckCircle className="w-3 h-3 text-cyan-400" /> : <Copy className="w-3 h-3" />}
-                </button>
-              </div>
-              <Badge className="bg-primary/20 text-primary border-primary/30 gap-1.5">
-                <div className="w-2 h-2 rounded-full bg-primary" />
-                SCAN COMPLETE
-              </Badge>
-              <Badge variant="outline" className="text-xs">
-                {confidence} Confidence
-              </Badge>
+              <span className="px-3 py-2 rounded-md text-sm font-medium text-foreground cursor-default" aria-current="page">
+                Analysis
+              </span>
+              <Link href="/learn" className="px-3 py-2 rounded-md text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors">
+                Learn
+              </Link>
             </div>
-            <div className="flex items-center gap-3">
-              {/* Export Dropdown */}
+            <div className="relative z-10 flex items-center gap-3">
               <div className="relative">
-                <Button 
-                  variant="outline" 
-                  size="sm" 
+                <Button
+                  variant="outline"
+                  size="sm"
                   className="gap-2"
                   onClick={() => setExportMenuOpen(!exportMenuOpen)}
                 >
@@ -146,10 +155,7 @@ export const TopNavBar = memo(function TopNavBar({
                 </Button>
                 {exportMenuOpen && (
                   <>
-                    <div 
-                      className="fixed inset-0 z-40" 
-                      onClick={() => setExportMenuOpen(false)} 
-                    />
+                    <div className="fixed inset-0 z-40" onClick={() => setExportMenuOpen(false)} />
                     <div className="absolute right-0 mt-2 w-48 bg-card border border-border rounded-lg shadow-lg z-50 py-1">
                       <ExportMenuItem icon={<FileText className="w-4 h-4" />} label="PDF Report" status={canExport ? 'available' : 'coming-soon'} onClick={handleExportPDF} />
                       <ExportMenuItem icon={<FileJson className="w-4 h-4" />} label="JSON Data" status={canExport ? 'available' : 'coming-soon'} onClick={handleExportJSON} />
@@ -158,46 +164,39 @@ export const TopNavBar = memo(function TopNavBar({
                   </>
                 )}
               </div>
-              <Button 
-                size="sm" 
-                className="gap-2 bg-primary text-primary-foreground"
-                onClick={handleAnalyzeDifferent}
-              >
+              <Button size="sm" className="gap-2 bg-primary text-primary-foreground" onClick={handleAnalyzeDifferent}>
                 <Search className="w-4 h-4" />
                 Analyze Different Wallet
               </Button>
             </div>
-          </div>
+          </nav>
+        </div>
 
-          {/* Mobile Navigation */}
-          <div className="flex md:hidden items-center justify-between h-14">
-            <Link href="/" className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-lg bg-primary/20 flex items-center justify-center">
-                <div className="w-3.5 h-3.5 rounded-full bg-primary" />
-              </div>
-              <span className="font-bold">LeakLens</span>
-            </Link>
-            
-            <div className="flex items-center gap-2">
-              <div className="flex items-center gap-1.5 px-2 py-1 rounded bg-card border border-border/60">
-                <span className="font-mono text-xs">{formatAddress(wallet)}</span>
-                <button onClick={onCopy} className="text-muted-foreground">
-                  {copied ? <CheckCircle className="w-3 h-3 text-cyan-400" /> : <Copy className="w-3 h-3" />}
-                </button>
-              </div>
-              <Badge className={cn("text-[10px] px-1.5", riskColors.bg, riskColors.text)}>
-                {riskLevel}
-              </Badge>
-              <button 
-                onClick={() => setMobileMenuOpen(true)}
-                className="p-2 hover:bg-muted/50 rounded-lg transition-colors"
-              >
-                <Menu className="w-5 h-5" />
+        {/* Mobile: full-width bar */}
+        <div className="flex md:hidden items-center justify-between h-14 border-b border-border/40 bg-background/95 px-4 sm:px-6 lg:px-8">
+          <Link href="/" className="flex items-center gap-2">
+            <ScanSearch className="w-5 h-5 text-cyan-500" />
+            <span className="font-bold text-lg tracking-tight text-foreground">LeakLens</span>
+          </Link>
+          <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5 px-2 py-1 rounded bg-card border border-border/60">
+              <span className="font-mono text-xs">{formatAddress(wallet)}</span>
+              <button onClick={onCopy} className="text-muted-foreground">
+                {copied ? <CheckCircle className="w-3 h-3 text-cyan-400" /> : <Copy className="w-3 h-3" />}
               </button>
             </div>
+            <Badge className={cn("text-[10px] px-1.5", riskColors.bg, riskColors.text)}>
+              {riskLevel}
+            </Badge>
+            <button
+              onClick={() => setMobileMenuOpen(true)}
+              className="p-2 hover:bg-muted/50 rounded-lg transition-colors"
+            >
+              <Menu className="w-5 h-5" />
+            </button>
           </div>
         </div>
-      </nav>
+      </header>
 
       {/* Mobile Bottom Sheet */}
       <MobileBottomSheet 

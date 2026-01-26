@@ -50,7 +50,7 @@ export const HeroSection = memo(function HeroSection() {
 
   return (
     <WavyBackground className='h-min-content'>
-      <section className="pt-32 pb-16 px-4 sm:px-6 flex items-center">
+      <section id="analyze" className="pt-32 pb-16 px-4 sm:px-6 flex items-center scroll-mt-20">
         <div className="max-w-7xl mx-auto w-full relative z-20">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
             {/* Left Column - Text Content */}

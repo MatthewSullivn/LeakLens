@@ -15,6 +15,8 @@ import {
   AnimatedSection,
   SectionSkeleton,
 } from '@/components/analysis'
+import { Badge } from '@/components/ui/badge'
+import { Copy, CheckCircle } from 'lucide-react'
 
 // Lazy load below-fold components for performance
 const WalletLinkage = lazy(() => import('@/components/analysis/wallet-linkage').then(m => ({ default: m.WalletLinkage })))
@@ -97,7 +99,32 @@ export default function AnalysisPage({ params }: { params: Promise<{ wallet: str
         data={data}
       />
 
-      <main className="relative max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-6">
+      <main className="relative max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-6 sm:pb-8 space-y-6">
+
+        {/* Page title: wallet address + SCAN COMPLETE / Confidence */}
+        <div className="pb-2">
+          <div className="flex items-center gap-2 flex-wrap">
+            <h1 className="font-mono text-xl sm:text-2xl font-semibold text-foreground break-all pr-2">
+              {wallet}
+            </h1>
+            <button
+              onClick={copyAddress}
+              className="shrink-0 p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+              title="Copy address"
+            >
+              {copied ? <CheckCircle className="w-4 h-4 text-cyan-400" /> : <Copy className="w-4 h-4" />}
+            </button>
+          </div>
+          <div className="flex flex-wrap items-center gap-2 mt-2">
+            <Badge className="bg-primary/20 text-primary border-primary/30 gap-1.5">
+              <div className="w-2 h-2 rounded-full bg-primary" />
+              SCAN COMPLETE
+            </Badge>
+            <Badge variant="outline" className="text-xs">
+              {data.confidence} Confidence
+            </Badge>
+          </div>
+        </div>
 
         {/* 1. Exposure Summary (TL;DR) - Always Expanded */}
         <AnimatedSection>
