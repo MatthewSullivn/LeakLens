@@ -2137,23 +2137,52 @@ def analyze_wallet_comprehensive(request: WalletAnalysisRequest):
             rpc_map = fetch_transactions_parallel(sig_strings, max_workers=2) if sig_strings else {}
             mempool_tx_map = {k: v for k, v in (rpc_map or {}).items() if v is not None}
             mempool_limit = subset_n
-        mempool_data = analyze_wallet_execution_profiles(
-            request.wallet,
-            limit=mempool_limit,
-            signatures=signatures[:mempool_limit],
-            tx_details_map=mempool_tx_map
-        )
-        
-        # Opsec: use enhanced-based when Helius-primary (Vercel) for full data; else RPC
-        if use_helius_primary and enhanced_all:
-            opsec_data = analyze_opsec_failures_from_enhanced(request.wallet, enhanced_all)
-        else:
-            opsec_data = analyze_opsec_failures(
+        # Execution profile / mempool forensics.
+        # This is a rich but non-critical signal – if anything in here has
+        # unexpected types (e.g. a string where a dict is expected), we
+        # degrade gracefully instead of failing the whole analysis.
+        try:
+            mempool_data = analyze_wallet_execution_profiles(
                 request.wallet,
-                limit=min(80, request.limit),
-                signatures=signatures,
-                tx_details_map=tx_details_map
+                limit=mempool_limit,
+                signatures=signatures[:mempool_limit],
+                tx_details_map=mempool_tx_map
             )
+        except AttributeError:
+            # Log and fall back to empty structure rather than 500.
+            print("\n" + "="*60)
+            print("ATTRIBUTE ERROR IN analyze_wallet_execution_profiles – falling back to empty mempool data")
+            print("="*60 + "\n")
+            mempool_data = {}
+        
+        # Opsec: use enhanced-based when Helius-primary (Vercel) for full data; else RPC.
+        # As with mempool, opsec failures are important but should never hard-crash
+        # the entire analysis if an upstream provider returns a weird shape.
+        try:
+            if use_helius_primary and enhanced_all:
+                opsec_data = analyze_opsec_failures_from_enhanced(request.wallet, enhanced_all)
+            else:
+                opsec_data = analyze_opsec_failures(
+                    request.wallet,
+                    limit=min(80, request.limit),
+                    signatures=signatures,
+                    tx_details_map=tx_details_map
+                )
+        except AttributeError:
+            print("\n" + "="*60)
+            print("ATTRIBUTE ERROR IN opsec analysis – falling back to empty opsec data")
+            print("="*60 + "\n")
+            opsec_data = {
+                "wallet": request.wallet,
+                "total_transactions": len(signatures),
+                "critical_leaks": [],
+                "funding_sources": [],
+                "withdrawal_targets": [],
+                "memo_usage": 0,
+                "exposure_score": 0,
+                "cumulative_exposure": "UNKNOWN",
+                "weakest_link": "Opsec analysis unavailable due to data type mismatch."
+            }
         
         # Prepare transaction complexity data
         complexity_data = []
