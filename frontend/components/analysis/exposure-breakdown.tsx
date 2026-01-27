@@ -1,7 +1,7 @@
 'use client'
 
-import { memo, useState } from 'react'
-import { BarChart3, TrendingUp, TrendingDown, Minus, Info, ChevronDown } from 'lucide-react'
+import { memo, useState, useMemo, useRef, useEffect } from 'react'
+import { BarChart3, TrendingUp, TrendingDown, Minus, Info, ChevronDown, Eye } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import {
@@ -10,13 +10,232 @@ import {
   CollapsibleTrigger,
 } from '@/components/ui/collapsible'
 import { cn } from '@/lib/utils'
-import type { AnalysisResult } from './types'
+import { STROKE_COLORS } from './utils'
+import type { AnalysisResult, SurveillanceSignals } from './types'
 
 interface ExposureBreakdownProps {
   data: AnalysisResult
 }
 
 type ImpactLevel = 'high' | 'medium' | 'low' | 'minimal'
+
+// ============================================================================
+// VISUALIZATION: Stacked Exposure Bar
+// ============================================================================
+
+interface SignalContribution {
+  name: string
+  value: number
+  maxValue: number
+  color: string
+  description: string
+}
+
+interface StackedExposureBarProps {
+  totalScore: number
+  riskLevel: string
+  signals: SurveillanceSignals | undefined
+}
+
+const StackedExposureBar = memo(function StackedExposureBar({ 
+  totalScore, 
+  riskLevel,
+  signals 
+}: StackedExposureBarProps) {
+  const barRef = useRef<HTMLDivElement>(null)
+  const [animatedScore, setAnimatedScore] = useState(0)
+  const hasAnimated = useRef(false)
+
+  // Animate score on scroll into view
+  useEffect(() => {
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    if (prefersReducedMotion) {
+      setAnimatedScore(totalScore)
+      return
+    }
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && !hasAnimated.current) {
+          hasAnimated.current = true
+          let current = 0
+          const step = totalScore / 25
+          const interval = setInterval(() => {
+            current += step
+            if (current >= totalScore) {
+              setAnimatedScore(totalScore)
+              clearInterval(interval)
+            } else {
+              setAnimatedScore(current)
+            }
+          }, 20)
+        }
+      },
+      { threshold: 0.3 }
+    )
+
+    if (barRef.current) observer.observe(barRef.current)
+    return () => observer.disconnect()
+  }, [totalScore])
+
+  // Calculate signal contributions (these are weighted estimates)
+  const contributions = useMemo((): SignalContribution[] => {
+    if (!signals) return []
+
+    // Normalize signals to contribution percentages (these sum to ~100 of the score)
+    const rawContributions = [
+      {
+        name: 'Swap Activity',
+        value: signals.swap_signal || 0,
+        maxValue: 25,
+        color: 'bg-cyan-500',
+        description: 'Trading frequency creates behavioral patterns'
+      },
+      {
+        name: 'Counterparties',
+        value: signals.counterparty_signal || 0,
+        maxValue: 25,
+        color: 'bg-blue-500',
+        description: 'Repeated wallet interactions enable clustering'
+      },
+      {
+        name: 'Timing Patterns',
+        value: Math.min(20, (100 - (signals.active_hours_entropy || 0)) * 0.2),
+        maxValue: 20,
+        color: 'bg-purple-500',
+        description: 'Regular activity timing reveals timezone'
+      },
+      {
+        name: 'Memecoin Trading',
+        value: signals.memecoin_signal || 0,
+        maxValue: 15,
+        color: 'bg-yellow-500',
+        description: 'High memecoin ratio flags speculative behavior'
+      },
+      {
+        name: 'Concentration',
+        value: signals.concentration_signal || 0,
+        maxValue: 15,
+        color: 'bg-orange-500',
+        description: 'Portfolio concentration reveals trading style'
+      }
+    ].filter(c => c.value > 0)
+
+    return rawContributions.sort((a, b) => b.value - a.value)
+  }, [signals])
+
+  // Calculate actual widths based on contribution to total score
+  const totalContribution = contributions.reduce((sum, c) => sum + c.value, 0) || 1
+  const strokeColor = STROKE_COLORS[riskLevel] || STROKE_COLORS.MEDIUM
+
+  return (
+    <div ref={barRef} className="mb-4">
+      {/* Score Header */}
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center gap-2">
+          <Eye className="w-4 h-4 text-primary" />
+          <span className="text-sm font-medium">Surveillance Exposure Score</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <span 
+            className="text-2xl font-bold tabular-nums"
+            style={{ color: strokeColor, textShadow: `0 0 15px ${strokeColor}40` }}
+          >
+            {Math.round(animatedScore)}
+          </span>
+          <span className="text-sm text-muted-foreground">/100</span>
+        </div>
+      </div>
+
+      {/* Main Progress Bar */}
+      <div className="relative h-4 bg-muted/30 rounded-full overflow-hidden border border-border/30">
+        {/* Background gradient showing risk zones */}
+        <div 
+          className="absolute inset-0 opacity-20"
+          style={{
+            background: 'linear-gradient(90deg, oklch(0.7 0.15 145) 0%, oklch(0.75 0.15 85) 50%, oklch(0.65 0.2 30) 100%)'
+          }}
+        />
+        
+        {/* Animated fill */}
+        <div 
+          className="absolute top-0 left-0 h-full rounded-full transition-all duration-700 ease-out"
+          style={{ 
+            width: `${animatedScore}%`,
+            background: `linear-gradient(90deg, ${strokeColor}cc, ${strokeColor})`
+          }}
+        />
+        
+        {/* Score marker */}
+        <div 
+          className="absolute top-1/2 -translate-y-1/2 w-1 h-6 bg-white rounded-full shadow-lg transition-all duration-700"
+          style={{ left: `calc(${animatedScore}% - 2px)` }}
+        />
+      </div>
+
+      {/* Risk zone labels */}
+      <div className="flex justify-between mt-1 px-1">
+        <span className="text-[9px] text-cyan-400">Low</span>
+        <span className="text-[9px] text-yellow-400">Medium</span>
+        <span className="text-[9px] text-orange-400">High</span>
+        <span className="text-[9px] text-red-400">Critical</span>
+      </div>
+
+      {/* Stacked contribution breakdown */}
+      {contributions.length > 0 && (
+        <div className="mt-4">
+          <p className="text-[10px] text-muted-foreground mb-2 uppercase tracking-wide">
+            Contributing Factors
+          </p>
+          
+          {/* Stacked horizontal bar */}
+          <div className="h-2.5 bg-muted/20 rounded-full overflow-hidden flex">
+            {contributions.map((contrib, i) => {
+              const widthPct = (contrib.value / totalContribution) * 100
+              return (
+                <div
+                  key={contrib.name}
+                  className={cn(contrib.color, "h-full transition-all duration-500 relative group")}
+                  style={{ 
+                    width: `${widthPct}%`,
+                    opacity: 0.8 + (0.2 * (1 - i / contributions.length))
+                  }}
+                >
+                  {/* Tooltip */}
+                  <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-2 py-1 bg-card border border-border rounded text-[9px] opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-10">
+                    {contrib.name}: {Math.round(contrib.value)} pts
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+
+          {/* Legend */}
+          <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2">
+            {contributions.slice(0, 4).map((contrib) => (
+              <div key={contrib.name} className="flex items-center gap-1.5">
+                <div className={cn("w-2 h-2 rounded-sm", contrib.color)} />
+                <span className="text-[10px] text-muted-foreground">{contrib.name}</span>
+                <span className="text-[10px] font-medium text-foreground tabular-nums">
+                  {Math.round(contrib.value)}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Probabilistic note */}
+      <div className="mt-3 flex items-start gap-1.5">
+        <Info className="w-3 h-3 text-muted-foreground/60 shrink-0 mt-0.5" />
+        <span className="text-[9px] text-muted-foreground/80 leading-relaxed">
+          This score estimates how easily surveillance platforms can classify and track this wallet. 
+          Higher scores indicate more identifiable patterns.
+        </span>
+      </div>
+    </div>
+  )
+})
 
 interface ExposureFactor {
   name: string
@@ -230,9 +449,17 @@ export const ExposureBreakdown = memo(function ExposureBreakdown({ data }: Expos
           </CardHeader>
         </CollapsibleTrigger>
 
-        {/* Collapsed: Show compact bars */}
+        {/* Collapsed: Show stacked exposure bar + compact bars */}
         {!isExpanded && (
           <CardContent className="pt-0 pb-4">
+            {/* Stacked Exposure Visualization */}
+            <StackedExposureBar 
+              totalScore={data.surveillance_exposure?.surveillance_score || 0}
+              riskLevel={data.surveillance_exposure?.risk_level || 'MEDIUM'}
+              signals={signals}
+            />
+            
+            {/* Compact factor bars */}
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
               {sortedFactors.slice(0, 6).map((factor, i) => (
                 <FactorBar key={i} factor={factor} />
@@ -244,6 +471,14 @@ export const ExposureBreakdown = memo(function ExposureBreakdown({ data }: Expos
         {/* Expanded: Show detailed breakdown */}
         <CollapsibleContent>
           <CardContent className="pt-0 space-y-3">
+            {/* Stacked Exposure Visualization */}
+            <StackedExposureBar 
+              totalScore={data.surveillance_exposure?.surveillance_score || 0}
+              riskLevel={data.surveillance_exposure?.risk_level || 'MEDIUM'}
+              signals={signals}
+            />
+            
+            {/* Detailed factor rows */}
             {sortedFactors.map((factor, i) => (
               <FactorRow key={i} factor={factor} />
             ))}

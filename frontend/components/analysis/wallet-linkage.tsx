@@ -64,20 +64,34 @@ const LinkageVisualization = memo(function LinkageVisualization({
 }) {
   const [hoveredNode, setHoveredNode] = useState<string | null>(null)
   
+  // Sort edges by confidence and take top 8
   const displayEdges = useMemo(() => {
-    return edges.slice(0, 8).map((edge, i) => {
+    const sortedEdges = [...edges].sort((a, b) => b.confidence - a.confidence).slice(0, 8)
+    const maxInteractions = Math.max(...sortedEdges.map(e => e.interactions), 1)
+    
+    return sortedEdges.map((edge, i) => {
       const targetNode = nodes.find(n => n.id === edge.target)
       const edgeType = getEdgeType(edge)
-      const angle = (i / 8) * 2 * Math.PI - Math.PI / 2
+      const angle = (i / Math.min(edges.length, 8)) * 2 * Math.PI - Math.PI / 2
       const radius = 85
       const x = 150 + radius * Math.cos(angle)
       const y = 115 + radius * Math.sin(angle)
-      return { edge, targetNode, edgeType, x, y, angle }
+      
+      // Calculate edge thickness based on interactions (1.5 - 4px)
+      const thickness = 1.5 + (edge.interactions / maxInteractions) * 2.5
+      
+      // Calculate opacity based on confidence (0.3 - 1.0)
+      const opacity = 0.3 + (edge.confidence * 0.7)
+      
+      return { edge, targetNode, edgeType, x, y, angle, thickness, opacity }
     }).filter(item => item.targetNode)
   }, [edges, nodes])
 
+  // Calculate max values for normalization display
+  const maxConfidence = Math.max(...displayEdges.map(e => e.edge.confidence), 0.01)
+
   return (
-    <div className="relative h-56 sm:h-60 bg-muted/5 rounded-lg overflow-hidden border border-border/30">
+    <div className="relative h-64 sm:h-72 bg-muted/5 rounded-lg overflow-hidden border border-border/30">
       {/* Subtle radial gradient background */}
       <div 
         className="absolute inset-0 opacity-30"
@@ -86,30 +100,8 @@ const LinkageVisualization = memo(function LinkageVisualization({
         }}
       />
       
-      <svg className="w-full h-full relative z-10" viewBox="0 0 300 230" preserveAspectRatio="xMidYMid meet">
-        {/* Connection lines */}
-        {displayEdges.map((item, i) => {
-          const isHovered = hoveredNode === item.edge.target
-          return (
-            <g key={i}>
-              <line 
-                x1="150" y1="115" 
-                x2={item.x} y2={item.y}
-                stroke={
-                  isHovered ? 'oklch(0.75 0.15 195)' :
-                  item.edge.has_funding ? 'rgba(34, 211, 238, 0.4)' :
-                  item.edge.has_cashout ? 'rgba(239, 68, 68, 0.4)' :
-                  'rgba(148, 163, 184, 0.25)'
-                }
-                strokeWidth={isHovered ? 2.5 : Math.max(1.5, item.edge.confidence * 2.5)}
-                strokeDasharray={item.edge.has_repeated ? "none" : "4,4"}
-                className="transition-all duration-200"
-              />
-            </g>
-          )
-        })}
-        
-        {/* Center node (target wallet) with glow */}
+      <svg className="w-full h-full relative z-10" viewBox="0 0 300 250" preserveAspectRatio="xMidYMid meet">
+        {/* Definitions for filters and gradients */}
         <defs>
           <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
             <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
@@ -118,11 +110,75 @@ const LinkageVisualization = memo(function LinkageVisualization({
               <feMergeNode in="SourceGraphic"/>
             </feMerge>
           </filter>
+          <filter id="edgeGlow" x="-20%" y="-20%" width="140%" height="140%">
+            <feGaussianBlur stdDeviation="1.5" result="blur"/>
+            <feMerge>
+              <feMergeNode in="blur"/>
+              <feMergeNode in="SourceGraphic"/>
+            </feMerge>
+          </filter>
         </defs>
-        <circle cx="150" cy="115" r="22" fill="oklch(0.75 0.15 195)" filter="url(#glow)" />
-        <circle cx="150" cy="115" r="26" fill="none" stroke="oklch(0.75 0.15 195)" strokeWidth="1.5" opacity="0.4" />
-        <text x="150" y="150" textAnchor="middle" fill="oklch(0.75 0.15 195)" fontSize="9" fontWeight="500">
-          Target
+        
+        {/* Connection lines - drawn first so they appear behind nodes */}
+        {displayEdges.map((item, i) => {
+          const isHovered = hoveredNode === item.edge.target
+          const baseColor = item.edge.has_funding ? '#22d3ee' :
+                           item.edge.has_cashout ? '#ef4444' :
+                           item.edge.has_repeated ? '#eab308' :
+                           '#64748b'
+          
+          return (
+            <g key={`edge-${i}`}>
+              {/* Edge line with thickness based on interactions */}
+              <line 
+                x1="150" y1="120" 
+                x2={item.x} y2={item.y}
+                stroke={isHovered ? 'oklch(0.75 0.15 195)' : baseColor}
+                strokeWidth={isHovered ? item.thickness + 1 : item.thickness}
+                strokeOpacity={isHovered ? 1 : item.opacity}
+                strokeDasharray={item.edge.has_repeated || item.edge.has_funding || item.edge.has_cashout ? "none" : "4,4"}
+                strokeLinecap="round"
+                className="transition-all duration-200"
+                filter={isHovered ? "url(#edgeGlow)" : undefined}
+              />
+              
+              {/* Inline metrics on hover - positioned along the edge */}
+              {isHovered && (
+                <g>
+                  <rect 
+                    x={(150 + item.x) / 2 - 28} 
+                    y={(120 + item.y) / 2 - 10} 
+                    width="56" 
+                    height="20" 
+                    rx="4" 
+                    fill="oklch(0.15 0 0)" 
+                    stroke="oklch(0.75 0.15 195)"
+                    strokeWidth="1"
+                  />
+                  <text 
+                    x={(150 + item.x) / 2} 
+                    y={(120 + item.y) / 2 + 4} 
+                    textAnchor="middle" 
+                    fill="oklch(0.9 0 0)" 
+                    fontSize="8"
+                    fontWeight="500"
+                  >
+                    {item.edge.interactions}× • {Math.round(item.edge.confidence * 100)}%
+                  </text>
+                </g>
+              )}
+            </g>
+          )
+        })}
+        
+        {/* Center node (target wallet) with glow */}
+        <circle cx="150" cy="120" r="24" fill="oklch(0.75 0.15 195)" filter="url(#glow)" />
+        <circle cx="150" cy="120" r="28" fill="none" stroke="oklch(0.75 0.15 195)" strokeWidth="1.5" opacity="0.4" />
+        <text x="150" y="125" textAnchor="middle" fill="oklch(0.1 0 0)" fontSize="8" fontWeight="600">
+          YOU
+        </text>
+        <text x="150" y="158" textAnchor="middle" fill="oklch(0.75 0.15 195)" fontSize="8" fontWeight="500">
+          Target Wallet
         </text>
 
         {/* Connected nodes */}
@@ -132,24 +188,45 @@ const LinkageVisualization = memo(function LinkageVisualization({
                            item.edge.has_cashout ? '#ef4444' :
                            item.edge.has_repeated ? '#eab308' :
                            '#64748b'
+          
+          // Size node based on relative confidence
+          const relativeSize = 7 + (item.edge.confidence / maxConfidence) * 5
+          
           return (
             <g 
-              key={i} 
+              key={`node-${i}`} 
               className="cursor-pointer"
               onMouseEnter={() => setHoveredNode(item.edge.target)}
               onMouseLeave={() => setHoveredNode(null)}
             >
               <a href={`https://solscan.io/account/${item.edge.target}`} target="_blank" rel="noopener noreferrer">
+                {/* Outer ring for high-confidence nodes */}
+                {item.edge.confidence > 0.7 && (
+                  <circle 
+                    cx={item.x} cy={item.y} 
+                    r={relativeSize + 4} 
+                    fill="none"
+                    stroke={nodeColor}
+                    strokeWidth="1"
+                    opacity={0.4}
+                    className="transition-all duration-200"
+                  />
+                )}
+                
+                {/* Main node circle */}
                 <circle 
                   cx={item.x} cy={item.y} 
-                  r={isHovered ? 12 : 9} 
+                  r={isHovered ? relativeSize + 2 : relativeSize} 
                   fill={isHovered ? 'oklch(0.75 0.15 195)' : nodeColor}
-                  opacity={isHovered ? 1 : 0.75}
+                  opacity={isHovered ? 1 : item.opacity + 0.2}
                   className="transition-all duration-200"
+                  filter={isHovered ? "url(#edgeGlow)" : undefined}
                 />
+                
+                {/* Node label */}
                 <text 
                   x={item.x} 
-                  y={item.y + 18} 
+                  y={item.y + relativeSize + 10} 
                   textAnchor="middle" 
                   fill={isHovered ? 'oklch(0.75 0.15 195)' : '#9ca3af'}
                   fontSize="7"
@@ -157,6 +234,20 @@ const LinkageVisualization = memo(function LinkageVisualization({
                 >
                   {item.targetNode?.label || shortenAddress(item.edge.target, 3)}
                 </text>
+                
+                {/* Inline confidence badge (always visible for high confidence) */}
+                {(item.edge.confidence > 0.5 || isHovered) && (
+                  <text 
+                    x={item.x} 
+                    y={item.y + relativeSize + 18} 
+                    textAnchor="middle" 
+                    fill={isHovered ? 'oklch(0.75 0.15 195)' : '#6b7280'}
+                    fontSize="6"
+                    fontWeight="500"
+                  >
+                    {Math.round(item.edge.confidence * 100)}%
+                  </text>
+                )}
               </a>
             </g>
           )
@@ -177,6 +268,19 @@ const LinkageVisualization = memo(function LinkageVisualization({
           <div className="w-1.5 h-1.5 rounded-full bg-yellow-500" />
           Repeated
         </Badge>
+      </div>
+
+      {/* Edge thickness legend */}
+      <div className="absolute bottom-2 left-2 flex items-center gap-2 px-2 py-1 bg-background/80 rounded-md border border-border/30">
+        <span className="text-[8px] text-muted-foreground">Line thickness = interaction count</span>
+        <div className="flex items-center gap-1">
+          <div className="w-4 h-[1px] bg-muted-foreground/50" />
+          <span className="text-[7px] text-muted-foreground">low</span>
+        </div>
+        <div className="flex items-center gap-1">
+          <div className="w-4 h-[3px] bg-muted-foreground/50 rounded" />
+          <span className="text-[7px] text-muted-foreground">high</span>
+        </div>
       </div>
     </div>
   )
