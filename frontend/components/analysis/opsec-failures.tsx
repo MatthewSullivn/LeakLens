@@ -1,9 +1,14 @@
 'use client'
 
-import { memo } from 'react'
-import { ShieldAlert, AlertTriangle, Link2, TrendingDown, TrendingUp, Info } from 'lucide-react'
+import { memo, useState } from 'react'
+import { ShieldAlert, AlertTriangle, Link2, TrendingDown, TrendingUp, Info, ChevronDown } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@/components/ui/collapsible'
 import { cn } from '@/lib/utils'
 import { SolscanLink } from './shared'
 import { getSeverityColor } from './utils'
@@ -104,7 +109,7 @@ const LeakAccordion = memo(function LeakAccordion({
   )
 })
 
-// Sources section (always visible)
+// Sources section (collapsible)
 const SourcesAccordion = memo(function SourcesAccordion({ 
   title,
   icon,
@@ -118,42 +123,56 @@ const SourcesAccordion = memo(function SourcesAccordion({
   type: 'funding' | 'withdrawal'
   explanation: string
 }) {
+  const [isOpen, setIsOpen] = useState(false)
   const iconColor = type === 'funding' ? 'text-cyan-400' : 'text-red-500'
   
   if (sources.length === 0) return null
   
   return (
-    <div className="rounded-lg border bg-muted/10 border-border/40">
-      <div className="flex items-center gap-2 p-3 border-b border-border/30">
-        {icon}
-        <span className="text-sm font-medium">{title}</span>
-        <Badge variant="outline" className="text-xs px-2 py-0.5">{sources.length}</Badge>
-      </div>
-      <div className="p-3 space-y-2">
-        {sources.slice(0, 5).map((source, i) => (
-          <div key={i} className="flex items-center justify-between p-2.5 bg-muted/30 rounded-lg">
-            <div className="flex items-center gap-2 min-w-0">
-              {type === 'funding' ? (
-                <TrendingDown className={cn("w-4 h-4 shrink-0", iconColor)} />
-              ) : (
-                <TrendingUp className={cn("w-4 h-4 shrink-0", iconColor)} />
-              )}
-              <SolscanLink address={source.wallet} className="font-mono text-xs truncate">
-                {source.label}
-              </SolscanLink>
+    <Collapsible open={isOpen} onOpenChange={setIsOpen}>
+      <div className="rounded-lg border bg-muted/10 border-border/40">
+        <CollapsibleTrigger className="w-full">
+          <div className="flex items-center justify-between p-3 cursor-pointer hover:bg-muted/20 transition-colors">
+            <div className="flex items-center gap-2">
+              {icon}
+              <span className="text-sm font-medium">{title}</span>
+              <Badge variant="outline" className="text-xs px-2 py-0.5">{sources.length}</Badge>
             </div>
-            <div className="text-right shrink-0 ml-2">
-              <p className="text-sm font-semibold tabular-nums text-foreground">{source.total_sol.toFixed(3)} SOL</p>
-              <p className="text-[10px] text-muted-foreground">{source.count}x</p>
-            </div>
+            <ChevronDown className={cn(
+              "w-4 h-4 text-muted-foreground transition-transform duration-200",
+              isOpen && "rotate-180"
+            )} />
           </div>
-        ))}
-        <p className="text-xs text-muted-foreground pt-2">
-          <span className="font-medium">Why this matters: </span>
-          {explanation}
-        </p>
+        </CollapsibleTrigger>
+        
+        <CollapsibleContent>
+          <div className="px-3 pb-3 space-y-2 border-t border-border/30">
+            {sources.slice(0, 5).map((source, i) => (
+              <div key={i} className="flex items-center justify-between p-2.5 bg-muted/30 rounded-lg">
+                <div className="flex items-center gap-2 min-w-0">
+                  {type === 'funding' ? (
+                    <TrendingDown className={cn("w-4 h-4 shrink-0", iconColor)} />
+                  ) : (
+                    <TrendingUp className={cn("w-4 h-4 shrink-0", iconColor)} />
+                  )}
+                  <SolscanLink address={source.wallet} className="font-mono text-xs truncate">
+                    {source.label}
+                  </SolscanLink>
+                </div>
+                <div className="text-right shrink-0 ml-2">
+                  <p className="text-sm font-semibold tabular-nums text-foreground">{source.total_sol.toFixed(3)} SOL</p>
+                  <p className="text-[10px] text-muted-foreground">{source.count}x</p>
+                </div>
+              </div>
+            ))}
+            <p className="text-xs text-muted-foreground pt-2">
+              <span className="font-medium">Why this matters: </span>
+              {explanation}
+            </p>
+          </div>
+        </CollapsibleContent>
       </div>
-    </div>
+    </Collapsible>
   )
 })
 

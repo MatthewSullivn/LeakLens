@@ -131,36 +131,34 @@ export default function AnalysisPage({ params }: { params: Promise<{ wallet: str
       />
 
       <main className="relative w-full">
-        {/* Header */}
-        <div className="w-full px-6 sm:px-8 lg:px-12 pt-24 pb-6">
-          <div className="max-w-[1800px] mx-auto">
-            <div className="flex items-center gap-3 mb-3">
-              <h1 className="font-mono text-base sm:text-lg font-medium text-foreground/90 break-all">
-                {wallet}
-              </h1>
-              <button
-                onClick={copyAddress}
-                className="shrink-0 p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-all"
-                title="Copy address"
-              >
-                {copied ? <CheckCircle className="w-4 h-4 text-cyan-400" /> : <Copy className="w-4 h-4" />}
-              </button>
-            </div>
-            <div className="flex items-center gap-2">
-              <Badge className="bg-cyan-500/10 text-cyan-400 border-cyan-500/20 text-xs px-2.5 py-0.5">
-                <div className="w-1.5 h-1.5 rounded-full bg-cyan-400 mr-1.5" />
-                Analysis Complete
-              </Badge>
-              <Badge variant="outline" className="text-xs px-2.5 py-0.5">
-                {data.confidence} Confidence
-              </Badge>
-            </div>
-          </div>
-        </div>
-
         {/* Main Content - Full Width Grid */}
-        <div className="w-full px-6 sm:px-8 lg:px-12 pb-16">
+        <div className="w-full px-6 sm:px-8 lg:px-12 pt-24 pb-16">
           <div className="max-w-[1800px] mx-auto">
+            
+            {/* Header - Centered above Exposure Summary */}
+            <div className="max-w-5xl mx-auto mb-6">
+              <div className="flex items-center justify-center gap-3 mb-3">
+                <h1 className="font-mono text-base sm:text-lg font-medium text-foreground/90 break-all">
+                  {wallet}
+                </h1>
+                <button
+                  onClick={copyAddress}
+                  className="shrink-0 p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-all"
+                  title="Copy address"
+                >
+                  {copied ? <CheckCircle className="w-4 h-4 text-cyan-400" /> : <Copy className="w-4 h-4" />}
+                </button>
+              </div>
+              <div className="flex items-center justify-center gap-2">
+                <Badge className="bg-cyan-500/10 text-cyan-400 border-cyan-500/20 text-xs px-2.5 py-0.5">
+                  <div className="w-1.5 h-1.5 rounded-full bg-cyan-400 mr-1.5" />
+                  Analysis Complete
+                </Badge>
+                <Badge variant="outline" className="text-xs px-2.5 py-0.5">
+                  {data.confidence} Confidence
+                </Badge>
+              </div>
+            </div>
             
             {/* Hero: Exposure Summary - Centered */}
             <AnimatedSection>
@@ -169,24 +167,34 @@ export default function AnalysisPage({ params }: { params: Promise<{ wallet: str
               </div>
             </AnimatedSection>
 
-            {/* Analysis Grid - 2 columns, full width */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 xl:gap-8">
+            {/* Trading Behavior Profile - Full Width */}
+            <AnimatedSection delay={50}>
+              <div className="w-full mb-10">
+                <Suspense fallback={<SectionSkeleton />}>
+                  <FinancialContext data={data} />
+                </Suspense>
+              </div>
+            </AnimatedSection>
+
+            {/* Why this wallet can be tracked - Full Width Two Column Section */}
+            <AnimatedSection delay={100}>
+              <div className="w-full mb-10">
+                <WhyTrackable data={data} />
+              </div>
+            </AnimatedSection>
+
+            {/* Analysis Grid - 2 columns, equal height panels */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 xl:gap-8 items-stretch">
               
               {/* Left Column */}
-              <div className="space-y-6 xl:space-y-8">
-                <AnimatedSection delay={100}>
-                  <Suspense fallback={<SectionSkeleton />}>
-                    <FinancialContext data={data} />
-                  </Suspense>
-                </AnimatedSection>
-
-                <AnimatedSection delay={200}>
+              <div className="flex flex-col gap-6 xl:gap-8">
+                <AnimatedSection delay={150}>
                   <Suspense fallback={<SectionSkeleton />}>
                     <WalletLinkage data={data.ego_network} />
                   </Suspense>
                 </AnimatedSection>
 
-                <AnimatedSection delay={300}>
+                <AnimatedSection delay={250}>
                   <Suspense fallback={<SectionSkeleton />}>
                     <ExposureBreakdown data={data} />
                   </Suspense>
@@ -194,20 +202,18 @@ export default function AnalysisPage({ params }: { params: Promise<{ wallet: str
               </div>
 
               {/* Right Column */}
-              <div className="space-y-6 xl:space-y-8">
-                <AnimatedSection delay={125}>
-                  <WhyTrackable data={data} />
-                </AnimatedSection>
-
-                <AnimatedSection delay={225}>
+              <div className="flex flex-col gap-6 xl:gap-8">
+                <AnimatedSection delay={175}>
                   <Suspense fallback={<SectionSkeleton />}>
                     <OpsecFailuresSection data={data.opsec_failures} />
                   </Suspense>
                 </AnimatedSection>
 
-                <AnimatedSection delay={325}>
+                <AnimatedSection delay={275} className="flex-1">
                   <Suspense fallback={<SectionSkeleton />}>
-                    <SearchWalletElsewhere wallet={wallet} />
+                    <div className="h-full">
+                      <SearchWalletElsewhere wallet={wallet} />
+                    </div>
                   </Suspense>
                 </AnimatedSection>
               </div>

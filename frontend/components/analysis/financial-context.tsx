@@ -117,7 +117,7 @@ export const FinancialContext = memo(function FinancialContext({ data }: Trading
             </div>
 
             {/* Key Metrics Grid */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
               <div className="p-3 rounded-lg bg-muted/20 border border-border/30">
                 <div className="flex items-center gap-1.5 mb-1">
                   <Zap className="w-3.5 h-3.5 text-primary" />
