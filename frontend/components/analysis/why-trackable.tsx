@@ -1,16 +1,11 @@
 'use client'
 
-import { memo, useState, useMemo } from 'react'
-import { Fingerprint, Clock, Users, Activity, ChevronDown, Zap, Moon, Globe, Bot, User } from 'lucide-react'
+import { memo, useMemo } from 'react'
+import { Fingerprint, Clock, Users, Activity, Zap, Moon, Globe, Bot, User, Link2 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from '@/components/ui/collapsible'
 import { cn } from '@/lib/utils'
-import type { AnalysisResult, GeographicOrigin } from './types'
+import type { AnalysisResult, GeographicOrigin, RepeatedCounterparty } from './types'
 
 interface WhyTrackableProps {
   data: AnalysisResult
@@ -328,109 +323,170 @@ const BotConfidenceScale = memo(function BotConfidenceScale({
   )
 })
 
-interface ExplanationBlockProps {
+// ============================================================================
+// FLAT (NON-COLLAPSIBLE) INSIGHT CARDS — reduce scroll + friction
+// ============================================================================
+
+type ImpactLevel = 'low' | 'medium' | 'high'
+
+const impactColors: Record<ImpactLevel, { badge: string; accent: string }> = {
+  low: { badge: 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20', accent: 'border-cyan-500/30' },
+  medium: { badge: 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20', accent: 'border-yellow-500/30' },
+  high: { badge: 'bg-red-500/10 text-red-400 border-red-500/20', accent: 'border-red-500/30' },
+}
+
+interface InsightCardProps {
   icon: React.ReactNode
   title: string
-  summary: string
+  impactLevel: ImpactLevel
   explanation: string
   evidence: { label: string; value: string }[]
   impact: string
-  impactLevel: 'low' | 'medium' | 'high'
-  defaultOpen?: boolean
   visualization?: React.ReactNode
 }
 
-const ExplanationBlock = memo(function ExplanationBlock({ 
-  icon, 
-  title, 
-  summary,
-  explanation, 
-  evidence, 
-  impact,
+const InsightCard = memo(function InsightCard({
+  icon,
+  title,
   impactLevel,
-  defaultOpen = false,
-  visualization
-}: ExplanationBlockProps) {
-  const [isOpen, setIsOpen] = useState(defaultOpen)
-  
-  const impactColors = {
-    low: { badge: 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20', accent: 'border-cyan-500/30' },
-    medium: { badge: 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20', accent: 'border-yellow-500/30' },
-    high: { badge: 'bg-red-500/10 text-red-400 border-red-500/20', accent: 'border-red-500/30' }
-  }
-  
+  explanation,
+  evidence,
+  impact,
+  visualization,
+}: InsightCardProps) {
   return (
-    <Collapsible open={isOpen} onOpenChange={setIsOpen}>
-      <div className={cn(
-        "rounded-lg border transition-all duration-200",
-        isOpen ? "bg-muted/20 border-primary/30" : "bg-muted/10 border-border/40 hover:border-border/60"
-      )}>
-        <CollapsibleTrigger className="w-full">
-          <div className="flex items-center justify-between p-4 cursor-pointer">
-            <div className="flex items-center gap-3">
-              <div className={cn(
-                "p-2 rounded-lg transition-colors",
-                isOpen ? "bg-primary/20 border border-primary/30" : "bg-primary/10 border border-primary/20"
-              )}>
-                {icon}
-              </div>
-              <div className="text-left">
-                <h4 className="font-medium text-sm">{title}</h4>
-                {!isOpen && (
-                  <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">{summary}</p>
-                )}
-              </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <Badge variant="outline" className={cn("text-[10px] hidden sm:flex", impactColors[impactLevel].badge)}>
-                {impactLevel} impact
-              </Badge>
-              <ChevronDown className={cn(
-                "w-4 h-4 text-muted-foreground transition-transform duration-200",
-                isOpen && "rotate-180"
-              )} />
-            </div>
+    <div className="rounded-xl border border-border/40 bg-muted/10 overflow-hidden">
+      <div className="p-4 flex items-start justify-between gap-3">
+        <div className="flex items-start gap-3 min-w-0">
+          <div className="p-2 rounded-lg bg-primary/10 border border-primary/20 shrink-0">
+            {icon}
           </div>
-        </CollapsibleTrigger>
-        
-        <CollapsibleContent>
-          <div className="px-4 pb-4 space-y-4">
-            {/* Visualization (if provided) - shown first for immediate visual impact */}
-            {visualization && (
-              <div className="ml-0 sm:ml-11">
-                {visualization}
-              </div>
-            )}
-            
-            {/* Full Explanation */}
-            <p className="text-sm text-muted-foreground leading-relaxed pl-0 sm:pl-11">
-              {explanation}
-            </p>
-            
-            {/* Evidence Tags */}
-            <div className="flex flex-wrap gap-2 pl-0 sm:pl-11">
-              {evidence.map((item, i) => (
-                <div key={i} className="px-2.5 py-1 rounded bg-muted/50 border border-border/50">
-                  <span className="text-[10px] text-muted-foreground uppercase tracking-wide">{item.label}</span>
-                  <span className="text-xs font-medium ml-1.5 text-primary">{item.value}</span>
-                </div>
-              ))}
-            </div>
-
-            {/* Why This Matters */}
-            <div className={cn(
-              "ml-0 sm:ml-11 p-3 rounded-lg border-l-2 bg-muted/30",
-              impactColors[impactLevel].accent
-            )}>
-              <p className="text-xs text-muted-foreground">
-                <span className="font-medium text-foreground">Why this matters: </span>
-                {impact}
-              </p>
-            </div>
+          <div className="min-w-0">
+            <h4 className="font-medium text-sm leading-tight">{title}</h4>
+            <Badge variant="outline" className={cn("mt-2 text-[10px] py-0", impactColors[impactLevel].badge)}>
+              {impactLevel} impact
+            </Badge>
           </div>
-        </CollapsibleContent>
+        </div>
       </div>
-    </Collapsible>
+
+      <div className="px-4 pb-4 space-y-3">
+        {visualization && <div className="pt-1">{visualization}</div>}
+
+        <p className="text-sm text-muted-foreground leading-relaxed">
+          {explanation}
+        </p>
+
+        <div className="flex flex-wrap gap-2">
+          {evidence.map((item, i) => (
+            <div key={i} className="px-2.5 py-1 rounded bg-muted/40 border border-border/40">
+              <span className="text-[10px] text-muted-foreground uppercase tracking-wide">{item.label}</span>
+              <span className="text-xs font-medium ml-1.5 text-primary tabular-nums">{item.value}</span>
+            </div>
+          ))}
+        </div>
+
+        <div className={cn("p-3 rounded-lg border-l-2 bg-muted/20", impactColors[impactLevel].accent)}>
+          <p className="text-xs text-muted-foreground leading-relaxed">
+            <span className="font-medium text-foreground">Why this matters: </span>
+            {impact}
+          </p>
+        </div>
+      </div>
+    </div>
+  )
+})
+
+// ============================================================================
+// CREATIVE (BUT ACCURATE) VIS: Counterparty Linkability Mini-Graph
+// ============================================================================
+
+interface CounterpartyLinksVizProps {
+  repeatedCounterparties: number
+  strongestLinks: number
+  fundingSources: number
+  withdrawalTargets: number
+  topCounterparties: RepeatedCounterparty[]
+}
+
+const CounterpartyLinksViz = memo(function CounterpartyLinksViz({
+  repeatedCounterparties,
+  strongestLinks,
+  fundingSources,
+  withdrawalTargets,
+  topCounterparties,
+}: CounterpartyLinksVizProps) {
+  const rows = (topCounterparties || []).slice(0, 4)
+  const maxInteractions = Math.max(...rows.map(r => r.interactions), 1)
+
+  return (
+    <div className="rounded-lg bg-card/30 border border-border/40 p-3">
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2">
+          <div className="p-1.5 rounded-md bg-primary/10 border border-primary/20">
+            <Link2 className="w-3.5 h-3.5 text-primary" />
+          </div>
+          <p className="text-[11px] text-muted-foreground">
+            Links strengthen when you repeat the same paths
+          </p>
+        </div>
+        <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
+          <span className="px-2 py-0.5 rounded bg-muted/30 border border-border/40">
+            repeated: <span className="text-foreground tabular-nums">{repeatedCounterparties}</span>
+          </span>
+          <span className="px-2 py-0.5 rounded bg-muted/30 border border-border/40">
+            strong: <span className="text-foreground tabular-nums">{strongestLinks}</span>
+          </span>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-2 mt-3">
+        <div className="rounded-md bg-muted/20 border border-border/30 p-2">
+          <p className="text-[9px] text-muted-foreground uppercase tracking-wide">Funding paths</p>
+          <p className="text-sm font-semibold text-foreground tabular-nums">{fundingSources}</p>
+        </div>
+        <div className="rounded-md bg-muted/20 border border-border/30 p-2">
+          <p className="text-[9px] text-muted-foreground uppercase tracking-wide">Cashout paths</p>
+          <p className="text-sm font-semibold text-foreground tabular-nums">{withdrawalTargets}</p>
+        </div>
+      </div>
+
+      {rows.length > 0 ? (
+        <div className="mt-3 space-y-2">
+          {rows.map((r) => (
+            <div key={r.address} className="flex items-center gap-2">
+              <div className="w-2 h-2 rounded-full bg-primary/80 shadow-[0_0_10px_rgba(34,211,238,0.25)]" />
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-[10px] text-muted-foreground truncate">
+                    {r.label || r.address}
+                  </p>
+                  <p className="text-[10px] text-muted-foreground tabular-nums">
+                    {Math.round((r.confidence || 0) * 100)}%
+                  </p>
+                </div>
+                <div className="h-1.5 bg-muted/30 rounded-full overflow-hidden border border-border/30">
+                  <div
+                    className="h-full bg-primary/70"
+                    style={{ width: `${Math.min(100, (r.interactions / maxInteractions) * 100)}%` }}
+                  />
+                </div>
+              </div>
+              <div className="text-[10px] text-foreground tabular-nums w-10 text-right">
+                {r.interactions}×
+              </div>
+            </div>
+          ))}
+          <p className="text-[9px] text-muted-foreground/80 italic">
+            Bars show relative interaction frequency; confidence is probabilistic.
+          </p>
+        </div>
+      ) : (
+        <p className="mt-3 text-[10px] text-muted-foreground">
+          No repeated counterparties were confidently identified in the analyzed window.
+        </p>
+      )}
+    </div>
   )
 })
 
@@ -471,6 +527,7 @@ export const WhyTrackable = memo(function WhyTrackable({ data }: WhyTrackablePro
   const strongestLinks = egoNetwork?.summary?.strongest_links?.length || 0
   const fundingSources = data.opsec_failures?.funding_sources?.length || 0
   const withdrawalTargets = data.opsec_failures?.withdrawal_targets?.length || 0
+  const topRepeated = egoNetwork?.summary?.repeated_counterparties || []
 
   // Peak activity calculation
   const hourlyPattern = activityPattern?.hourly || []
@@ -489,121 +546,112 @@ export const WhyTrackable = memo(function WhyTrackable({ data }: WhyTrackablePro
           Understanding how blockchain surveillance systems identify and classify wallets
         </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-3">
-        {/* Block A: Behavioral Fingerprint - Default Open */}
-        <ExplanationBlock
-          icon={<Activity className="w-4 h-4 text-primary" />}
-          title="Behavior creates a fingerprint"
-          summary="Reaction speed and execution patterns identify trader type"
-          explanation={
-            isLikelyBot
-              ? "This wallet shows automated execution patterns. Reaction times and consistency suggest algorithmic trading or bot usage, which creates a distinct behavioral signature."
-              : "Reaction speed, execution consistency, and repetitive patterns distinguish human traders from bots. Your trading rhythm is identifiable."
-          }
-          evidence={[
-            { 
-              label: 'Fastest', 
-              value: fastestReaction < 1000 
-                ? `${fastestReaction}ms` 
-                : `${(fastestReaction / 1000).toFixed(1)}s` 
-            },
-            { 
-              label: 'Human-speed', 
-              value: `${humanPct}%` 
-            },
-            { 
-              label: 'Bot Score', 
-              value: `${Math.round(reactionSpeed?.bot_confidence || 0)}%` 
+      <CardContent className="space-y-4">
+        {/* Flat card grid: 2-up on desktop to reduce scroll */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <InsightCard
+            icon={<Activity className="w-4 h-4 text-primary" />}
+            title="Behavior creates a fingerprint"
+            explanation={
+              isLikelyBot
+                ? "This wallet shows automated execution patterns. Reaction times and consistency suggest algorithmic trading or bot usage, which creates a distinct behavioral signature."
+                : "Reaction speed, execution consistency, and repetitive patterns distinguish human traders from bots. Your trading rhythm is identifiable."
             }
-          ]}
-          impact="Surveillance firms use reaction speed analysis to classify wallets as human, bot, or institutional. Consistent patterns make wallets easier to track across chains."
-          impactLevel={isLikelyBot || humanPct < 30 ? 'high' : humanPct < 60 ? 'medium' : 'low'}
-          defaultOpen={true}
-          visualization={
-            <BotConfidenceScale 
-              botConfidence={reactionSpeed?.bot_confidence || 0}
-              humanPct={humanPct}
-              fastestReaction={fastestReaction}
-            />
-          }
-        />
-
-        {/* Block B: Timing Patterns */}
-        <ExplanationBlock
-          icon={<Clock className="w-4 h-4 text-primary" />}
-          title="Timing reveals routines"
-          summary={`Active ${regionName} timezone, sleep ${sleepStart}:00-${sleepEnd}:00 UTC`}
-          explanation="Transaction timestamps reveal your timezone, sleep schedule, and daily activity patterns. This temporal fingerprint narrows geographic location."
-          evidence={[
-            { 
-              label: 'Region', 
-              value: `${regionName} (${Math.round(regionConfidence)}%)` 
-            },
-            { 
-              label: 'Sleep', 
-              value: `${sleepStart}:00-${sleepEnd}:00` 
-            },
-            { 
-              label: 'Peak', 
-              value: `${peakHour}:00 UTC` 
-            }
-          ]}
-          impact="Regular timing patterns allow surveillance systems to infer your approximate location and identify you across multiple wallets by matching activity windows."
-          impactLevel={sleepConfidence > 70 ? 'high' : sleepConfidence > 40 ? 'medium' : 'low'}
-          visualization={
-            <>
-              <ActivityChart 
-                hourlyData={hourlyPattern.length === 24 ? hourlyPattern : Array(24).fill(0)}
-                sleepStart={sleepStart}
-                sleepEnd={sleepEnd}
-                sleepConfidence={sleepConfidence}
-                peakHour={peakHour}
-              />
-              <GeographicChart data={geographic} />
-            </>
-          }
-        />
-
-        {/* Block C: Counterparty Links */}
-        <ExplanationBlock
-          icon={<Users className="w-4 h-4 text-primary" />}
-          title="Repeated counterparties create links"
-          summary={`${repeatedCounterparties} repeated interactions, ${strongestLinks} strong links`}
-          explanation="Every time you interact with the same wallet—for funding, trading, or withdrawals—you strengthen the link between those addresses. Surveillance systems cluster wallets based on these patterns."
-          evidence={[
-            { label: 'Repeated', value: repeatedCounterparties.toString() },
-            { label: 'Strong Links', value: strongestLinks.toString() },
-            { label: 'Funding', value: fundingSources.toString() },
-            { label: 'Cashouts', value: withdrawalTargets.toString() }
-          ]}
-          impact="Repeated interactions are the primary method surveillance firms use to infer wallet ownership. Even one shared funding source can permanently link wallets."
-          impactLevel={repeatedCounterparties > 5 || strongestLinks > 3 ? 'high' : repeatedCounterparties > 2 ? 'medium' : 'low'}
-        />
-
-        {/* Block D: Transaction Patterns (conditional) */}
-        {(surveillanceSignals?.mev_execution_detected || (surveillanceSignals?.swap_count || 0) > 20) && (
-          <ExplanationBlock
-            icon={<Zap className="w-4 h-4 text-primary" />}
-            title="Transaction patterns reveal sophistication"
-            summary={`${surveillanceSignals?.swap_count || 0} swaps, ${surveillanceSignals?.mev_execution_detected ? 'MEV detected' : 'standard execution'}`}
-            explanation="The complexity of your transactions—MEV awareness, swap frequency, and execution style—creates a profile of your trading sophistication and likely wallet type."
             evidence={[
-              { label: 'MEV', value: surveillanceSignals?.mev_execution_detected ? 'Yes' : 'No' },
-              { label: 'Swaps', value: (surveillanceSignals?.swap_count || 0).toString() },
-              { label: 'Concentration', value: `${surveillanceSignals?.portfolio_concentration || 0}%` }
+              {
+                label: 'Fastest',
+                value: fastestReaction < 1000 ? `${fastestReaction}ms` : `${(fastestReaction / 1000).toFixed(1)}s`,
+              },
+              { label: 'Human-speed', value: `${humanPct}%` },
+              { label: 'Bot Score', value: `${Math.round(reactionSpeed?.bot_confidence || 0)}%` },
             ]}
-            impact="Sophisticated trading patterns classify you as a professional or institutional trader, which triggers enhanced monitoring by surveillance platforms."
-            impactLevel={surveillanceSignals?.mev_execution_detected ? 'high' : 'medium'}
+            impact="Surveillance firms use reaction speed analysis to classify wallets as human, bot, or institutional. Consistent patterns make wallets easier to track across chains."
+            impactLevel={isLikelyBot || humanPct < 30 ? 'high' : humanPct < 60 ? 'medium' : 'low'}
+            visualization={
+              <BotConfidenceScale
+                botConfidence={reactionSpeed?.bot_confidence || 0}
+                humanPct={humanPct}
+                fastestReaction={fastestReaction}
+              />
+            }
           />
-        )}
+
+          <InsightCard
+            icon={<Clock className="w-4 h-4 text-primary" />}
+            title="Timing reveals routines"
+            explanation="Transaction timestamps reveal your timezone, sleep schedule, and daily activity patterns. This temporal fingerprint narrows geographic location."
+            evidence={[
+              { label: 'Region', value: `${regionName} (${Math.round(regionConfidence)}%)` },
+              { label: 'Sleep', value: `${sleepStart}:00-${sleepEnd}:00` },
+              { label: 'Peak', value: `${peakHour}:00 UTC` },
+            ]}
+            impact="Regular timing patterns allow surveillance systems to infer your approximate location and identify you across multiple wallets by matching activity windows."
+            impactLevel={sleepConfidence > 70 ? 'high' : sleepConfidence > 40 ? 'medium' : 'low'}
+            visualization={
+              <>
+                <ActivityChart
+                  hourlyData={hourlyPattern.length === 24 ? hourlyPattern : Array(24).fill(0)}
+                  sleepStart={sleepStart}
+                  sleepEnd={sleepEnd}
+                  sleepConfidence={sleepConfidence}
+                  peakHour={peakHour}
+                />
+                <GeographicChart data={geographic} />
+              </>
+            }
+          />
+
+          <InsightCard
+            icon={<Users className="w-4 h-4 text-primary" />}
+            title="Repeated counterparties create links"
+            explanation="Every time you interact with the same wallet—for funding, trading, or withdrawals—you strengthen the link between those addresses. Surveillance systems cluster wallets based on these patterns."
+            evidence={[
+              { label: 'Repeated', value: repeatedCounterparties.toString() },
+              { label: 'Strong Links', value: strongestLinks.toString() },
+              { label: 'Funding', value: fundingSources.toString() },
+              { label: 'Cashouts', value: withdrawalTargets.toString() },
+            ]}
+            impact="Repeated interactions are the primary method surveillance firms use to infer wallet ownership. Even one shared funding source can permanently link wallets."
+            impactLevel={repeatedCounterparties > 5 || strongestLinks > 3 ? 'high' : repeatedCounterparties > 2 ? 'medium' : 'low'}
+            visualization={
+              <CounterpartyLinksViz
+                repeatedCounterparties={repeatedCounterparties}
+                strongestLinks={strongestLinks}
+                fundingSources={fundingSources}
+                withdrawalTargets={withdrawalTargets}
+                topCounterparties={topRepeated}
+              />
+            }
+          />
+
+          {(surveillanceSignals?.mev_execution_detected || (surveillanceSignals?.swap_count || 0) > 20) ? (
+            <InsightCard
+              icon={<Zap className="w-4 h-4 text-primary" />}
+              title="Transaction patterns reveal sophistication"
+              explanation="The complexity of your transactions—MEV awareness, swap frequency, and execution style—creates a profile of your trading sophistication and likely wallet type."
+              evidence={[
+                { label: 'MEV', value: surveillanceSignals?.mev_execution_detected ? 'Yes' : 'No' },
+                { label: 'Swaps', value: (surveillanceSignals?.swap_count || 0).toString() },
+                { label: 'Concentration', value: `${surveillanceSignals?.portfolio_concentration || 0}%` },
+              ]}
+              impact="Sophisticated trading patterns classify you as a professional or institutional trader, which triggers enhanced monitoring by surveillance platforms."
+              impactLevel={surveillanceSignals?.mev_execution_detected ? 'high' : 'medium'}
+            />
+          ) : (
+            <div className="rounded-xl border border-border/40 bg-muted/5 p-4 flex items-center justify-center text-center">
+              <p className="text-xs text-muted-foreground">
+                Not enough swap/MEV activity in the analyzed window to confidently label transaction sophistication.
+              </p>
+            </div>
+          )}
+        </div>
 
         {/* Educational Footer */}
-        <div className="mt-4 p-4 rounded-lg bg-card border border-border/50">
+        <div className="p-4 rounded-lg bg-card border border-border/50">
           <p className="text-xs text-muted-foreground leading-relaxed">
             <span className="text-primary font-medium">How surveillance works: </span>
-            Blockchain analysis firms combine these signals to build probabilistic identity clusters. 
-            No single factor reveals identity—but patterns compound. Each identifiable behavior 
-            reduces the anonymity set and increases confidence in wallet clustering.
+            Blockchain analysis firms combine these signals to build probabilistic identity clusters.
+            No single factor reveals identity—but patterns compound over time.
           </p>
         </div>
       </CardContent>

@@ -130,7 +130,7 @@ export default function AnalysisPage({ params }: { params: Promise<{ wallet: str
         data={data}
       />
 
-      <main className="relative max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-6 sm:pb-8 space-y-6">
+      <main className="relative max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-6 sm:pb-8 space-y-4">
 
         {/* Page title: wallet address + SCAN COMPLETE / Confidence */}
         <div className="pb-2">
@@ -162,46 +162,43 @@ export default function AnalysisPage({ params }: { params: Promise<{ wallet: str
           <ExposureSummary data={data} />
         </AnimatedSection>
 
-        {/* 2. Why This Wallet Can Be Tracked - Collapsible (first expanded) */}
+        {/* 2. Trading Behavior Profile - Collapsible */}
         <AnimatedSection delay={100}>
+          <Suspense fallback={<SectionSkeleton />}>
+            <FinancialContext data={data} />
+          </Suspense>
+        </AnimatedSection>
+
+        {/* 3. Why This Wallet Can Be Tracked - Collapsible (first expanded) */}
+        <AnimatedSection delay={150}>
           <WhyTrackable data={data} />
         </AnimatedSection>
 
-        {/* 3. Wallet Linkage Visualization - Graph visible, details collapsed */}
-        <AnimatedSection delay={150}>
+        {/* 4. Wallet Linkage Visualization - Graph visible, details collapsed */}
+        <AnimatedSection delay={200}>
           <Suspense fallback={<SectionSkeleton />}>
             <WalletLinkage data={data.ego_network} />
           </Suspense>
         </AnimatedSection>
 
-        {/* 4. Operational Security Failures - Accordion */}
-        <AnimatedSection delay={200}>
+        {/* 5. Operational Security Failures - Accordion */}
+        <AnimatedSection delay={250}>
           <Suspense fallback={<SectionSkeleton />}>
             <OpsecFailuresSection data={data.opsec_failures} />
           </Suspense>
         </AnimatedSection>
 
-        {/* 4b. Search wallet on Arkham / X */}
-        <AnimatedSection delay={225}>
+        {/* 5b. Search wallet on Arkham / X */}
+        <AnimatedSection delay={275}>
           <Suspense fallback={<SectionSkeleton />}>
             <SearchWalletElsewhere wallet={wallet} />
           </Suspense>
         </AnimatedSection>
 
-        {/* 5. Exposure Score Breakdown - Collapsed by default */}
-        <AnimatedSection delay={250}>
-          <Suspense fallback={<SectionSkeleton />}>
-            <ExposureBreakdown data={data} />
-          </Suspense>
-        </AnimatedSection>
-
-        {/* 6. Financial Activity Context - Collapsed, secondary */}
+        {/* 6. Exposure Score Breakdown - Collapsed by default */}
         <AnimatedSection delay={300}>
           <Suspense fallback={<SectionSkeleton />}>
-            <FinancialContext 
-              tradingPnl={data.token_trading_pnl} 
-              netWorth={data.net_worth} 
-            />
+            <ExposureBreakdown data={data} />
           </Suspense>
         </AnimatedSection>
 
