@@ -130,98 +130,112 @@ export default function AnalysisPage({ params }: { params: Promise<{ wallet: str
         data={data}
       />
 
-      <main className="relative max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-6 sm:pb-8 space-y-4">
-
-        {/* Page title: wallet address + SCAN COMPLETE / Confidence */}
-        <div className="pb-2">
-          <div className="flex items-center gap-2 flex-wrap">
-            <h1 className="font-mono text-xl sm:text-2xl font-semibold text-foreground break-all pr-2">
-              {wallet}
-            </h1>
-            <button
-              onClick={copyAddress}
-              className="shrink-0 p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
-              title="Copy address"
-            >
-              {copied ? <CheckCircle className="w-4 h-4 text-cyan-400" /> : <Copy className="w-4 h-4" />}
-            </button>
-          </div>
-          <div className="flex flex-wrap items-center gap-2 mt-2">
-            <Badge className="bg-primary/20 text-primary border-primary/30 gap-1.5">
-              <div className="w-2 h-2 rounded-full bg-primary" />
-              SCAN COMPLETE
-            </Badge>
-            <Badge variant="outline" className="text-xs">
-              {data.confidence} Confidence
-            </Badge>
+      <main className="relative w-full">
+        {/* Header */}
+        <div className="w-full px-6 sm:px-8 lg:px-12 pt-24 pb-6">
+          <div className="max-w-[1800px] mx-auto">
+            <div className="flex items-center gap-3 mb-3">
+              <h1 className="font-mono text-base sm:text-lg font-medium text-foreground/90 break-all">
+                {wallet}
+              </h1>
+              <button
+                onClick={copyAddress}
+                className="shrink-0 p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-all"
+                title="Copy address"
+              >
+                {copied ? <CheckCircle className="w-4 h-4 text-cyan-400" /> : <Copy className="w-4 h-4" />}
+              </button>
+            </div>
+            <div className="flex items-center gap-2">
+              <Badge className="bg-cyan-500/10 text-cyan-400 border-cyan-500/20 text-xs px-2.5 py-0.5">
+                <div className="w-1.5 h-1.5 rounded-full bg-cyan-400 mr-1.5" />
+                Analysis Complete
+              </Badge>
+              <Badge variant="outline" className="text-xs px-2.5 py-0.5">
+                {data.confidence} Confidence
+              </Badge>
+            </div>
           </div>
         </div>
 
-        {/* 1. Exposure Summary (TL;DR) - Always Expanded */}
-        <AnimatedSection>
-          <ExposureSummary data={data} />
-        </AnimatedSection>
+        {/* Main Content - Full Width Grid */}
+        <div className="w-full px-6 sm:px-8 lg:px-12 pb-16">
+          <div className="max-w-[1800px] mx-auto">
+            
+            {/* Hero: Exposure Summary - Centered */}
+            <AnimatedSection>
+              <div className="max-w-5xl mx-auto mb-10">
+                <ExposureSummary data={data} />
+              </div>
+            </AnimatedSection>
 
-        {/* 2. Trading Behavior Profile - Collapsible */}
-        <AnimatedSection delay={100}>
-          <Suspense fallback={<SectionSkeleton />}>
-            <FinancialContext data={data} />
-          </Suspense>
-        </AnimatedSection>
+            {/* Analysis Grid - 2 columns, full width */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 xl:gap-8">
+              
+              {/* Left Column */}
+              <div className="space-y-6 xl:space-y-8">
+                <AnimatedSection delay={100}>
+                  <Suspense fallback={<SectionSkeleton />}>
+                    <FinancialContext data={data} />
+                  </Suspense>
+                </AnimatedSection>
 
-        {/* 3. Why This Wallet Can Be Tracked - Collapsible (first expanded) */}
-        <AnimatedSection delay={150}>
-          <WhyTrackable data={data} />
-        </AnimatedSection>
+                <AnimatedSection delay={200}>
+                  <Suspense fallback={<SectionSkeleton />}>
+                    <WalletLinkage data={data.ego_network} />
+                  </Suspense>
+                </AnimatedSection>
 
-        {/* 4. Wallet Linkage Visualization - Graph visible, details collapsed */}
-        <AnimatedSection delay={200}>
-          <Suspense fallback={<SectionSkeleton />}>
-            <WalletLinkage data={data.ego_network} />
-          </Suspense>
-        </AnimatedSection>
+                <AnimatedSection delay={300}>
+                  <Suspense fallback={<SectionSkeleton />}>
+                    <ExposureBreakdown data={data} />
+                  </Suspense>
+                </AnimatedSection>
+              </div>
 
-        {/* 5. Operational Security Failures - Accordion */}
-        <AnimatedSection delay={250}>
-          <Suspense fallback={<SectionSkeleton />}>
-            <OpsecFailuresSection data={data.opsec_failures} />
-          </Suspense>
-        </AnimatedSection>
+              {/* Right Column */}
+              <div className="space-y-6 xl:space-y-8">
+                <AnimatedSection delay={125}>
+                  <WhyTrackable data={data} />
+                </AnimatedSection>
 
-        {/* 5b. Search wallet on Arkham / X */}
-        <AnimatedSection delay={275}>
-          <Suspense fallback={<SectionSkeleton />}>
-            <SearchWalletElsewhere wallet={wallet} />
-          </Suspense>
-        </AnimatedSection>
+                <AnimatedSection delay={225}>
+                  <Suspense fallback={<SectionSkeleton />}>
+                    <OpsecFailuresSection data={data.opsec_failures} />
+                  </Suspense>
+                </AnimatedSection>
 
-        {/* 6. Exposure Score Breakdown - Collapsed by default */}
-        <AnimatedSection delay={300}>
-          <Suspense fallback={<SectionSkeleton />}>
-            <ExposureBreakdown data={data} />
-          </Suspense>
-        </AnimatedSection>
+                <AnimatedSection delay={325}>
+                  <Suspense fallback={<SectionSkeleton />}>
+                    <SearchWalletElsewhere wallet={wallet} />
+                  </Suspense>
+                </AnimatedSection>
+              </div>
+            </div>
 
-        {/* 7. What This Means For You - Always Expanded */}
-        <AnimatedSection delay={350}>
-          <Suspense fallback={<SectionSkeleton />}>
-            <ImplicationsSection />
-          </Suspense>
-        </AnimatedSection>
+            {/* Bottom Narrative Sections */}
+            <div className="mt-12 max-w-5xl mx-auto space-y-8">
+              <AnimatedSection delay={400}>
+                <Suspense fallback={<SectionSkeleton />}>
+                  <ImplicationsSection />
+                </Suspense>
+              </AnimatedSection>
 
-        {/* 8. Final CTA Section - Minimal, centered */}
-        <AnimatedSection delay={400}>
-          <Suspense fallback={<SectionSkeleton />}>
-            <MitigationCTA />
-          </Suspense>
-        </AnimatedSection>
+              <AnimatedSection delay={450}>
+                <Suspense fallback={<SectionSkeleton />}>
+                  <MitigationCTA />
+                </Suspense>
+              </AnimatedSection>
+            </div>
 
-        {/* Footer Trust Signal */}
-        <div className="text-center py-6 border-t border-border/30">
-          <p className="text-[10px] text-muted-foreground/60 leading-relaxed max-w-md mx-auto">
-            This analysis uses heuristic inference based on publicly available on-chain data.
-            Results are probabilistic estimates similar to those used by blockchain surveillance platforms.
-          </p>
+            {/* Footer */}
+            <div className="mt-16 pt-8 border-t border-border/20">
+              <p className="text-xs text-muted-foreground/70 text-center max-w-2xl mx-auto leading-relaxed">
+                This analysis uses heuristic inference based on publicly available on-chain data.
+                Results are probabilistic estimates similar to those used by blockchain surveillance platforms.
+              </p>
+            </div>
+          </div>
         </div>
       </main>
     </div>

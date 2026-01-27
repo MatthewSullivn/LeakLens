@@ -1,14 +1,9 @@
 'use client'
 
-import { memo, useState, useMemo } from 'react'
-import { Activity, Zap, Clock, Layers, TrendingUp, ChevronDown, Info, Coins } from 'lucide-react'
+import { memo, useMemo } from 'react'
+import { Activity, Zap, Clock, Layers, TrendingUp, Info, Coins } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from '@/components/ui/collapsible'
 import { cn } from '@/lib/utils'
 import type { AnalysisResult } from './types'
 
@@ -33,8 +28,6 @@ function estimateUniquePairs(swapCount: number, uniqueTokens: number): number {
 }
 
 export const FinancialContext = memo(function FinancialContext({ data }: TradingBehaviorProps) {
-  const [isExpanded, setIsExpanded] = useState(false)
-
   // Extract trading behavior data
   const signals = data.surveillance_exposure?.signals
   const swapCount = signals?.swap_count || 0
@@ -88,40 +81,30 @@ export const FinancialContext = memo(function FinancialContext({ data }: Trading
   })
 
   return (
-    <Collapsible open={isExpanded} onOpenChange={setIsExpanded}>
-      <Card className="border-border/40">
-        <CollapsibleTrigger className="w-full text-left">
-          <CardHeader className="pb-3 cursor-pointer hover:bg-muted/10 transition-colors rounded-t-lg">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <div className="p-1.5 rounded-lg bg-primary/10">
-                  <Activity className="w-4 h-4 text-primary" />
-                </div>
-                <div>
-                  <CardTitle className="text-base">Trading Behavior Profile</CardTitle>
-                  <CardDescription className="text-xs">
-                    Trading patterns contribute to behavioral fingerprinting
-                  </CardDescription>
-                </div>
-              </div>
-              <div className="flex items-center gap-3">
-                <Badge 
-                  variant="outline" 
-                  className="text-[10px] py-0 bg-primary/10 text-primary border-primary/30"
-                >
-                  {swapCount} swaps
-                </Badge>
-                <ChevronDown className={cn(
-                  "w-4 h-4 text-muted-foreground transition-transform duration-200",
-                  isExpanded && "rotate-180"
-                )} />
-              </div>
+    <Card className="border-border/40 h-full">
+      <CardHeader className="pb-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-primary/10">
+              <Activity className="w-5 h-5 text-primary" />
             </div>
-          </CardHeader>
-        </CollapsibleTrigger>
+            <div>
+              <CardTitle className="text-lg font-semibold">Trading Behavior Profile</CardTitle>
+              <CardDescription className="text-xs mt-1">
+                Trading patterns contribute to behavioral fingerprinting
+              </CardDescription>
+            </div>
+          </div>
+          <Badge 
+            variant="outline" 
+            className="text-xs px-3 py-1 bg-primary/10 text-primary border-primary/30"
+          >
+            {swapCount} swaps
+          </Badge>
+        </div>
+      </CardHeader>
 
-        <CollapsibleContent>
-          <CardContent className="pt-0 space-y-4">
+      <CardContent className="pt-0 space-y-5">
             {/* Important Note */}
             <div className="p-3 rounded-lg bg-muted/20 border border-border/30">
               <div className="flex gap-2.5">
@@ -269,9 +252,7 @@ export const FinancialContext = memo(function FinancialContext({ data }: Trading
                 Trading frequency, token selection, and execution style (MEV awareness, burst patterns) are used by blockchain analysis firms to classify wallet sophistication and link related addresses.
               </p>
             </div>
-          </CardContent>
-        </CollapsibleContent>
-      </Card>
-    </Collapsible>
+      </CardContent>
+    </Card>
   )
 })

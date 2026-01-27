@@ -1,14 +1,9 @@
 'use client'
 
-import { memo, useState } from 'react'
-import { ShieldAlert, AlertTriangle, Link2, TrendingDown, TrendingUp, Info, ChevronDown } from 'lucide-react'
+import { memo } from 'react'
+import { ShieldAlert, AlertTriangle, Link2, TrendingDown, TrendingUp, Info } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from '@/components/ui/collapsible'
 import { cn } from '@/lib/utils'
 import { SolscanLink } from './shared'
 import { getSeverityColor } from './utils'
@@ -68,7 +63,7 @@ function getLeakExplanation(leakType: string): { title: string; summary: string;
   }
 }
 
-// Collapsible leak card
+// Leak card (always visible)
 const LeakAccordion = memo(function LeakAccordion({ 
   leak, 
   defaultOpen = false 
@@ -76,64 +71,40 @@ const LeakAccordion = memo(function LeakAccordion({
   leak: CriticalLeak
   defaultOpen?: boolean 
 }) {
-  const [isOpen, setIsOpen] = useState(defaultOpen)
   const explanation = getLeakExplanation(leak.type)
   
   return (
-    <Collapsible open={isOpen} onOpenChange={setIsOpen}>
-      <div className={cn(
-        "rounded-lg border transition-all duration-200",
-        isOpen ? "bg-red-500/5 border-red-500/30" : "bg-red-500/5 border-red-500/20 hover:border-red-500/30"
-      )}>
-        <CollapsibleTrigger className="w-full">
-          <div className="flex items-center justify-between p-3 cursor-pointer">
-            <div className="flex items-center gap-3">
-              <div className={cn(
-                "p-1.5 rounded-lg transition-colors",
-                isOpen ? "bg-red-500/20" : "bg-red-500/10"
-              )}>
-                <AlertTriangle className="w-3.5 h-3.5 text-red-400" />
-              </div>
-              <div className="text-left">
-                <h4 className="font-medium text-sm text-red-400">{explanation.title}</h4>
-                {!isOpen && (
-                  <p className="text-[11px] text-muted-foreground mt-0.5">{explanation.summary}</p>
-                )}
-              </div>
-            </div>
-            <ChevronDown className={cn(
-              "w-4 h-4 text-red-400/60 transition-transform duration-200",
-              isOpen && "rotate-180"
-            )} />
+    <div className="rounded-lg border bg-red-500/5 border-red-500/30">
+      <div className="flex items-start gap-3 p-4">
+        <div className="p-2 rounded-lg bg-red-500/15">
+          <AlertTriangle className="w-4 h-4 text-red-400" />
+        </div>
+        <div className="space-y-2 flex-1">
+          <div>
+            <h4 className="font-medium text-sm text-red-400">{explanation.title}</h4>
+            <p className="text-[11px] text-muted-foreground mt-1">{explanation.summary}</p>
           </div>
-        </CollapsibleTrigger>
-        
-        <CollapsibleContent>
-          <div className="px-3 pb-3 space-y-3">
-            <p className="text-xs text-muted-foreground leading-relaxed pl-9">
-              {explanation.explanation}
+          <p className="text-xs text-muted-foreground leading-relaxed">
+            {explanation.explanation}
+          </p>
+          {leak.detail && (
+            <p className="text-[10px] text-muted-foreground/70 font-mono break-all">
+              {leak.detail}
             </p>
-            
-            {leak.detail && (
-              <p className="text-[10px] text-muted-foreground/70 font-mono pl-9 break-all">
-                {leak.detail}
-              </p>
-            )}
-            
-            <div className="ml-9 p-2.5 rounded bg-red-500/10 border-l-2 border-red-500/40">
-              <p className="text-[11px]">
-                <span className="font-medium text-red-400">Why this matters: </span>
-                <span className="text-muted-foreground">{explanation.impact}</span>
-              </p>
-            </div>
+          )}
+          <div className="p-3 rounded bg-red-500/10 border-l-2 border-red-500/40">
+            <p className="text-[11px]">
+              <span className="font-medium text-red-400">Why this matters: </span>
+              <span className="text-muted-foreground">{explanation.impact}</span>
+            </p>
           </div>
-        </CollapsibleContent>
+        </div>
       </div>
-    </Collapsible>
+    </div>
   )
 })
 
-// Collapsible sources section
+// Sources section (always visible)
 const SourcesAccordion = memo(function SourcesAccordion({ 
   title,
   icon,
@@ -147,59 +118,42 @@ const SourcesAccordion = memo(function SourcesAccordion({
   type: 'funding' | 'withdrawal'
   explanation: string
 }) {
-  const [isOpen, setIsOpen] = useState(false)
   const iconColor = type === 'funding' ? 'text-cyan-400' : 'text-red-500'
   
   if (sources.length === 0) return null
   
   return (
-    <Collapsible open={isOpen} onOpenChange={setIsOpen}>
-      <div className={cn(
-        "rounded-lg border transition-all duration-200",
-        isOpen ? "bg-muted/20 border-border/50" : "bg-muted/10 border-border/30 hover:border-border/50"
-      )}>
-        <CollapsibleTrigger className="w-full">
-          <div className="flex items-center justify-between p-3 cursor-pointer">
-            <div className="flex items-center gap-2">
-              {icon}
-              <span className="text-sm font-medium">{title}</span>
-              <Badge variant="outline" className="text-[10px] py-0">{sources.length}</Badge>
-            </div>
-            <ChevronDown className={cn(
-              "w-4 h-4 text-muted-foreground transition-transform duration-200",
-              isOpen && "rotate-180"
-            )} />
-          </div>
-        </CollapsibleTrigger>
-        
-        <CollapsibleContent>
-          <div className="px-3 pb-3 space-y-2">
-            {sources.slice(0, 5).map((source, i) => (
-              <div key={i} className="flex items-center justify-between p-2.5 bg-muted/30 rounded-lg">
-                <div className="flex items-center gap-2 min-w-0">
-                  {type === 'funding' ? (
-                    <TrendingDown className={cn("w-3.5 h-3.5 shrink-0", iconColor)} />
-                  ) : (
-                    <TrendingUp className={cn("w-3.5 h-3.5 shrink-0", iconColor)} />
-                  )}
-                  <SolscanLink address={source.wallet} className="font-mono text-[11px] truncate">
-                    {source.label}
-                  </SolscanLink>
-                </div>
-                <div className="text-right shrink-0 ml-2">
-                  <p className="text-xs font-medium tabular-nums">{source.total_sol.toFixed(3)} SOL</p>
-                  <p className="text-[10px] text-muted-foreground">{source.count}x</p>
-                </div>
-              </div>
-            ))}
-            <p className="text-[10px] text-muted-foreground pt-1 pl-1">
-              <span className="font-medium">Why this matters: </span>
-              {explanation}
-            </p>
-          </div>
-        </CollapsibleContent>
+    <div className="rounded-lg border bg-muted/10 border-border/40">
+      <div className="flex items-center gap-2 p-3 border-b border-border/30">
+        {icon}
+        <span className="text-sm font-medium">{title}</span>
+        <Badge variant="outline" className="text-xs px-2 py-0.5">{sources.length}</Badge>
       </div>
-    </Collapsible>
+      <div className="p-3 space-y-2">
+        {sources.slice(0, 5).map((source, i) => (
+          <div key={i} className="flex items-center justify-between p-2.5 bg-muted/30 rounded-lg">
+            <div className="flex items-center gap-2 min-w-0">
+              {type === 'funding' ? (
+                <TrendingDown className={cn("w-4 h-4 shrink-0", iconColor)} />
+              ) : (
+                <TrendingUp className={cn("w-4 h-4 shrink-0", iconColor)} />
+              )}
+              <SolscanLink address={source.wallet} className="font-mono text-xs truncate">
+                {source.label}
+              </SolscanLink>
+            </div>
+            <div className="text-right shrink-0 ml-2">
+              <p className="text-sm font-semibold tabular-nums text-foreground">{source.total_sol.toFixed(3)} SOL</p>
+              <p className="text-[10px] text-muted-foreground">{source.count}x</p>
+            </div>
+          </div>
+        ))}
+        <p className="text-xs text-muted-foreground pt-2">
+          <span className="font-medium">Why this matters: </span>
+          {explanation}
+        </p>
+      </div>
+    </div>
   )
 })
 

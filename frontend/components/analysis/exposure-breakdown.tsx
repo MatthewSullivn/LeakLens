@@ -1,14 +1,9 @@
 'use client'
 
 import { memo, useState, useMemo, useRef, useEffect } from 'react'
-import { BarChart3, TrendingUp, TrendingDown, Minus, Info, ChevronDown, Eye } from 'lucide-react'
+import { BarChart3, TrendingUp, TrendingDown, Minus, Info, Eye } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from '@/components/ui/collapsible'
 import { cn } from '@/lib/utils'
 import { STROKE_COLORS } from './utils'
 import type { AnalysisResult, SurveillanceSignals } from './types'
@@ -349,8 +344,6 @@ const FactorRow = memo(function FactorRow({ factor }: { factor: ExposureFactor }
 })
 
 export const ExposureBreakdown = memo(function ExposureBreakdown({ data }: ExposureBreakdownProps) {
-  const [isExpanded, setIsExpanded] = useState(false)
-  
   const signals = data.surveillance_exposure?.signals
   const opsec = data.opsec_failures
   const sleepWindow = data.sleep_window
@@ -410,67 +403,36 @@ export const ExposureBreakdown = memo(function ExposureBreakdown({ data }: Expos
   }, {} as Record<ImpactLevel, number>)
 
   return (
-    <Collapsible open={isExpanded} onOpenChange={setIsExpanded}>
-      <Card className="border-border/40">
-        <CollapsibleTrigger className="w-full text-left">
-          <CardHeader className="pb-4 cursor-pointer hover:bg-muted/10 transition-colors rounded-t-lg">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <div className="p-1.5 rounded-lg bg-primary/10">
-                  <BarChart3 className="w-4 h-4 text-primary" />
-                </div>
-                <div>
-                  <CardTitle className="text-base">Exposure Score Breakdown</CardTitle>
-                  <CardDescription className="text-xs mt-0.5">
-                    Factors contributing to surveillance exposure
-                  </CardDescription>
-                </div>
-              </div>
-              <div className="flex items-center gap-3">
-                {/* Impact summary badges */}
-                <div className="hidden sm:flex gap-1.5">
-                  {impactCounts.high && (
-                    <Badge variant="outline" className="bg-red-500/10 text-red-400 border-red-500/20 text-[10px] py-0">
-                      {impactCounts.high} high
-                    </Badge>
-                  )}
-                  {impactCounts.medium && (
-                    <Badge variant="outline" className="bg-yellow-500/10 text-yellow-400 border-yellow-500/20 text-[10px] py-0">
-                      {impactCounts.medium} med
-                    </Badge>
-                  )}
-                </div>
-                <ChevronDown className={cn(
-                  "w-4 h-4 text-muted-foreground transition-transform duration-200",
-                  isExpanded && "rotate-180"
-                )} />
-              </div>
+    <Card className="border-border/40 h-full">
+      <CardHeader className="pb-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-primary/10">
+              <BarChart3 className="w-5 h-5 text-primary" />
             </div>
-          </CardHeader>
-        </CollapsibleTrigger>
-
-        {/* Collapsed: Show stacked exposure bar + compact bars */}
-        {!isExpanded && (
-          <CardContent className="pt-0 pb-4">
-            {/* Stacked Exposure Visualization */}
-            <StackedExposureBar 
-              totalScore={data.surveillance_exposure?.surveillance_score || 0}
-              riskLevel={data.surveillance_exposure?.risk_level || 'MEDIUM'}
-              signals={signals}
-            />
-            
-            {/* Compact factor bars */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-              {sortedFactors.slice(0, 6).map((factor, i) => (
-                <FactorBar key={i} factor={factor} />
-              ))}
+            <div>
+              <CardTitle className="text-lg font-semibold">Exposure Score Breakdown</CardTitle>
+              <CardDescription className="text-xs mt-1">
+                Factors contributing to surveillance exposure
+              </CardDescription>
             </div>
-          </CardContent>
-        )}
+          </div>
+          <div className="flex items-center gap-2">
+            {impactCounts.high && (
+              <Badge variant="outline" className="bg-red-500/10 text-red-400 border-red-500/20 text-xs px-2.5 py-1">
+                {impactCounts.high} high
+              </Badge>
+            )}
+            {impactCounts.medium && (
+              <Badge variant="outline" className="bg-yellow-500/10 text-yellow-400 border-yellow-500/20 text-xs px-2.5 py-1">
+                {impactCounts.medium} med
+              </Badge>
+            )}
+          </div>
+        </div>
+      </CardHeader>
 
-        {/* Expanded: Show detailed breakdown */}
-        <CollapsibleContent>
-          <CardContent className="pt-0 space-y-3">
+      <CardContent className="pt-0 space-y-4">
             {/* Stacked Exposure Visualization */}
             <StackedExposureBar 
               totalScore={data.surveillance_exposure?.surveillance_score || 0}
@@ -483,20 +445,18 @@ export const ExposureBreakdown = memo(function ExposureBreakdown({ data }: Expos
               <FactorRow key={i} factor={factor} />
             ))}
 
-            {/* Methodology Note */}
-            <div className="p-3 rounded-lg bg-card border border-border/40 mt-4">
-              <div className="flex gap-2.5">
-                <Info className="w-3.5 h-3.5 text-primary shrink-0 mt-0.5" />
-                <p className="text-[10px] text-muted-foreground leading-relaxed">
-                  <span className="font-medium text-foreground">How this works: </span>
-                  Exposure scores are heuristic estimates similar to those used by surveillance platforms. 
-                  Higher impact factors have greater influence on your overall exposure score.
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </CollapsibleContent>
-      </Card>
-    </Collapsible>
+        {/* Methodology Note */}
+        <div className="p-4 rounded-lg bg-card border border-border/40 mt-4">
+          <div className="flex gap-2.5">
+            <Info className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              <span className="font-medium text-foreground">How this works: </span>
+              Exposure scores are heuristic estimates similar to those used by surveillance platforms. 
+              Higher impact factors have greater influence on your overall exposure score.
+            </p>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
   )
 })
