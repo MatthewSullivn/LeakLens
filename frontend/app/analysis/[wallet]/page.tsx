@@ -28,6 +28,9 @@ const ImplicationsSection = lazy(() => import('@/components/analysis/implication
 const MitigationCTA = lazy(() => import('@/components/analysis/implications').then(m => ({ default: m.MitigationCTA })))
 const SearchWalletElsewhere = lazy(() => import('@/components/analysis/search-wallet-elsewhere').then(m => ({ default: m.SearchWalletElsewhere })))
 
+/** Minimum time to show the loading screen (ms) so it doesn’t flash away when data is fast/cached */
+const MIN_LOADING_MS = 3000
+
 export default function AnalysisPage({ params }: { params: Promise<{ wallet: string }> }) {
   const resolvedParams = use(params)
   const wallet = resolvedParams.wallet
@@ -40,13 +43,23 @@ export default function AnalysisPage({ params }: { params: Promise<{ wallet: str
   useEffect(() => {
     const abortController = new AbortController()
     let aborted = false
+    let minDelayTimerId: ReturnType<typeof setTimeout> | null = null
+    const startTime = Date.now()
+
+    const showResultAfterMinDelay = () => {
+      const remaining = Math.max(0, MIN_LOADING_MS - (Date.now() - startTime))
+      minDelayTimerId = setTimeout(() => {
+        minDelayTimerId = null
+        if (!aborted) setLoading(false)
+      }, remaining)
+    }
 
     const fetchAnalysis = async () => {
       const cached = retryCount === 0 ? getCachedAnalysis(wallet) : null
       if (cached) {
         setData(cached)
-        setLoading(false)
         setError('')
+        showResultAfterMinDelay()
         return
       }
       try {
@@ -84,6 +97,7 @@ export default function AnalysisPage({ params }: { params: Promise<{ wallet: str
         if (aborted) return
         setCachedAnalysis(wallet, result)
         setData(result)
+        showResultAfterMinDelay()
       } catch (err: any) {
         if (err.name === 'AbortError') {
           aborted = true
@@ -107,7 +121,7 @@ export default function AnalysisPage({ params }: { params: Promise<{ wallet: str
         
         setError(errorMessage)
       } finally {
-        if (!aborted) setLoading(false)
+        if (!aborted && !minDelayTimerId) setLoading(false)
       }
     }
     fetchAnalysis()
@@ -115,6 +129,7 @@ export default function AnalysisPage({ params }: { params: Promise<{ wallet: str
     return () => {
       aborted = true
       abortController.abort()
+      if (minDelayTimerId) clearTimeout(minDelayTimerId)
     }
   }, [wallet, retryCount])
 
