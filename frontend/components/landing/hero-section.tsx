@@ -1,12 +1,13 @@
 'use client'
 
-import { useState, useCallback, memo } from 'react'
+import { useState, useCallback, memo, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Search, ArrowRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { isValidSolanaAddress } from '@/lib/utils'
+import { prefetchAnalysis } from '@/lib/analysis-cache'
 import { DEMO_WALLET } from './constants'
 import { WavyBackground } from '@/components/ui/wavy-background'
 import { EncryptedText } from '../ui/encrypted-text'
@@ -16,6 +17,11 @@ export const HeroSection = memo(function HeroSection() {
   const [wallet, setWallet] = useState('')
   const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
+
+  // Prefetch demo wallet on mount so "Explore a real wallet" loads instantly when clicked
+  useEffect(() => {
+    prefetchAnalysis(DEMO_WALLET)
+  }, [])
 
   const handleAnalyze = useCallback(async () => {
     setError('')
@@ -144,6 +150,7 @@ export const HeroSection = memo(function HeroSection() {
                   <div className="mt-6">
                     <button
                       onClick={handleDemoWallet}
+                      onMouseEnter={() => prefetchAnalysis(DEMO_WALLET)}
                       disabled={isLoading}
                       className="text-sm hover:text-primary/80 underline underline-offset-4 transition-colors drop-shadow-[0_1px_2px_rgba(0,0,0,0.2)] cursor-pointer"
                       style={{ color: 'var(--color-cyan-600)' }}

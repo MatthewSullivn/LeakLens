@@ -15,6 +15,7 @@ import {
   AnimatedSection,
   SectionSkeleton,
 } from '@/components/analysis'
+import { getCachedAnalysis, setCachedAnalysis } from '@/lib/analysis-cache'
 import { Badge } from '@/components/ui/badge'
 import { Copy, CheckCircle } from 'lucide-react'
 
@@ -34,19 +35,27 @@ export default function AnalysisPage({ params }: { params: Promise<{ wallet: str
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [copied, setCopied] = useState(false)
+  const [retryCount, setRetryCount] = useState(0)
 
   useEffect(() => {
     const abortController = new AbortController()
     let aborted = false
 
     const fetchAnalysis = async () => {
+      const cached = retryCount === 0 ? getCachedAnalysis(wallet) : null
+      if (cached) {
+        setData(cached)
+        setLoading(false)
+        setError('')
+        return
+      }
       try {
         setLoading(true)
         setError('')
         const response = await fetch('/api/analyze-wallet', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ wallet, limit: 100 }),
+          body: JSON.stringify({ wallet, limit: 50 }),
           signal: abortController.signal,
         })
 
@@ -73,6 +82,7 @@ export default function AnalysisPage({ params }: { params: Promise<{ wallet: str
         }
         const result = await response.json()
         if (aborted) return
+        setCachedAnalysis(wallet, result)
         setData(result)
       } catch (err: any) {
         if (err.name === 'AbortError') {
@@ -106,7 +116,13 @@ export default function AnalysisPage({ params }: { params: Promise<{ wallet: str
       aborted = true
       abortController.abort()
     }
-  }, [wallet])
+  }, [wallet, retryCount])
+
+  const handleRetry = useCallback(() => {
+    setError('')
+    setLoading(true)
+    setRetryCount((c) => c + 1)
+  }, [])
 
   const copyAddress = useCallback(() => {
     navigator.clipboard.writeText(wallet)
@@ -115,8 +131,8 @@ export default function AnalysisPage({ params }: { params: Promise<{ wallet: str
   }, [wallet])
 
   if (loading) return <LoadingState wallet={wallet} />
-  if (error && !data) return <ErrorState error={error} wallet={wallet} />
-  if (!data) return <ErrorState error="No data received" wallet={wallet} />
+  if (error && !data) return <ErrorState error={error} wallet={wallet} onRetry={handleRetry} />
+  if (!data) return <ErrorState error="No data received" wallet={wallet} onRetry={handleRetry} />
 
   return (
     <div className="min-h-screen bg-background">

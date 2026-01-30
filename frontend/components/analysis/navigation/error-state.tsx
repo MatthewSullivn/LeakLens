@@ -13,13 +13,14 @@ import { formatAddress } from '@/lib/utils'
 interface ErrorStateProps {
   error: string
   wallet: string
+  onRetry?: () => void
 }
 
 // ============================================================================
 // ERROR STATE
 // ============================================================================
 
-export const ErrorState = memo(function ErrorState({ error, wallet }: ErrorStateProps) {
+export const ErrorState = memo(function ErrorState({ error, wallet, onRetry }: ErrorStateProps) {
   return (
     <div className="min-h-screen bg-background flex items-center justify-center px-4">
       <div className="text-center space-y-6 max-w-md">
@@ -31,9 +32,16 @@ export const ErrorState = memo(function ErrorState({ error, wallet }: ErrorState
           </p>
           <p className="text-sm text-red-400">{error}</p>
         </div>
-        <Link href="/">
-          <Button>Return Home</Button>
-        </Link>
+        <div className="flex flex-wrap items-center justify-center gap-3">
+          {onRetry && (
+            <Button onClick={onRetry} variant="default">
+              Try again
+            </Button>
+          )}
+          <Link href="/">
+            <Button variant={onRetry ? 'outline' : 'default'}>Return Home</Button>
+          </Link>
+        </div>
       </div>
     </div>
   )

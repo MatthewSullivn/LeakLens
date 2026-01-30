@@ -1056,6 +1056,8 @@ def analyze_reaction_speed(wallet: str, tx_details_list: list) -> ReactionSpeedA
         next_details = next_tx.get("details")
         if not current_details or not next_details:
             continue
+        if not isinstance(current_details, dict) or not isinstance(next_details, dict):
+            continue
         current_has_receive = has_token_receive(current_details, wallet)
         next_has_action = has_token_action(next_details, wallet)
         
@@ -1117,12 +1119,14 @@ def analyze_reaction_speed(wallet: str, tx_details_list: list) -> ReactionSpeedA
 
 def _is_enhanced_tx(tx: dict) -> bool:
     """Helius Enhanced format has nativeTransfers/tokenTransfers, not meta."""
-    return bool(tx and (tx.get("nativeTransfers") is not None or tx.get("tokenTransfers") is not None) and not tx.get("meta"))
+    if not isinstance(tx, dict):
+        return False
+    return bool(tx.get("nativeTransfers") is not None or tx.get("tokenTransfers") is not None) and not tx.get("meta")
 
 
 def has_token_receive(tx_details: dict, wallet: str) -> bool:
     """Check if transaction involves receiving tokens. Supports RPC meta and Helius enhanced."""
-    if not tx_details:
+    if not tx_details or not isinstance(tx_details, dict):
         return False
     # Helius enhanced: tokenTransfers/nativeTransfers
     if _is_enhanced_tx(tx_details):
@@ -1190,7 +1194,7 @@ def has_token_receive(tx_details: dict, wallet: str) -> bool:
 
 def has_token_action(tx_details: dict, wallet: str) -> bool:
     """Check if transaction involves sending/swapping tokens. Supports RPC meta and Helius enhanced."""
-    if not tx_details:
+    if not tx_details or not isinstance(tx_details, dict):
         return False
     # Helius enhanced: feePayer + tokenTransfers/nativeTransfers
     if _is_enhanced_tx(tx_details):
