@@ -22,6 +22,7 @@ import re
 import requests
 from datetime import datetime, timezone
 import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from dotenv import load_dotenv
 
 # Load environment variables before any API key usage
@@ -47,6 +48,7 @@ from leaklens_solana import (
     analyze_reaction_speed as analyze_reaction_speed_solana,
     analyze_opsec_failures,
     analyze_opsec_failures_from_enhanced,
+    ReactionSpeedAnalysis,
 )
 
 # Solana-only for encrypt.trade hackathon
@@ -102,7 +104,7 @@ def helius_get_transactions(wallet: str, limit: int = 200) -> Tuple[List[dict], 
     try:
         url = f"https://api.helius.xyz/v0/addresses/{wallet}/transactions"
         params = {"api-key": helius_key, "limit": int(min(limit, 100))}
-        resp = requests.get(url, params=params, timeout=20, headers={"Accept": "application/json"})
+        resp = requests.get(url, params=params, timeout=15, headers={"Accept": "application/json"})
         if resp.status_code != 200:
             return [], {"error": f"helius_tx_status_{resp.status_code}", "body": resp.text[:200]}
         data = resp.json()
@@ -715,7 +717,7 @@ def get_jupiter_portfolio(wallet: str):
             "Accept": "application/json",
             "User-Agent": "LeakLens/1.0 (+https://encrypt.trade)"
         }
-        response = requests.get(url, timeout=12, headers=headers)
+        response = requests.get(url, timeout=8, headers=headers)
         
         # If Jupiter API returns 404 or other errors, return empty portfolio instead of failing
         if response.status_code == 404:
@@ -1524,6 +1526,8 @@ def check_sns_domain(wallet: str) -> dict:
             )
             if resp.status_code == 200:
                 data = resp.json()
+                if not isinstance(data, dict):
+                    data = {}
                 domain = data.get("domain") or data.get("name")
                 if domain:
                     return {
@@ -2060,6 +2064,142 @@ def analyze_ego_network(wallet: str, tx_details_map: Dict[str, dict], limit: int
     }
 
 
+def _worker_mempool(wallet: str, limit: int, use_helius_primary: bool, enhanced_all: List[dict],
+                   signatures: list, tx_details_map: dict) -> Tuple[str, dict]:
+    """Run mempool/execution profile analysis. Returns ('mempool_data', result)."""
+    try:
+        mempool_limit = min(50, len(signatures))
+        mempool_tx_map = dict(tx_details_map) if tx_details_map else {}
+        if use_helius_primary and enhanced_all and not tx_details_map:
+            subset_n = min(25, len(signatures))  # fewer RPC calls for faster response
+            sig_strings = []
+            for s in (signatures or [])[:subset_n]:
+                if isinstance(s, dict):
+                    x = s.get("signature") or s.get("transactionSignature")
+                    if x:
+                        sig_strings.append(x)
+                elif isinstance(s, str):
+                    sig_strings.append(s)
+            rpc_map = fetch_transactions_parallel(sig_strings, max_workers=2) if sig_strings else {}
+            mempool_tx_map = {k: v for k, v in (rpc_map or {}).items() if v is not None}
+            mempool_limit = subset_n
+        data = analyze_wallet_execution_profiles(
+            wallet, limit=mempool_limit,
+            signatures=(signatures or [])[:mempool_limit],
+            tx_details_map=mempool_tx_map
+        )
+        return ("mempool_data", data if isinstance(data, dict) else {})
+    except (AttributeError, TypeError, Exception):
+        return ("mempool_data", {})
+
+
+def _worker_opsec(wallet: str, limit: int, use_helius_primary: bool, enhanced_all: List[dict],
+                  signatures: list, tx_details_map: dict) -> Tuple[str, dict]:
+    """Run opsec failure analysis. Returns ('opsec_data', result)."""
+    fallback = {
+        "wallet": wallet,
+        "total_transactions": len(signatures or []),
+        "critical_leaks": [], "funding_sources": [], "withdrawal_targets": [],
+        "memo_usage": 0, "exposure_score": 0, "cumulative_exposure": "UNKNOWN",
+        "weakest_link": "Opsec analysis unavailable due to data type mismatch."
+    }
+    try:
+        if use_helius_primary and enhanced_all:
+            data = analyze_opsec_failures_from_enhanced(wallet, enhanced_all)
+        else:
+            data = analyze_opsec_failures(
+                wallet, limit=min(80, limit),
+                signatures=signatures or [],
+                tx_details_map=tx_details_map or {}
+            )
+        return ("opsec_data", data if isinstance(data, dict) else fallback)
+    except (AttributeError, TypeError, Exception):
+        return ("opsec_data", fallback)
+
+
+def _worker_portfolio(wallet: str) -> Tuple[str, Tuple[dict, dict, dict]]:
+    """Run portfolio fetch + summary. Returns ('portfolio', (portfolio_data, portfolio_summary, portfolio_debug))."""
+    portfolio_data = {"tokens": [], "totalValue": 0}
+    portfolio_summary = {}
+    portfolio_debug = {"source": "none"}
+    try:
+        portfolio_resp = get_jupiter_portfolio(wallet)
+        portfolio_data = portfolio_resp if isinstance(portfolio_resp, dict) else {"tokens": [], "totalValue": 0}
+        tokens = portfolio_data.get("tokens", []) if isinstance(portfolio_data, dict) else []
+        portfolio_summary = summarize_portfolio(tokens, portfolio_data.get("totalValue", 0))
+        if portfolio_summary:
+            portfolio_debug = {"source": "jupiter", "status": "ok"}
+        else:
+            helius_summary, helius_status = helius_portfolio_summary(wallet)
+            if helius_summary:
+                portfolio_summary = helius_summary
+                portfolio_debug = {"source": "helius", **(helius_status or {})}
+            else:
+                portfolio_debug = {"source": "helius_failed", **(helius_status or {})}
+        if not portfolio_summary:
+            portfolio_summary = {}
+            if portfolio_debug.get("source") == "none":
+                portfolio_debug = {"source": "none", "status": "empty"}
+    except Exception as e:
+        portfolio_data = {"tokens": [], "totalValue": 0}
+        portfolio_summary = {}
+        portfolio_debug = {"source": "exception", "error": str(e)[:120]}
+    return ("portfolio", (portfolio_data, portfolio_summary, portfolio_debug))
+
+
+def _worker_networth(wallet: str) -> Tuple[str, dict]:
+    """Run net worth breakdown. Returns ('networth', result)."""
+    try:
+        return ("networth", compute_networth_breakdown(wallet))
+    except Exception:
+        return ("networth", {})
+
+
+def _worker_swap_pnl_income(wallet: str, enhanced_all: List[dict], use_helius_primary: bool,
+                            tx_details_map: dict, limit: int) -> Tuple[str, Tuple[list, dict, dict, dict]]:
+    """Run swap detection, PnL, income. Returns ('swap_pnl_income', (swap_events, trading_pnl, income_sources, all_dbg))."""
+    all_dbg: dict = {}
+    enhanced = enhanced_all or []
+    if not enhanced and use_helius_primary:
+        enhanced, all_dbg = helius_get_transactions(wallet, limit=min(max(limit, 100), 100))
+    swap_events = detect_swaps_from_helius(enhanced)
+    if not swap_events:
+        if use_helius_primary and enhanced:
+            swap_events = detect_swaps_delta_from_enhanced(wallet, enhanced)
+            all_dbg["swap_method"] = "enhanced_delta"
+        else:
+            swap_events = detect_swaps_delta(wallet, tx_details_map or {})
+            all_dbg["swap_method"] = "delta_based"
+    else:
+        all_dbg["swap_method"] = "helius_parsed"
+    trading_pnl = compute_token_trading_pnl_fifo(swap_events)
+    trading_pnl.setdefault("debug", {})["helius_swaps"] = all_dbg
+    trading_pnl.setdefault("debug", {})["swaps_count"] = len(swap_events)
+    income_sources = compute_income_sources_from_enhanced(wallet, enhanced)
+    income_sources.setdefault("debug", all_dbg)
+    income_sources["debug"]["tx_count"] = len(enhanced)
+    return ("swap_pnl_income", (swap_events, trading_pnl, income_sources, all_dbg))
+
+
+def _worker_ego_network(wallet: str, tx_details_map: dict, limit: int) -> Tuple[str, dict]:
+    """Run ego network analysis. Returns ('ego_network', result)."""
+    try:
+        return ("ego_network", analyze_ego_network(wallet, tx_details_map or {}, limit=min(100, limit)))
+    except Exception:
+        return ("ego_network", {})
+
+
+def _worker_notable(wallet: str, use_helius_primary: bool, enhanced_all: List[dict],
+                    tx_details_map: dict, signatures: list) -> Tuple[str, dict]:
+    """Run notable transactions. Returns ('notable_transactions', result)."""
+    try:
+        if use_helius_primary and enhanced_all:
+            return ("notable_transactions", get_notable_transactions_from_enhanced(wallet, enhanced_all))
+        return ("notable_transactions", get_notable_transactions(wallet, tx_details_map or {}, signatures or []))
+    except Exception:
+        return ("notable_transactions", {})
+
+
 @app.post("/analyze-wallet")
 def analyze_wallet_comprehensive(request: WalletAnalysisRequest):
     """
@@ -2074,8 +2214,9 @@ def analyze_wallet_comprehensive(request: WalletAnalysisRequest):
             raise HTTPException(status_code=400, detail="Wallet must be a string")
         if not isinstance(request.limit, (int, type(None))):
             request.limit = 100
-        # Solana only
-        use_helius_primary = os.getenv("VERCEL") == "1"
+        # Solana only. Use Helius for transaction fetch whenever API key is set (fast 1-call path).
+        # Without key we fall back to RPC (1 + N getTransaction calls — slow).
+        use_helius_primary = bool(os.getenv("HELIUS_API_KEY"))
         limit = request.limit or 100
         enhanced_all: List[dict] = []
         all_dbg: dict = {}
@@ -2113,47 +2254,48 @@ def analyze_wallet_comprehensive(request: WalletAnalysisRequest):
         sleep = detect_sleep_window_solana(hourly_counts)
         
         # Analyze reaction speed for bot detection
-        reaction = analyze_reaction_speed_solana(request.wallet, tx_details_list)
+        try:
+            reaction = analyze_reaction_speed_solana(request.wallet, tx_details_list)
+        except (AttributeError, TypeError) as e:
+            print("\n" + "="*60)
+            print("ATTRIBUTE/TYPE ERROR IN analyze_reaction_speed – using default reaction data")
+            print("="*60)
+            traceback.print_exc()
+            print("="*60 + "\n")
+            reaction = ReactionSpeedAnalysis()
         
         # Calculate probabilities
         probs = calculate_probabilities_solana(df, hourly_counts, daily_counts, sleep)
         
-        # Analyze execution profiles (reduced limit for speed).
-        # On Vercel: tx_details_map is empty (enhanced-only). Fetch RPC for a subset with
-        # low concurrency so we get real compute units / priority fee / Jito. Use 50 tx:
-        # 2× sample of 25 → more representative profile; half of 100 → lower rate-limit risk.
-        mempool_limit = min(50, len(signatures))
-        mempool_tx_map = tx_details_map
-        if use_helius_primary and enhanced_all and not tx_details_map:
-            subset_n = min(50, len(signatures))
-            sig_strings = []
-            for s in signatures[:subset_n]:
-                if isinstance(s, dict):
-                    x = s.get("signature") or s.get("transactionSignature")
-                    if x:
-                        sig_strings.append(x)
-                elif isinstance(s, str):
-                    sig_strings.append(s)
-            rpc_map = fetch_transactions_parallel(sig_strings, max_workers=2) if sig_strings else {}
-            mempool_tx_map = {k: v for k, v in (rpc_map or {}).items() if v is not None}
-            mempool_limit = subset_n
-        mempool_data = analyze_wallet_execution_profiles(
-            request.wallet,
-            limit=mempool_limit,
-            signatures=signatures[:mempool_limit],
-            tx_details_map=mempool_tx_map
-        )
-        
-        # Opsec: use enhanced-based when Helius-primary (Vercel) for full data; else RPC
-        if use_helius_primary and enhanced_all:
-            opsec_data = analyze_opsec_failures_from_enhanced(request.wallet, enhanced_all)
-        else:
-            opsec_data = analyze_opsec_failures(
-                request.wallet,
-                limit=min(80, request.limit),
-                signatures=signatures,
-                tx_details_map=tx_details_map
-            )
+        # Run independent I/O- and CPU-heavy steps in parallel for faster response
+        parallel_results: Dict[str, Any] = {}
+        with ThreadPoolExecutor(max_workers=7) as executor:
+            futures = [
+                executor.submit(_worker_mempool, request.wallet, limit, use_helius_primary, enhanced_all, signatures, tx_details_map),
+                executor.submit(_worker_opsec, request.wallet, limit, use_helius_primary, enhanced_all, signatures, tx_details_map),
+                executor.submit(_worker_portfolio, request.wallet),
+                executor.submit(_worker_networth, request.wallet),
+                executor.submit(_worker_swap_pnl_income, request.wallet, enhanced_all, use_helius_primary, tx_details_map, limit),
+                executor.submit(_worker_ego_network, request.wallet, tx_details_map, limit),
+                executor.submit(_worker_notable, request.wallet, use_helius_primary, enhanced_all, tx_details_map, signatures),
+            ]
+            for fut in as_completed(futures):
+                try:
+                    key, value = fut.result()
+                    parallel_results[key] = value
+                except Exception:
+                    pass
+        mempool_data = parallel_results.get("mempool_data", {})
+        opsec_data = parallel_results.get("opsec_data", {})
+        if not isinstance(opsec_data, dict):
+            opsec_data = {"wallet": request.wallet, "total_transactions": len(signatures), "critical_leaks": [], "funding_sources": [], "withdrawal_targets": [], "memo_usage": 0, "exposure_score": 0, "cumulative_exposure": "UNKNOWN", "weakest_link": "Opsec analysis unavailable."}
+        port_tup = parallel_results.get("portfolio", ({"tokens": [], "totalValue": 0}, {}, {"source": "none"}))
+        portfolio_data, portfolio_summary, portfolio_debug = port_tup
+        networth = parallel_results.get("networth", {})
+        swap_tup = parallel_results.get("swap_pnl_income", ([], {}, {}, {}))
+        swap_events, trading_pnl, income_sources, all_dbg = swap_tup
+        ego_network = parallel_results.get("ego_network", {})
+        notable_transactions = parallel_results.get("notable_transactions", {})
         
         # Prepare transaction complexity data
         complexity_data = []
@@ -2246,63 +2388,6 @@ def analyze_wallet_comprehensive(request: WalletAnalysisRequest):
                 if most_recent_timestamp and isinstance(most_recent_timestamp, (int, float)):
                     from datetime import datetime
                     most_recent_timestamp = datetime.utcfromtimestamp(most_recent_timestamp).isoformat() + 'Z'
-        
-        # Portfolio (best-effort; attach summary and debug info)
-        portfolio_data = {"tokens": [], "totalValue": 0}
-        portfolio_summary = {}
-        portfolio_debug = {"source": "none"}
-        try:
-            portfolio_resp = get_jupiter_portfolio(request.wallet)
-            portfolio_data = portfolio_resp if isinstance(portfolio_resp, dict) else {"tokens": [], "totalValue": 0}
-            tokens = portfolio_data.get("tokens", []) if isinstance(portfolio_data, dict) else []
-            portfolio_summary = summarize_portfolio(tokens, portfolio_data.get("totalValue", 0))
-            if portfolio_summary:
-                portfolio_debug = {"source": "jupiter", "status": "ok"}
-            else:
-                helius_summary, helius_status = helius_portfolio_summary(request.wallet)
-                if helius_summary:
-                    portfolio_summary = helius_summary
-                    portfolio_debug = {"source": "helius", **(helius_status or {})}
-                else:
-                    portfolio_debug = {"source": "helius_failed", **(helius_status or {})}
-            if not portfolio_summary:
-                portfolio_summary = {}
-                if portfolio_debug.get("source") == "none":
-                    portfolio_debug = {"source": "none", "status": "empty"}
-        except Exception as e:
-            portfolio_data = {"tokens": [], "totalValue": 0}
-            portfolio_summary = {}
-            portfolio_debug = {"source": "exception", "error": str(e)[:120]}
-
-        # Net worth + composition (non-USD-first; uses Helius balances)
-        networth = compute_networth_breakdown(request.wallet)
-
-        # Exact(ish) trading PnL and income sources from Helius Enhanced Transactions (parsed)
-        # Reuse enhanced_all when we already fetched it (Vercel Helius-primary path)
-        if not enhanced_all:
-            helius_limit = min(max(request.limit, 100), 100)  # cap at 100 per Helius docs
-            enhanced_all, all_dbg = helius_get_transactions(request.wallet, limit=helius_limit)
-
-        # Detect swaps: prefer Helius parsed events, fallback to delta-based detection
-        swap_events = detect_swaps_from_helius(enhanced_all)
-        if not swap_events:
-            # Fallback: enhanced delta when Vercel (no RPC tx_details_map), else RPC delta
-            if use_helius_primary and enhanced_all:
-                swap_events = detect_swaps_delta_from_enhanced(request.wallet, enhanced_all)
-                all_dbg["swap_method"] = "enhanced_delta"
-            else:
-                swap_events = detect_swaps_delta(request.wallet, tx_details_map)
-                all_dbg["swap_method"] = "delta_based"
-        else:
-            all_dbg["swap_method"] = "helius_parsed"
-        
-        trading_pnl = compute_token_trading_pnl_fifo(swap_events)
-        trading_pnl["debug"]["helius_swaps"] = all_dbg
-        trading_pnl["debug"]["swaps_count"] = len(swap_events)
-
-        income_sources = compute_income_sources_from_enhanced(request.wallet, enhanced_all)
-        income_sources["debug"] = all_dbg
-        income_sources["debug"]["tx_count"] = len(enhanced_all)
 
         # Compute surveillance exposure score
         swap_count = len(swap_events)
@@ -2339,15 +2424,6 @@ def analyze_wallet_comprehensive(request: WalletAnalysisRequest):
             insights.append(f"🔍 Surveillance Exposure: {score_value:.0f}/100 (MEDIUM) - Moderate behavioral fingerprinting risk")
         else:
             insights.append(f"🔍 Surveillance Exposure: {score_value:.0f}/100 (LOW) - Limited exposure signals detected")
-
-        # Ego-network analysis (linked wallets)
-        ego_network = analyze_ego_network(request.wallet, tx_details_map, limit=min(100, request.limit))
-
-        # Notable transactions: use enhanced-based when Helius-primary (Vercel) for full data
-        if use_helius_primary and enhanced_all:
-            notable_transactions = get_notable_transactions_from_enhanced(request.wallet, enhanced_all)
-        else:
-            notable_transactions = get_notable_transactions(request.wallet, tx_details_map, signatures)
 
         return {
             "wallet": request.wallet,

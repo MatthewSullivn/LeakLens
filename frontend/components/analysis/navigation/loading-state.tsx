@@ -1,6 +1,6 @@
 'use client'
 
-import { memo } from 'react'
+import { memo, useState, useEffect } from 'react'
 import { motion } from 'motion/react'
 import { LockIcon, Wallet } from 'lucide-react'
 import { formatAddress } from '@/lib/utils'
@@ -54,19 +54,36 @@ const blockchainNetworkDots = [
   },
 ]
 
-const loadingMessages = [
-  "Scanning blockchain networks...",
-  "Cross-referencing 50+ data points...",
-  "Analyzing transaction patterns...",
-  "Detecting anomalies...",
-  "Mapping fund flows...",
+// Timed phases so users see progress that matches backend stages (perceived speed)
+const LOADING_PHASES: { afterMs: number; message: string }[] = [
+  { afterMs: 0, message: 'Fetching transactions...' },
+  { afterMs: 2500, message: 'Analyzing patterns...' },
+  { afterMs: 6000, message: 'Building exposure profile...' },
+  { afterMs: 10000, message: 'Mapping connections...' },
+  { afterMs: 15000, message: 'Almost there...' },
 ]
 
 // ============================================================================
 // LOADING STATE
 // ============================================================================
 
+const LONG_WAIT_MS = 12000
+
 export const LoadingState = memo(function LoadingState({ wallet }: LoadingStateProps) {
+  const [phaseIndex, setPhaseIndex] = useState(0)
+  const [showLongWaitHint, setShowLongWaitHint] = useState(false)
+  const message = LOADING_PHASES[phaseIndex]?.message ?? LOADING_PHASES[LOADING_PHASES.length - 1].message
+
+  useEffect(() => {
+    const timers: ReturnType<typeof setTimeout>[] = []
+    for (let i = 1; i < LOADING_PHASES.length; i++) {
+      const delay = LOADING_PHASES[i].afterMs
+      timers.push(setTimeout(() => setPhaseIndex(i), delay))
+    }
+    timers.push(setTimeout(() => setShowLongWaitHint(true), LONG_WAIT_MS))
+    return () => timers.forEach((t) => clearTimeout(t))
+  }, [])
+
   return (
     <div className="min-h-screen bg-background relative overflow-hidden">
       {/* Animated gradient background */}
@@ -177,23 +194,17 @@ export const LoadingState = memo(function LoadingState({ wallet }: LoadingStateP
           animate={{ opacity: 1 }}
           transition={{ delay: 0.8, duration: 0.6 }}
         >
-          {/* Animated loading text */}
-          <div className="h-5 overflow-hidden">
-            <motion.div
-              animate={{ y: [0, -20, -40, -60, -80, 0] }}
-              transition={{ 
-                duration: 10, 
-                repeat: Infinity,
-                ease: "easeInOut",
-                times: [0, 0.2, 0.4, 0.6, 0.8, 1]
-              }}
+          {/* Phase-based message (perceived progress) */}
+          <div className="h-6 flex items-center justify-center min-w-[240px]">
+            <motion.p
+              key={message}
+              className="text-sm text-muted-foreground"
+              initial={{ opacity: 0.6 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.3 }}
             >
-              {loadingMessages.map((msg, idx) => (
-                <p key={idx} className="h-5 text-sm text-muted-foreground">
-                  {msg}
-                </p>
-              ))}
-            </motion.div>
+              {message}
+            </motion.p>
           </div>
 
           {/* Animated dots */}
@@ -229,6 +240,16 @@ export const LoadingState = memo(function LoadingState({ wallet }: LoadingStateP
               style={{ width: '50%' }}
             />
           </div>
+
+          {showLongWaitHint && (
+            <motion.p
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="text-xs text-muted-foreground/80 mt-2 max-w-[260px] text-center"
+            >
+              First-time analysis can take up to a minute. Please wait.
+            </motion.p>
+          )}
         </motion.div>
 
         {/* Trust badge */}

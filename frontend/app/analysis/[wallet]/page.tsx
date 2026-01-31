@@ -15,6 +15,7 @@ import {
   AnimatedSection,
   SectionSkeleton,
 } from '@/components/analysis'
+import { getCachedAnalysis, setCachedAnalysis } from '@/lib/analysis-cache'
 import { Badge } from '@/components/ui/badge'
 import { Copy, CheckCircle } from 'lucide-react'
 
@@ -27,6 +28,9 @@ const ImplicationsSection = lazy(() => import('@/components/analysis/implication
 const MitigationCTA = lazy(() => import('@/components/analysis/implications').then(m => ({ default: m.MitigationCTA })))
 const SearchWalletElsewhere = lazy(() => import('@/components/analysis/search-wallet-elsewhere').then(m => ({ default: m.SearchWalletElsewhere })))
 
+/** Minimum time to show the loading screen (ms) so it doesn’t flash away when data is fast/cached */
+const MIN_LOADING_MS = 3000
+
 export default function AnalysisPage({ params }: { params: Promise<{ wallet: string }> }) {
   const resolvedParams = use(params)
   const wallet = resolvedParams.wallet
@@ -34,19 +38,37 @@ export default function AnalysisPage({ params }: { params: Promise<{ wallet: str
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [copied, setCopied] = useState(false)
+  const [retryCount, setRetryCount] = useState(0)
 
   useEffect(() => {
     const abortController = new AbortController()
     let aborted = false
+    let minDelayTimerId: ReturnType<typeof setTimeout> | null = null
+    const startTime = Date.now()
+
+    const showResultAfterMinDelay = () => {
+      const remaining = Math.max(0, MIN_LOADING_MS - (Date.now() - startTime))
+      minDelayTimerId = setTimeout(() => {
+        minDelayTimerId = null
+        if (!aborted) setLoading(false)
+      }, remaining)
+    }
 
     const fetchAnalysis = async () => {
+      const cached = retryCount === 0 ? getCachedAnalysis(wallet) : null
+      if (cached) {
+        setData(cached)
+        setError('')
+        showResultAfterMinDelay()
+        return
+      }
       try {
         setLoading(true)
         setError('')
         const response = await fetch('/api/analyze-wallet', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ wallet, limit: 100 }),
+          body: JSON.stringify({ wallet, limit: 50 }),
           signal: abortController.signal,
         })
 
@@ -73,7 +95,9 @@ export default function AnalysisPage({ params }: { params: Promise<{ wallet: str
         }
         const result = await response.json()
         if (aborted) return
+        setCachedAnalysis(wallet, result)
         setData(result)
+        showResultAfterMinDelay()
       } catch (err: any) {
         if (err.name === 'AbortError') {
           aborted = true
@@ -97,7 +121,7 @@ export default function AnalysisPage({ params }: { params: Promise<{ wallet: str
         
         setError(errorMessage)
       } finally {
-        if (!aborted) setLoading(false)
+        if (!aborted && !minDelayTimerId) setLoading(false)
       }
     }
     fetchAnalysis()
@@ -105,8 +129,15 @@ export default function AnalysisPage({ params }: { params: Promise<{ wallet: str
     return () => {
       aborted = true
       abortController.abort()
+      if (minDelayTimerId) clearTimeout(minDelayTimerId)
     }
-  }, [wallet])
+  }, [wallet, retryCount])
+
+  const handleRetry = useCallback(() => {
+    setError('')
+    setLoading(true)
+    setRetryCount((c) => c + 1)
+  }, [])
 
   const copyAddress = useCallback(() => {
     navigator.clipboard.writeText(wallet)
@@ -115,8 +146,8 @@ export default function AnalysisPage({ params }: { params: Promise<{ wallet: str
   }, [wallet])
 
   if (loading) return <LoadingState wallet={wallet} />
-  if (error && !data) return <ErrorState error={error} wallet={wallet} />
-  if (!data) return <ErrorState error="No data received" wallet={wallet} />
+  if (error && !data) return <ErrorState error={error} wallet={wallet} onRetry={handleRetry} />
+  if (!data) return <ErrorState error="No data received" wallet={wallet} onRetry={handleRetry} />
 
   return (
     <div className="min-h-screen bg-background">
