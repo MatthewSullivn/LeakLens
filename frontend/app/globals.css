@@ -20,6 +20,13 @@
 }
 
 @theme inline {
+  --animate-glitch-flicker: glitch-flicker 0.08s step-end infinite;
+
+  @keyframes glitch-flicker {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.92; }
+  }
+
   --animate-meteor-effect: meteor 5s linear infinite;
 
   @keyframes meteor {

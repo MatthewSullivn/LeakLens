@@ -10,7 +10,7 @@ import { isValidSolanaAddress } from '@/lib/utils'
 import { prefetchAnalysis } from '@/lib/analysis-cache'
 import { DEMO_WALLET } from './constants'
 import { WavyBackground } from '@/components/ui/wavy-background'
-import { EncryptedText } from '../ui/encrypted-text'
+import { GlitchText } from '../ui/glitch-text'
 
 export const HeroSection = memo(function HeroSection() {
   const router = useRouter()
@@ -74,10 +74,10 @@ export const HeroSection = memo(function HeroSection() {
               
               {/* Headline */}
               <h1 className="text-3xl sm:text-4xl md:text-5xl font-semibold tracking-tight mb-6 text-foreground leading-tight drop-shadow-[0_2px_8px_rgba(0,0,0,0.3)]">
-                <EncryptedText 
-                  text="Your wallet has a profile." 
-                  revealDelayMs={45}
-                  flipDelayMs={35}
+                <GlitchText
+                  text="Your wallet has a profile."
+                  revealDelayMs={70}
+                  scrambleIntervalMs={40}
                   className="inline-block"
                 />
                 <br />
