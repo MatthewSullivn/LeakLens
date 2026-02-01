@@ -83,7 +83,7 @@ const LinkageVisualization = memo(function LinkageVisualization({
   }, [edges, nodes])
 
   return (
-    <div className="relative h-56 sm:h-60 bg-muted/5 rounded-lg overflow-hidden border border-border/30">
+    <div className="relative h-48 sm:h-56 md:h-60 bg-muted/5 rounded-lg overflow-hidden border border-border/30">
       {/* Subtle radial gradient background */}
       <div 
         className="absolute inset-0 opacity-30"

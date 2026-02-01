@@ -2,23 +2,13 @@
 
 import { useEffect, useState, use, useCallback, lazy, Suspense } from 'react'
 import {
-  // Types
   type AnalysisResult,
-  // Navigation Components
   TopNavBar,
   LoadingState,
   ErrorState,
-  // Section wrapper
   AnalysisSection,
-  // Section Components (eagerly loaded - above fold)
   ExposureSummary,
   OneTransactionHighlight,
-  WhyTrackable,
-  LeakFlowDiagram,
-  ReactionDonut,
-  ActivityHeatmap,
-  ExposureRadar,
-  // Shared
   AnimatedSection,
   SectionSkeleton,
 } from '@/components/analysis'
@@ -26,13 +16,20 @@ import { getCachedAnalysis, setCachedAnalysis } from '@/lib/analysis-cache'
 import { Badge } from '@/components/ui/badge'
 import { Copy, CheckCircle } from 'lucide-react'
 
-// Lazy load below-fold components for performance
+// Lazy load components for better performance
+const WhyTrackable = lazy(() => import('@/components/analysis/why-trackable').then(m => ({ default: m.WhyTrackable })))
+const LeakFlowDiagram = lazy(() => import('@/components/analysis/leak-flow-diagram').then(m => ({ default: m.LeakFlowDiagram })))
+const ReactionDonut = lazy(() => import('@/components/analysis/reaction-donut').then(m => ({ default: m.ReactionDonut })))
+const ActivityHeatmap = lazy(() => import('@/components/analysis/activity-heatmap').then(m => ({ default: m.ActivityHeatmap })))
+const ExposureRadar = lazy(() => import('@/components/analysis/exposure-radar').then(m => ({ default: m.ExposureRadar })))
 const WalletLinkage = lazy(() => import('@/components/analysis/wallet-linkage').then(m => ({ default: m.WalletLinkage })))
 const OpsecFailuresSection = lazy(() => import('@/components/analysis/opsec-failures').then(m => ({ default: m.OpsecFailuresSection })))
 const FinancialContext = lazy(() => import('@/components/analysis/financial-context').then(m => ({ default: m.FinancialContext })))
 const ImplicationsSection = lazy(() => import('@/components/analysis/implications').then(m => ({ default: m.ImplicationsSection })))
 const MitigationCTA = lazy(() => import('@/components/analysis/implications').then(m => ({ default: m.MitigationCTA })))
 const SearchWalletElsewhere = lazy(() => import('@/components/analysis/search-wallet-elsewhere').then(m => ({ default: m.SearchWalletElsewhere })))
+const PortfolioTreemap = lazy(() => import('@/components/analysis/portfolio-treemap').then(m => ({ default: m.PortfolioTreemap })))
+const TransactionSparkline = lazy(() => import('@/components/analysis/transaction-sparkline').then(m => ({ default: m.TransactionSparkline })))
 
 /** Minimum time to show the loading screen (ms) so it doesn’t flash away when data is fast/cached */
 const MIN_LOADING_MS = 3000
@@ -157,7 +154,6 @@ export default function AnalysisPage({ params }: { params: Promise<{ wallet: str
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Navigation */}
       <TopNavBar 
         wallet={wallet} 
         copied={copied} 
@@ -167,107 +163,114 @@ export default function AnalysisPage({ params }: { params: Promise<{ wallet: str
         data={data}
       />
 
-      <main className="relative max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-6 sm:pb-8 space-y-10">
-
-        {/* Page title: wallet address + SCAN COMPLETE / Confidence */}
-        <div className="pb-2">
-          <div className="flex items-center gap-2 flex-wrap">
-            <h1 className="font-mono text-xl sm:text-2xl font-semibold text-foreground break-all pr-2">
-              {wallet}
+      <main className="max-w-4xl mx-auto px-3 sm:px-4 lg:px-6 pt-16 sm:pt-18 pb-8 space-y-5 sm:space-y-8">
+        {/* Header */}
+        <header className="pt-2">
+          <div className="flex items-center gap-2">
+            <h1 className="font-mono text-sm sm:text-lg font-medium text-foreground truncate">
+              <span className="hidden sm:inline">{wallet}</span>
+              <span className="sm:hidden">{wallet.slice(0, 6)}...{wallet.slice(-4)}</span>
             </h1>
             <button
               onClick={copyAddress}
-              className="shrink-0 p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
-              title="Copy address"
+              className="shrink-0 p-1 rounded text-muted-foreground hover:text-foreground transition-colors"
+              title="Copy"
             >
-              {copied ? <CheckCircle className="w-4 h-4 text-cyan-400" /> : <Copy className="w-4 h-4" />}
+              {copied ? <CheckCircle className="w-3.5 h-3.5 text-primary" /> : <Copy className="w-3.5 h-3.5" />}
             </button>
           </div>
-          <div className="flex flex-wrap items-center gap-2 mt-2">
-            <Badge className="bg-primary/20 text-primary border-primary/30 gap-1.5">
-              <div className="w-2 h-2 rounded-full bg-primary" />
-              SCAN COMPLETE
+          <div className="flex items-center gap-1.5 mt-1.5">
+            <Badge className="bg-primary/15 text-primary border-primary/20 text-[9px] sm:text-[10px] py-0 gap-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-primary" />
+              COMPLETE
             </Badge>
-            <Badge variant="outline" className="text-xs">
-              {data.confidence} Confidence
+            <Badge variant="outline" className="text-[9px] sm:text-[10px] py-0 text-muted-foreground">
+              {data.confidence}
             </Badge>
           </div>
-        </div>
+        </header>
 
-        {/* Section 1: Why wallets aren't anonymous */}
+        {/* Section 1 */}
         <AnimatedSection>
           <AnalysisSection
             number={1}
             title="Why wallets aren't anonymous"
-            education={
-              <>
-                Wallets are <strong className="text-foreground">pseudonymous, not anonymous</strong>. Every transaction is public and permanent. A single link (a CEX deposit, an NFT mint, or a social tie) can tie an address to a person. Surveillance firms and platforms (e.g. Arkham, Blockscanner, chain analytics) use this to cluster and label wallets. Below: your exposure at a glance and how one transaction can permanently reduce privacy.
-              </>
-            }
+            education={<>Wallets are <strong className="text-foreground">pseudonymous</strong>. Every transaction is public and permanent.</>}
           >
             <ExposureSummary data={data} />
             <OneTransactionHighlight data={data} />
           </AnalysisSection>
         </AnimatedSection>
 
-        {/* Section 2: How your activity is tracked & clustered */}
-        <AnimatedSection delay={100}>
+        {/* Section 2 */}
+        <AnimatedSection delay={50}>
           <AnalysisSection
             number={2}
-            title="How your activity is tracked & clustered"
-            education={
-              <>
-                On-chain activity is tracked by clustering <strong className="text-foreground">flows, timing, and counterparties</strong>. Firms like Arkham, Nansen, and chain analytics label wallets and build graphs. Your timing, funding sources, cashout targets, and reaction patterns create a permanent fingerprint that can be linked across chains and to real-world data (e.g. from X or Blockscanner). The cards below show why this wallet is classifiable and how it links to others.
-              </>
-            }
+            title="How activity is tracked"
+            education={<>Activity is tracked by clustering <strong className="text-foreground">flows, timing, and counterparties</strong>.</>}
           >
-            <WhyTrackable data={data} />
-            <LeakFlowDiagram data={data} />
-            <ReactionDonut data={data} />
-            <ActivityHeatmap data={data} />
-            <ExposureRadar data={data} />
+            <Suspense fallback={<SectionSkeleton />}>
+              <WhyTrackable data={data} />
+            </Suspense>
+            
+            <Suspense fallback={<SectionSkeleton />}>
+              <LeakFlowDiagram data={data} />
+            </Suspense>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
+              <Suspense fallback={<SectionSkeleton />}>
+                <ReactionDonut data={data} />
+              </Suspense>
+              <Suspense fallback={<SectionSkeleton />}>
+                <ExposureRadar data={data} />
+              </Suspense>
+            </div>
+            
+            <Suspense fallback={<SectionSkeleton />}>
+              <TransactionSparkline data={data} />
+            </Suspense>
+            
+            <Suspense fallback={<SectionSkeleton />}>
+              <ActivityHeatmap data={data} />
+            </Suspense>
+            
             <Suspense fallback={<SectionSkeleton />}>
               <WalletLinkage data={data.ego_network} />
             </Suspense>
           </AnalysisSection>
         </AnimatedSection>
 
-        {/* Section 3: Your exposure in detail */}
-        <AnimatedSection delay={200}>
+        {/* Section 3 */}
+        <AnimatedSection delay={100}>
           <AnalysisSection
             number={3}
-            title="Your exposure in detail"
-            education={
-              <>
-                This section breaks down the <strong className="text-foreground">specific links and failures</strong> that increase exposure (funding sources, cashouts, critical leaks) and how your wallet can appear on platforms like Arkham, 0xppl, or Blockscanner. Understanding these vectors is the first step to reducing them.
-              </>
-            }
+            title="Exposure details"
+            education={<>Specific <strong className="text-foreground">links and failures</strong> that increase exposure.</>}
           >
             <Suspense fallback={<SectionSkeleton />}>
               <OpsecFailuresSection data={data.opsec_failures} />
             </Suspense>
+            
+            <Suspense fallback={<SectionSkeleton />}>
+              <PortfolioTreemap data={data} />
+            </Suspense>
+            
+            <Suspense fallback={<SectionSkeleton />}>
+              <FinancialContext tradingPnl={data.token_trading_pnl} netWorth={data.net_worth} />
+            </Suspense>
+            
             <Suspense fallback={<SectionSkeleton />}>
               <SearchWalletElsewhere wallet={wallet} />
-            </Suspense>
-            <Suspense fallback={<SectionSkeleton />}>
-              <FinancialContext
-                tradingPnl={data.token_trading_pnl}
-                netWorth={data.net_worth}
-              />
             </Suspense>
           </AnalysisSection>
         </AnimatedSection>
 
-        {/* Section 4: Reducing exposure (selective privacy) */}
-        <AnimatedSection delay={300}>
+        {/* Section 4 */}
+        <AnimatedSection delay={150}>
           <AnalysisSection
             number={4}
-            title="Reducing exposure (selective privacy)"
-            education={
-              <>
-                <strong className="text-foreground">Selective privacy</strong> means reducing linkability where it matters, without giving up normal use. Data from X, Blockscanner, Arkham, and 0xppl shows how exposure is visible; the same levers (address hygiene, timing, and tooling) can be used to reduce it while keeping usability.
-              </>
-            }
+            title="Reducing exposure"
+            education={<><strong className="text-foreground">Selective privacy</strong> reduces linkability without sacrificing usability.</>}
           >
             <Suspense fallback={<SectionSkeleton />}>
               <ImplicationsSection />
@@ -278,13 +281,12 @@ export default function AnalysisPage({ params }: { params: Promise<{ wallet: str
           </AnalysisSection>
         </AnimatedSection>
 
-        {/* Footer Trust Signal */}
-        <div className="text-center py-6 border-t border-border/30">
-          <p className="text-[10px] text-muted-foreground/60 leading-relaxed max-w-md mx-auto">
-            This analysis uses heuristic inference based on publicly available on-chain data.
-            Results are probabilistic estimates similar to those used by blockchain surveillance platforms.
+        {/* Footer */}
+        <footer className="text-center pt-4 border-t border-border/20">
+          <p className="text-[8px] sm:text-[9px] text-muted-foreground/50 max-w-sm mx-auto">
+            Analysis based on publicly available on-chain data. Results are probabilistic estimates.
           </p>
-        </div>
+        </footer>
       </main>
     </div>
   )

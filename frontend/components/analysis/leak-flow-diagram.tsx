@@ -37,48 +37,48 @@ export const LeakFlowDiagram = memo(function LeakFlowDiagram({ data }: LeakFlowD
         </CardDescription>
       </CardHeader>
       <CardContent className="pt-0">
-        <div className="rounded-lg bg-muted/10 border border-border/30 p-4 sm:p-6">
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 sm:gap-6">
+        <div className="rounded-lg bg-muted/10 border border-border/30 p-3 sm:p-4 md:p-6">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4 md:gap-6">
             {/* Funding sources */}
             <div className="flex flex-col items-center gap-2 min-w-0 flex-1">
-              <div className="p-3 rounded-xl bg-cyan-500/10 border border-cyan-500/30 w-full max-w-[140px] flex flex-col items-center justify-center min-h-[80px]">
-                <ArrowDownToLine className="w-5 h-5 text-cyan-500 mb-1" />
-                <span className="text-2xl font-bold tabular-nums text-cyan-400">{fundingCount}</span>
-                <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Funding sources</span>
+              <div className="p-2 sm:p-3 rounded-xl bg-cyan-500/10 border border-cyan-500/30 w-full max-w-[110px] sm:max-w-[140px] flex flex-col items-center justify-center min-h-[70px] sm:min-h-[80px]">
+                <ArrowDownToLine className="w-4 h-4 sm:w-5 sm:h-5 text-cyan-500 mb-1" />
+                <span className="text-xl sm:text-2xl font-bold tabular-nums text-cyan-400">{fundingCount}</span>
+                <span className="text-[9px] sm:text-[10px] uppercase tracking-wider text-muted-foreground">Funding</span>
               </div>
             </div>
 
-            <div className="flex items-center justify-center shrink-0">
-              <div className="flex items-center gap-1 text-muted-foreground/60">
-                <div className="w-6 h-0.5 bg-gradient-to-r from-transparent to-cyan-500/50 rounded" />
-                <ArrowRight className="w-5 h-5 text-muted-foreground" />
-                <div className="w-6 h-0.5 bg-gradient-to-l from-transparent to-cyan-500/50 rounded" />
+            <div className="flex items-center justify-center shrink-0 rotate-90 sm:rotate-0">
+              <div className="flex items-center gap-0.5 sm:gap-1 text-muted-foreground/60">
+                <div className="w-3 sm:w-6 h-0.5 bg-gradient-to-r from-transparent to-cyan-500/50 rounded" />
+                <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground" />
+                <div className="w-3 sm:w-6 h-0.5 bg-gradient-to-l from-transparent to-cyan-500/50 rounded" />
               </div>
             </div>
 
             {/* Your wallet (center) */}
             <div className="flex flex-col items-center gap-2 shrink-0">
-              <div className="p-3 rounded-xl bg-primary/15 border-2 border-primary/40 w-full max-w-[140px] flex flex-col items-center justify-center min-h-[80px] ring-2 ring-primary/20">
-                <Wallet className="w-5 h-5 text-primary mb-1" />
-                <span className="text-xs font-semibold text-foreground">Your wallet</span>
-                <span className="text-[10px] text-muted-foreground">exposed</span>
+              <div className="p-2 sm:p-3 rounded-xl bg-primary/15 border-2 border-primary/40 w-full max-w-[100px] sm:max-w-[140px] flex flex-col items-center justify-center min-h-[70px] sm:min-h-[80px] ring-2 ring-primary/20">
+                <Wallet className="w-4 h-4 sm:w-5 sm:h-5 text-primary mb-1" />
+                <span className="text-[11px] sm:text-xs font-semibold text-foreground">Your wallet</span>
+                <span className="text-[9px] sm:text-[10px] text-muted-foreground">exposed</span>
               </div>
             </div>
 
-            <div className="flex items-center justify-center shrink-0">
-              <div className="flex items-center gap-1 text-muted-foreground/60">
-                <div className="w-6 h-0.5 bg-gradient-to-r from-transparent to-red-500/50 rounded" />
-                <ArrowRight className="w-5 h-5 text-muted-foreground" />
-                <div className="w-6 h-0.5 bg-gradient-to-l from-transparent to-red-500/50 rounded" />
+            <div className="flex items-center justify-center shrink-0 rotate-90 sm:rotate-0">
+              <div className="flex items-center gap-0.5 sm:gap-1 text-muted-foreground/60">
+                <div className="w-3 sm:w-6 h-0.5 bg-gradient-to-r from-transparent to-red-500/50 rounded" />
+                <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground" />
+                <div className="w-3 sm:w-6 h-0.5 bg-gradient-to-l from-transparent to-red-500/50 rounded" />
               </div>
             </div>
 
             {/* Cashout targets */}
             <div className="flex flex-col items-center gap-2 min-w-0 flex-1">
-              <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/30 w-full max-w-[140px] flex flex-col items-center justify-center min-h-[80px]">
-                <ArrowUpFromLine className="w-5 h-5 text-red-500 mb-1" />
-                <span className="text-2xl font-bold tabular-nums text-red-400">{cashoutCount}</span>
-                <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Cashout targets</span>
+              <div className="p-2 sm:p-3 rounded-xl bg-red-500/10 border border-red-500/30 w-full max-w-[110px] sm:max-w-[140px] flex flex-col items-center justify-center min-h-[70px] sm:min-h-[80px]">
+                <ArrowUpFromLine className="w-4 h-4 sm:w-5 sm:h-5 text-red-500 mb-1" />
+                <span className="text-xl sm:text-2xl font-bold tabular-nums text-red-400">{cashoutCount}</span>
+                <span className="text-[9px] sm:text-[10px] uppercase tracking-wider text-muted-foreground">Cashout</span>
               </div>
             </div>
           </div>

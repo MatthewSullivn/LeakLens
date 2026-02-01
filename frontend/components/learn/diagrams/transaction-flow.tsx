@@ -31,26 +31,26 @@ export const TransactionFlow = memo(function TransactionFlow({ className }: Tran
 
   return (
     <div ref={ref} className={cn('relative', className)}>
-      <div className="flex items-center justify-center gap-4 sm:gap-8">
+      <div className="flex items-center justify-center gap-2 sm:gap-4 md:gap-8">
         {steps.map((step, i) => (
-          <div key={i} className="flex items-center gap-4 sm:gap-8">
+          <div key={i} className="flex items-center gap-2 sm:gap-4 md:gap-8">
             <div
               className={cn(
-                'flex flex-col items-center gap-3 transition-all duration-600',
+                'flex flex-col items-center gap-2 sm:gap-3 transition-all duration-600',
                 isVisible ? 'opacity-100 scale-100 translate-y-0' : 'opacity-0 scale-90 translate-y-4'
               )}
               style={{ transitionDelay: `${i * 200}ms` }}
             >
               <div
                 className={cn(
-                  'w-16 h-16 sm:w-20 sm:h-20 rounded-2xl flex items-center justify-center',
+                  'w-12 h-12 sm:w-16 sm:h-16 md:w-20 md:h-20 rounded-xl sm:rounded-2xl flex items-center justify-center',
                   'bg-gradient-to-br border-2 shadow-lg',
                   step.color
                 )}
               >
-                <step.icon className="w-7 h-7 sm:w-8 sm:h-8 text-foreground/90" />
+                <step.icon className="w-5 h-5 sm:w-7 sm:h-7 md:w-8 md:h-8 text-foreground/90" />
               </div>
-              <span className="text-sm font-medium text-muted-foreground">{step.label}</span>
+              <span className="text-xs sm:text-sm font-medium text-muted-foreground">{step.label}</span>
             </div>
 
             {i < steps.length - 1 && (
@@ -61,27 +61,28 @@ export const TransactionFlow = memo(function TransactionFlow({ className }: Tran
                 )}
                 style={{ transitionDelay: `${i * 200 + 150}ms` }}
               >
-                <svg width={40} height={24} className="text-muted-foreground/50">
+                {/* Responsive arrow - smaller on mobile */}
+                <svg width={24} height={16} className="sm:w-[40px] sm:h-[24px] text-muted-foreground/50">
                   <defs>
                     <marker
                       id={`arrow-${i}`}
-                      markerWidth="8"
-                      markerHeight="8"
-                      refX="6"
-                      refY="4"
+                      markerWidth="6"
+                      markerHeight="6"
+                      refX="4"
+                      refY="3"
                       orient="auto"
                     >
-                      <path d="M0 0 L8 4 L0 8 Z" fill="currentColor" />
+                      <path d="M0 0 L6 3 L0 6 Z" fill="currentColor" />
                     </marker>
                   </defs>
                   <line
                     x1="0"
-                    y1="12"
-                    x2="36"
-                    y2="12"
+                    y1="8"
+                    x2="20"
+                    y2="8"
                     stroke="currentColor"
-                    strokeWidth="2"
-                    strokeDasharray="4 2"
+                    strokeWidth="1.5"
+                    strokeDasharray="3 2"
                     markerEnd={`url(#arrow-${i})`}
                     className={isVisible ? 'animate-pulse' : ''}
                     style={{ animationDuration: '2s' }}

@@ -34,3 +34,7 @@ export { ExposureBreakdown } from './exposure-breakdown'
 export { FinancialContext } from './financial-context'
 export { ImplicationsSection, MitigationCTA } from './implications'
 export { SearchWalletElsewhere } from './search-wallet-elsewhere'
+
+// New Visualization Components
+export { PortfolioTreemap } from './portfolio-treemap'
+export { TransactionSparkline } from './transaction-sparkline'

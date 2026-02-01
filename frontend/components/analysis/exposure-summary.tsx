@@ -137,10 +137,10 @@ export const ExposureSummary = memo(function ExposureSummary({ data }: ExposureS
           <h2 className="text-lg font-semibold">Wallet Exposure Overview</h2>
         </div>
 
-        <div className="flex flex-col lg:flex-row gap-8 lg:gap-10 items-start">
+        <div className="flex flex-col lg:flex-row gap-6 lg:gap-10 items-start">
           {/* Multi-segment gauge */}
-          <div ref={gaugeRef} className="flex flex-col items-center gap-4 shrink-0">
-            <div className="relative w-36 h-36">
+          <div ref={gaugeRef} className="flex flex-col items-center gap-3 sm:gap-4 shrink-0 mx-auto lg:mx-0">
+            <div className="relative w-28 h-28 sm:w-36 sm:h-36">
               <svg viewBox="0 0 100 100" className="w-full h-full -rotate-90">
                 <circle cx={CX} cy={CY} r={R} fill="none" stroke="currentColor" strokeWidth={STROKE} className="text-border/20" />
                 {segmentPaths.map((seg, i) => (
@@ -157,8 +157,8 @@ export const ExposureSummary = memo(function ExposureSummary({ data }: ExposureS
                 ))}
               </svg>
               <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                <span className="text-3xl font-bold tabular-nums text-foreground">{Math.round(animatedScore)}</span>
-                <span className="text-[10px] text-muted-foreground uppercase tracking-wider mt-0.5">of 100</span>
+                <span className="text-2xl sm:text-3xl font-bold tabular-nums text-foreground">{Math.round(animatedScore)}</span>
+                <span className="text-[9px] sm:text-[10px] text-muted-foreground uppercase tracking-wider mt-0.5">of 100</span>
               </div>
             </div>
             <Badge className={cn(colors.bg, colors.text, colors.border, 'text-xs')}>
@@ -234,25 +234,25 @@ export const ExposureSummary = memo(function ExposureSummary({ data }: ExposureS
         </div>
 
         {/* Bottom stats */}
-        <div className="mt-8 pt-6 border-t border-border/30">
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-            <div className="p-3 rounded-lg bg-muted/20 border border-border/30 text-center">
-              <p className="text-xl font-semibold text-primary tabular-nums">{data.total_transactions}</p>
-              <p className="text-[10px] text-muted-foreground uppercase tracking-wide mt-1">Transactions analyzed</p>
+        <div className="mt-6 sm:mt-8 pt-4 sm:pt-6 border-t border-border/30">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4">
+            <div className="p-2 sm:p-3 rounded-lg bg-muted/20 border border-border/30 text-center">
+              <p className="text-lg sm:text-xl font-semibold text-primary tabular-nums">{data.total_transactions}</p>
+              <p className="text-[9px] sm:text-[10px] text-muted-foreground uppercase tracking-wide mt-0.5 sm:mt-1">Transactions</p>
             </div>
-            <div className="p-3 rounded-lg bg-muted/20 border border-border/30 text-center">
-              <p className="text-xl font-semibold text-primary tabular-nums">{data.ego_network?.total_links ?? 0}</p>
-              <p className="text-[10px] text-muted-foreground uppercase tracking-wide mt-1">Linked Wallets</p>
+            <div className="p-2 sm:p-3 rounded-lg bg-muted/20 border border-border/30 text-center">
+              <p className="text-lg sm:text-xl font-semibold text-primary tabular-nums">{data.ego_network?.total_links ?? 0}</p>
+              <p className="text-[9px] sm:text-[10px] text-muted-foreground uppercase tracking-wide mt-0.5 sm:mt-1">Linked Wallets</p>
             </div>
-            <div className="p-3 rounded-lg bg-muted/20 border border-border/30 text-center">
-              <p className="text-xl font-semibold tabular-nums" style={{ color: (data.opsec_failures?.critical_leaks?.length ?? 0) > 0 ? '#ef4444' : 'inherit' }}>
+            <div className="p-2 sm:p-3 rounded-lg bg-muted/20 border border-border/30 text-center">
+              <p className="text-lg sm:text-xl font-semibold tabular-nums" style={{ color: (data.opsec_failures?.critical_leaks?.length ?? 0) > 0 ? '#ef4444' : 'inherit' }}>
                 {data.opsec_failures?.critical_leaks?.length ?? 0}
               </p>
-              <p className="text-[10px] text-muted-foreground uppercase tracking-wide mt-1">Critical Leaks</p>
+              <p className="text-[9px] sm:text-[10px] text-muted-foreground uppercase tracking-wide mt-0.5 sm:mt-1">Critical Leaks</p>
             </div>
-            <div className="p-3 rounded-lg bg-muted/20 border border-border/30 text-center">
-              <p className="text-xl font-semibold tabular-nums">{data.surveillance_exposure?.signals?.repeated_counterparties ?? 0}</p>
-              <p className="text-[10px] text-muted-foreground uppercase tracking-wide mt-1">Counterparties</p>
+            <div className="p-2 sm:p-3 rounded-lg bg-muted/20 border border-border/30 text-center">
+              <p className="text-lg sm:text-xl font-semibold tabular-nums">{data.surveillance_exposure?.signals?.repeated_counterparties ?? 0}</p>
+              <p className="text-[9px] sm:text-[10px] text-muted-foreground uppercase tracking-wide mt-0.5 sm:mt-1">Counterparties</p>
             </div>
           </div>
         </div>

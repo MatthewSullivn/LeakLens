@@ -114,13 +114,13 @@ export const ExposureRadar = memo(function ExposureRadar({ data }: ExposureRadar
         </CardDescription>
       </CardHeader>
       <CardContent className="pt-0">
-        <div className="flex flex-col sm:flex-row items-center gap-6">
-          <div className="relative shrink-0" style={{ width: 180, height: 180 }}>
+        <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6">
+          <div className="relative shrink-0 w-[150px] h-[150px] sm:w-[180px] sm:h-[180px]">
             {/* Axis labels as HTML overlay so they stay readable */}
             {axisLines.map((line, i) => (
               <span
                 key={`label-${i}`}
-                className="absolute text-[11px] font-medium text-foreground whitespace-nowrap pointer-events-none"
+                className="absolute text-[9px] sm:text-[11px] font-medium text-foreground whitespace-nowrap pointer-events-none"
                 style={{
                   left: `${line.labelLeftPct}%`,
                   top: `${line.labelTopPct}%`,

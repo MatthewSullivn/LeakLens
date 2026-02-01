@@ -6,6 +6,14 @@ import { cn } from '@/lib/utils'
 
 type Stage = 'before' | 'transition' | 'after'
 
+// Memoized node data to prevent recreation on each render
+const PERIPHERAL_NODES = [
+  { x: 22, y: 30, label: 'A', breaks: false },
+  { x: 78, y: 30, label: 'B', breaks: true },
+  { x: 78, y: 70, label: 'C', breaks: true },
+  { x: 22, y: 70, label: 'D', breaks: false },
+] as const
+
 export const PrivacyTransformation = memo(function PrivacyTransformation() {
   const ref = useRef<HTMLDivElement>(null)
   const [isVisible, setIsVisible] = useState(false)
@@ -62,44 +70,50 @@ export const PrivacyTransformation = memo(function PrivacyTransformation() {
 
         <div
           className={cn(
-            'p-8 rounded-2xl border border-border/40 transition-all duration-600',
+            'p-4 sm:p-8 rounded-2xl border border-border/40 transition-all duration-600',
             'bg-card/20',
             isVisible ? 'opacity-100' : 'opacity-0'
           )}
         >
-          <div className="flex items-center justify-center gap-8 sm:gap-12 flex-wrap">
+          {/* Mobile: Column layout, Desktop: Row layout */}
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-8 md:gap-12">
+            {/* Your Wallet */}
             <div className="flex flex-col items-center gap-3">
               <div className="w-14 h-14 rounded-xl bg-primary/15 border-2 border-primary/50 flex items-center justify-center">
                 <Wallet className="w-7 h-7 text-primary" />
               </div>
               <span className="text-xs font-medium text-foreground">Your wallet</span>
             </div>
-            <div className="flex items-center gap-4 text-muted-foreground/50">
-              <Link2 className="w-5 h-5" />
+            
+            {/* Connection indicator - rotates on mobile */}
+            <div className="flex items-center gap-2 text-muted-foreground/50">
+              <Link2 className="w-5 h-5 rotate-90 sm:rotate-0" />
               <span className="text-xs">connected to</span>
             </div>
-            <div className="flex flex-wrap justify-center gap-6">
+            
+            {/* Connected entities - horizontal row on both mobile and desktop */}
+            <div className="flex flex-row justify-center gap-4 sm:gap-6">
               <div className="flex flex-col items-center gap-2">
-                <div className="w-12 h-12 rounded-xl bg-muted/80 border border-border/50 flex items-center justify-center">
-                  <Building2 className="w-5 h-5 text-muted-foreground" />
+                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-muted/80 border border-border/50 flex items-center justify-center">
+                  <Building2 className="w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground" />
                 </div>
-                <span className="text-xs text-muted-foreground">Exchanges</span>
+                <span className="text-[10px] sm:text-xs text-muted-foreground">Exchanges</span>
               </div>
               <div className="flex flex-col items-center gap-2">
-                <div className="w-12 h-12 rounded-xl bg-muted/80 border border-border/50 flex items-center justify-center">
-                  <Wallet className="w-5 h-5 text-muted-foreground" />
+                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-muted/80 border border-border/50 flex items-center justify-center">
+                  <Wallet className="w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground" />
                 </div>
-                <span className="text-xs text-muted-foreground">Other wallets</span>
+                <span className="text-[10px] sm:text-xs text-muted-foreground">Other wallets</span>
               </div>
               <div className="flex flex-col items-center gap-2">
-                <div className="w-12 h-12 rounded-xl bg-muted/80 border border-border/50 flex items-center justify-center">
-                  <Fingerprint className="w-5 h-5 text-muted-foreground" />
+                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-muted/80 border border-border/50 flex items-center justify-center">
+                  <Fingerprint className="w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground" />
                 </div>
-                <span className="text-xs text-muted-foreground">Past behavior</span>
+                <span className="text-[10px] sm:text-xs text-muted-foreground">Past behavior</span>
               </div>
             </div>
           </div>
-          <p className="text-center text-sm text-muted-foreground mt-6">
+          <p className="text-center text-xs sm:text-sm text-muted-foreground mt-4 sm:mt-6">
             Clustering algorithms used these links to build a profile of you.
           </p>
         </div>
@@ -138,14 +152,15 @@ export const PrivacyTransformation = memo(function PrivacyTransformation() {
           <h3 className="text-lg font-semibold text-foreground mb-2">
             After — tracking gets harder
           </h3>
-          <p className="text-sm text-muted-foreground max-w-xl mx-auto">
+          <p className="text-xs sm:text-sm text-muted-foreground max-w-xl mx-auto px-2">
             Fewer links mean noisier clustering. Labels become less confident. Profiles stay incomplete.
           </p>
         </div>
 
-        <div className="p-8 rounded-2xl bg-card/20 border border-border/40">
-          <div className="relative mx-auto" style={{ maxWidth: 320, aspectRatio: 1 }}>
-            <svg viewBox="0 0 100 100" className="w-full h-full">
+        <div className="p-4 sm:p-8 rounded-2xl bg-card/20 border border-border/40">
+          {/* SVG Network visualization - responsive sizing */}
+          <div className="relative mx-auto w-full max-w-[240px] sm:max-w-[320px] aspect-square">
+            <svg viewBox="0 0 100 100" className="w-full h-full" role="img" aria-label="Network diagram showing tracking connections">
               {/* Central node */}
               <circle
                 cx="50"
@@ -159,13 +174,8 @@ export const PrivacyTransformation = memo(function PrivacyTransformation() {
                 YOU
               </text>
 
-              {/* Peripheral nodes - positions */}
-              {[
-                { x: 22, y: 30, label: 'A', breaks: false },
-                { x: 78, y: 30, label: 'B', breaks: true },
-                { x: 78, y: 70, label: 'C', breaks: true },
-                { x: 22, y: 70, label: 'D', breaks: false },
-              ].map((p, i) => {
+              {/* Peripheral nodes - using memoized data */}
+              {PERIPHERAL_NODES.map((p, i) => {
                 const isBroken = stage === 'after' && p.breaks
                 return (
                   <g key={i}>
@@ -189,37 +199,39 @@ export const PrivacyTransformation = memo(function PrivacyTransformation() {
                       stroke={nodeStroke}
                       strokeWidth="1"
                       opacity={isBroken ? 0.5 : 1}
+                      className="transition-opacity duration-700"
                     />
                   </g>
                 )
               })}
             </svg>
 
-            {/* Legend overlay */}
-            <div className="absolute bottom-0 left-0 right-0 flex justify-center gap-6 text-[10px]">
-              <span className="flex items-center gap-1.5 text-muted-foreground">
-                <span className="w-3 h-0.5 bg-border rounded" />
+            {/* Legend overlay - responsive text */}
+            <div className="absolute -bottom-2 left-0 right-0 flex justify-center gap-3 sm:gap-6 text-[9px] sm:text-[10px]">
+              <span className="flex items-center gap-1 sm:gap-1.5 text-muted-foreground">
+                <span className="w-2.5 sm:w-3 h-0.5 bg-border rounded" />
                 Intact link
               </span>
-              <span className="flex items-center gap-1.5 text-destructive/80">
-                <span className="w-3 h-0.5 border border-dashed border-destructive/60 rounded" />
+              <span className="flex items-center gap-1 sm:gap-1.5 text-destructive/80">
+                <span className="w-2.5 sm:w-3 h-0.5 border border-dashed border-destructive/60 rounded" />
                 Broken link
               </span>
             </div>
           </div>
 
-          <div className="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-4 text-center">
-            <div className="p-3 rounded-xl bg-muted/30 border border-border/30">
-              <p className="text-xs font-medium text-foreground">Clustering</p>
-              <p className="text-xs text-muted-foreground">Noisier, less reliable</p>
+          {/* Stats grid - responsive */}
+          <div className="mt-8 sm:mt-6 grid grid-cols-3 gap-2 sm:gap-4 text-center">
+            <div className="p-2 sm:p-3 rounded-xl bg-muted/30 border border-border/30">
+              <p className="text-[10px] sm:text-xs font-medium text-foreground">Clustering</p>
+              <p className="text-[9px] sm:text-xs text-muted-foreground">Noisier, less reliable</p>
             </div>
-            <div className="p-3 rounded-xl bg-muted/30 border border-border/30">
-              <p className="text-xs font-medium text-foreground">Labels</p>
-              <p className="text-xs text-muted-foreground">Lower confidence</p>
+            <div className="p-2 sm:p-3 rounded-xl bg-muted/30 border border-border/30">
+              <p className="text-[10px] sm:text-xs font-medium text-foreground">Labels</p>
+              <p className="text-[9px] sm:text-xs text-muted-foreground">Lower confidence</p>
             </div>
-            <div className="p-3 rounded-xl bg-muted/30 border border-border/30">
-              <p className="text-xs font-medium text-foreground">Profiles</p>
-              <p className="text-xs text-muted-foreground">Stay incomplete</p>
+            <div className="p-2 sm:p-3 rounded-xl bg-muted/30 border border-border/30">
+              <p className="text-[10px] sm:text-xs font-medium text-foreground">Profiles</p>
+              <p className="text-[9px] sm:text-xs text-muted-foreground">Stay incomplete</p>
             </div>
           </div>
         </div>
@@ -228,22 +240,22 @@ export const PrivacyTransformation = memo(function PrivacyTransformation() {
       {/* Takeaway */}
       <div
         className={cn(
-          'p-6 rounded-2xl border transition-all duration-600',
+          'p-4 sm:p-6 rounded-2xl border transition-all duration-600',
           'bg-primary/5 border-primary/20',
           isVisible ? 'opacity-100' : 'opacity-0'
         )}
         style={{ transitionDelay: '400ms' }}
       >
-        <div className="flex items-start gap-4">
+        <div className="flex flex-col sm:flex-row items-start gap-3 sm:gap-4">
           <div className="p-2 rounded-lg bg-primary/10 shrink-0">
             <Link2Off className="w-5 h-5 text-primary" />
           </div>
           <div>
             <h4 className="font-semibold text-foreground mb-2">The bottom line</h4>
-            <p className="text-sm text-muted-foreground mb-2">
+            <p className="text-xs sm:text-sm text-muted-foreground mb-2">
               Your past stays public. What changes is how hard it is to reliably link future activity back to you.
             </p>
-            <p className="text-sm text-foreground font-medium">
+            <p className="text-xs sm:text-sm text-foreground font-medium">
               That&apos;s selective privacy — fewer traceable links, not a rewritten history.
             </p>
           </div>

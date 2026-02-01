@@ -61,7 +61,16 @@ export const WalletNetwork = memo(function WalletNetwork({
 
   return (
     <div ref={ref} className={cn('relative', className)}>
-      <svg viewBox="0 0 100 100" className={cn('w-full mx-auto aspect-square', !compact && 'max-w-[280px]')}>
+      {/* Responsive SVG container */}
+      <svg 
+        viewBox="0 0 100 100" 
+        className={cn(
+          'w-full mx-auto aspect-square', 
+          !compact && 'max-w-[200px] sm:max-w-[280px]'
+        )}
+        role="img"
+        aria-label="Wallet network diagram showing connections"
+      >
         {/* Connection lines */}
         {peripherals.map((p, i) => (
           <line
@@ -135,7 +144,7 @@ export const WalletNetwork = memo(function WalletNetwork({
       {!compact && (
         <p
           className={cn(
-            'text-center text-xs text-muted-foreground mt-4 transition-all duration-500',
+            'text-center text-[10px] sm:text-xs text-muted-foreground mt-3 sm:mt-4 transition-all duration-500 px-2',
             isVisible ? 'opacity-100' : 'opacity-0'
           )}
           style={{ transitionDelay: '500ms' }}

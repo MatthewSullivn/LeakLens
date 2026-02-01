@@ -67,10 +67,10 @@ export const PatternRadar = memo(function PatternRadar({
   )
 
   return (
-    <div ref={ref} className={cn('flex flex-col items-center gap-6', className)}>
-      {/* Radar chart */}
-      <div className="relative" style={{ width: 200, height: 200 }}>
-        <svg viewBox="0 0 100 100" className="w-full h-full">
+    <div ref={ref} className={cn('flex flex-col items-center gap-4 sm:gap-6', className)}>
+      {/* Radar chart - responsive sizing */}
+      <div className="relative w-[160px] h-[160px] sm:w-[200px] sm:h-[200px]">
+        <svg viewBox="0 0 100 100" className="w-full h-full" role="img" aria-label="Radar chart showing identity fingerprint dimensions">
           {/* Grid rings */}
           {gridPolygons.map((points, i) => (
             <polygon
@@ -121,31 +121,31 @@ export const PatternRadar = memo(function PatternRadar({
         {/* Center "you" indicator */}
         <div
           className={cn(
-            'absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 rounded-full',
+            'absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-6 h-6 sm:w-8 sm:h-8 rounded-full',
             'bg-primary/30 border-2 border-primary flex items-center justify-center',
             'transition-all duration-500',
             isVisible ? 'opacity-100 scale-100' : 'opacity-0 scale-0'
           )}
         >
-          <span className="text-[10px] font-bold text-primary">?</span>
+          <span className="text-[8px] sm:text-[10px] font-bold text-primary">?</span>
         </div>
       </div>
 
-      {/* Legend with icons */}
-      <div className="grid grid-cols-3 gap-4 w-full max-w-sm">
+      {/* Legend with icons - responsive grid */}
+      <div className="grid grid-cols-3 gap-2 sm:gap-4 w-full max-w-sm">
         {dimensions.map((d, i) => (
           <div
             key={i}
             className={cn(
-              'flex flex-col items-center gap-2 p-3 rounded-xl border transition-all duration-500',
+              'flex flex-col items-center gap-1.5 sm:gap-2 p-2 sm:p-3 rounded-xl border transition-all duration-500',
               'bg-card/50 border-border/40',
               isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'
             )}
             style={{ transitionDelay: `${400 + i * 100}ms` }}
           >
-            <d.icon className="w-5 h-5 text-primary" />
-            <span className="text-xs font-medium text-foreground">{d.label}</span>
-            <div className="w-full h-1.5 rounded-full bg-muted overflow-hidden">
+            <d.icon className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
+            <span className="text-[10px] sm:text-xs font-medium text-foreground">{d.label}</span>
+            <div className="w-full h-1 sm:h-1.5 rounded-full bg-muted overflow-hidden">
               <div
                 className="h-full bg-primary rounded-full transition-all duration-700"
                 style={{

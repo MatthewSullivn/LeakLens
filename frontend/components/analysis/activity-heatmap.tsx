@@ -83,7 +83,8 @@ export const ActivityHeatmap = memo(function ActivityHeatmap({ data }: ActivityH
               <Moon className="w-3 h-3" /> 24h
             </span>
           </div>
-          <div className="grid gap-0.5 rounded-lg overflow-hidden bg-muted/20 p-2 border border-border/30" style={{ gridTemplateColumns: 'repeat(24, minmax(0, 1fr))' }}>
+          {/* Mobile: 12 columns (2 rows), Desktop: 24 columns */}
+          <div className="grid gap-0.5 rounded-lg overflow-hidden bg-muted/20 p-2 border border-border/30 grid-cols-12 sm:grid-cols-24">
             {cells.map((cell) => (
               <div
                 key={cell.hour}
@@ -136,18 +137,18 @@ export const ActivityHeatmap = memo(function ActivityHeatmap({ data }: ActivityH
             </div>
             <div>
               <p className="text-[10px] text-muted-foreground uppercase tracking-wide mb-1.5">24-hour breakdown (txns per hour)</p>
-              <div className="grid grid-cols-12 sm:grid-cols-24 gap-1 text-[10px]">
+              <div className="grid grid-cols-6 sm:grid-cols-8 md:grid-cols-12 lg:grid-cols-24 gap-1 text-[10px]">
                 {cells.map((cell) => (
                   <div
                     key={cell.hour}
                     className={cn(
-                      'rounded px-1 py-0.5 text-center tabular-nums border border-transparent',
+                      'rounded px-0.5 sm:px-1 py-0.5 text-center tabular-nums border border-transparent',
                       cell.count > 0 ? 'bg-violet-500/20 text-foreground border-violet-500/30' : 'bg-muted/20 text-muted-foreground'
                     )}
                     title={`${cell.hour}:00 UTC: ${cell.count} txns`}
                   >
-                    <span className="font-medium">{cell.hour}h</span>
-                    <span className="block text-[9px]">{cell.count}</span>
+                    <span className="font-medium text-[9px] sm:text-[10px]">{cell.hour}h</span>
+                    <span className="block text-[8px] sm:text-[9px]">{cell.count}</span>
                   </div>
                 ))}
               </div>
