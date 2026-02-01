@@ -2,28 +2,23 @@
 
 import { cn } from '@/lib/utils'
 import { BentoGrid, BentoGridItem } from '@/components/ui/bento-grid'
-import { Network, Clock, Fingerprint, Link } from 'lucide-react'
 import { Meteors } from '@/components/ui/meteors'
+import { WalletNetwork } from '@/components/learn/diagrams'
+import { LeakChain } from './diagrams'
+import { Fingerprint } from 'lucide-react'
 
-function Skeleton({ icon, thumbnailCopy }: { icon: React.ReactNode; thumbnailCopy?: string }) {
+function BentoHeader({ children, className }: { children: React.ReactNode; className?: string }) {
   return (
     <div
       className={cn(
-        'relative flex flex-1 w-full h-full min-h-[6rem] rounded-xl',
-        'overflow-hidden'
+        'relative flex flex-1 w-full h-full min-h-[6rem] rounded-xl overflow-hidden',
+        'flex items-center justify-center p-6',
+        className
       )}
     >
-      {/* Meteors effect */}
-      <Meteors number={15} />
-
-      {/* Icon and text content */}
-      <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 z-10">
-        {icon}
-        {thumbnailCopy && (
-          <p className="text-xs text-muted-foreground/60 font-medium text-center px-4">
-            {thumbnailCopy}
-          </p>
-        )}
+      <Meteors number={12} />
+      <div className="relative z-10 w-full h-full flex items-center justify-center min-w-0 min-h-0">
+        {children}
       </div>
     </div>
   )
@@ -35,16 +30,9 @@ const items = [
     body: "Your transactions don't exist in isolation. Funding sources, repeated counterparties, and shared behavior allow wallets to be grouped together, even if you never interact directly.",
     subline: 'Clusters form faster than most users realize.',
     header: (
-      <Skeleton
-        icon={
-          <Network
-            className="w-16 h-16 text-cyan-400/20"
-            strokeWidth={1.25}
-            fill="none"
-          />
-        }
-        thumbnailCopy="Transactions don't exist in isolation."
-      />
+      <BentoHeader>
+        <WalletNetwork nodeCount={6} compact className="w-full max-w-[180px]" />
+      </BentoHeader>
     ),
     className: 'md:col-span-2',
   },
@@ -53,16 +41,20 @@ const items = [
     body: 'Transaction timestamps expose routines, timezones, and inactivity windows. Over time, simple timing patterns can narrow down where and how a wallet is operated.',
     subline: "Privacy loss doesn't require amounts; timing is enough.",
     header: (
-      <Skeleton
-        icon={
-          <Clock
-            className="w-16 h-16 text-cyan-400/20"
-            strokeWidth={1.25}
-            fill="none"
-          />
-        }
-        thumbnailCopy="Timing reveals routines."
-      />
+      <BentoHeader>
+        <div className="flex items-center gap-1">
+          {[2, 5, 8, 12, 15, 18, 22].map((h, i) => (
+            <div
+              key={i}
+              className="w-2 rounded-sm bg-[var(--color-cyan-600)]"
+              style={{
+                height: `${20 + (h % 5) * 12}px`,
+                opacity: 0.4 + (h % 4) * 0.15,
+              }}
+            />
+          ))}
+        </div>
+      </BentoHeader>
     ),
     className: 'md:col-span-1',
   },
@@ -71,16 +63,9 @@ const items = [
     body: 'Reaction speed, execution consistency, and transaction structure reveal whether a wallet is human, automated, or professionally operated.',
     subline: 'Bots and humans leave very different traces.',
     header: (
-      <Skeleton
-        icon={
-          <Fingerprint
-            className="w-16 h-16 text-cyan-400/20"
-            strokeWidth={1.25}
-            fill="none"
-          />
-        }
-        thumbnailCopy="Consistency becomes identity."
-      />
+      <BentoHeader>
+        <Fingerprint className="w-14 h-14 text-[var(--color-cyan-600)]/40" strokeWidth={1.2} />
+      </BentoHeader>
     ),
     className: 'md:col-span-1',
   },
@@ -89,16 +74,9 @@ const items = [
     body: 'A single interaction with the wrong wallet, protocol, or bridge can permanently link your address to known entities or clusters.',
     subline: "Blockchains don't forget.",
     header: (
-      <Skeleton
-        icon={
-          <Link
-            className="w-16 h-16 text-cyan-400/20"
-            strokeWidth={1.25}
-            fill="none"
-          />
-        }
-        thumbnailCopy="The ledger never forgets."
-      />
+      <BentoHeader>
+        <LeakChain />
+      </BentoHeader>
     ),
     className: 'md:col-span-2',
   },

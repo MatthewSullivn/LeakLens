@@ -5,12 +5,13 @@ import Link from 'next/link'
 import { BarChart3, Network, Clock, AlertTriangle, ArrowRight } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { DEMO_WALLET } from './constants'
+import { ExposureGauge } from './diagrams'
 
 const reveals = [
   {
-    icon: BarChart3,
     title: 'Exposure Score',
     description: 'A simple signal showing how identifiable your wallet activity is.',
+    viz: <ExposureGauge value={68} size={90} className="my-2" />,
   },
   {
     icon: Network,
@@ -57,23 +58,27 @@ export const WhatWalletReveals = memo(function WhatWalletReveals() {
         {/* Reveals Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
           {reveals.map((item, index) => {
-            const Icon = item.icon
+            const Icon = 'icon' in item ? item.icon : null
             return (
               <div
                 key={index}
                 className={cn(
-                  'flex flex-col items-start p-5 rounded-lg',
+                  'flex flex-col items-center p-5 rounded-xl',
                   'border border-border/40 bg-card/50',
-                  'hover:border-border/60 hover:bg-card/70 transition-colors'
+                  'hover:border-border/60 hover:bg-card/70 transition-all duration-300'
                 )}
               >
-                <div className="mb-3 p-2 rounded-md bg-muted/30">
-                  <Icon className="w-5 h-5 text-muted-foreground" strokeWidth={1.5} />
+                <div className="w-full flex justify-center min-h-[70px] mb-4 items-center">
+                  {'viz' in item ? item.viz : Icon && (
+                    <div className="p-2.5 rounded-lg bg-muted/30">
+                      <Icon className="w-6 h-6 text-muted-foreground" strokeWidth={1.5} />
+                    </div>
+                  )}
                 </div>
-                <h3 className="text-lg font-semibold mb-2 text-foreground">
+                <h3 className="text-lg font-semibold mb-2 text-foreground text-center">
                   {item.title}
                 </h3>
-                <p className="text-base text-muted-foreground leading-relaxed">
+                <p className="text-sm text-muted-foreground leading-relaxed text-center">
                   {item.description}
                 </p>
               </div>
