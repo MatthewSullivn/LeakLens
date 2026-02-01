@@ -8,9 +8,16 @@ import {
   TopNavBar,
   LoadingState,
   ErrorState,
+  // Section wrapper
+  AnalysisSection,
   // Section Components (eagerly loaded - above fold)
   ExposureSummary,
+  OneTransactionHighlight,
   WhyTrackable,
+  LeakFlowDiagram,
+  ReactionDonut,
+  ActivityHeatmap,
+  ExposureRadar,
   // Shared
   AnimatedSection,
   SectionSkeleton,
@@ -22,7 +29,6 @@ import { Copy, CheckCircle } from 'lucide-react'
 // Lazy load below-fold components for performance
 const WalletLinkage = lazy(() => import('@/components/analysis/wallet-linkage').then(m => ({ default: m.WalletLinkage })))
 const OpsecFailuresSection = lazy(() => import('@/components/analysis/opsec-failures').then(m => ({ default: m.OpsecFailuresSection })))
-const ExposureBreakdown = lazy(() => import('@/components/analysis/exposure-breakdown').then(m => ({ default: m.ExposureBreakdown })))
 const FinancialContext = lazy(() => import('@/components/analysis/financial-context').then(m => ({ default: m.FinancialContext })))
 const ImplicationsSection = lazy(() => import('@/components/analysis/implications').then(m => ({ default: m.ImplicationsSection })))
 const MitigationCTA = lazy(() => import('@/components/analysis/implications').then(m => ({ default: m.MitigationCTA })))
@@ -68,7 +74,7 @@ export default function AnalysisPage({ params }: { params: Promise<{ wallet: str
         const response = await fetch('/api/analyze-wallet', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ wallet, limit: 50 }),
+          body: JSON.stringify({ wallet, limit: 100 }),
           signal: abortController.signal,
         })
 
@@ -87,7 +93,7 @@ export default function AnalysisPage({ params }: { params: Promise<{ wallet: str
               }
             }
             if (msg) message = msg
-            if (body?.details) message += ` — ${body.details}`
+            if (body?.details) message += ` - ${body.details}`
           } catch {
             /* body not JSON, use statusText */
           }
@@ -161,7 +167,7 @@ export default function AnalysisPage({ params }: { params: Promise<{ wallet: str
         data={data}
       />
 
-      <main className="relative max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-6 sm:pb-8 space-y-6">
+      <main className="relative max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-6 sm:pb-8 space-y-10">
 
         {/* Page title: wallet address + SCAN COMPLETE / Confidence */}
         <div className="pb-2">
@@ -188,66 +194,88 @@ export default function AnalysisPage({ params }: { params: Promise<{ wallet: str
           </div>
         </div>
 
-        {/* 1. Exposure Summary (TL;DR) - Always Expanded */}
+        {/* Section 1: Why wallets aren't anonymous */}
         <AnimatedSection>
-          <ExposureSummary data={data} />
+          <AnalysisSection
+            number={1}
+            title="Why wallets aren't anonymous"
+            education={
+              <>
+                Wallets are <strong className="text-foreground">pseudonymous, not anonymous</strong>. Every transaction is public and permanent. A single link (a CEX deposit, an NFT mint, or a social tie) can tie an address to a person. Surveillance firms and platforms (e.g. Arkham, Blockscanner, chain analytics) use this to cluster and label wallets. Below: your exposure at a glance and how one transaction can permanently reduce privacy.
+              </>
+            }
+          >
+            <ExposureSummary data={data} />
+            <OneTransactionHighlight data={data} />
+          </AnalysisSection>
         </AnimatedSection>
 
-        {/* 2. Why This Wallet Can Be Tracked - Collapsible (first expanded) */}
+        {/* Section 2: How your activity is tracked & clustered */}
         <AnimatedSection delay={100}>
-          <WhyTrackable data={data} />
+          <AnalysisSection
+            number={2}
+            title="How your activity is tracked & clustered"
+            education={
+              <>
+                On-chain activity is tracked by clustering <strong className="text-foreground">flows, timing, and counterparties</strong>. Firms like Arkham, Nansen, and chain analytics label wallets and build graphs. Your timing, funding sources, cashout targets, and reaction patterns create a permanent fingerprint that can be linked across chains and to real-world data (e.g. from X or Blockscanner). The cards below show why this wallet is classifiable and how it links to others.
+              </>
+            }
+          >
+            <WhyTrackable data={data} />
+            <LeakFlowDiagram data={data} />
+            <ReactionDonut data={data} />
+            <ActivityHeatmap data={data} />
+            <ExposureRadar data={data} />
+            <Suspense fallback={<SectionSkeleton />}>
+              <WalletLinkage data={data.ego_network} />
+            </Suspense>
+          </AnalysisSection>
         </AnimatedSection>
 
-        {/* 3. Wallet Linkage Visualization - Graph visible, details collapsed */}
-        <AnimatedSection delay={150}>
-          <Suspense fallback={<SectionSkeleton />}>
-            <WalletLinkage data={data.ego_network} />
-          </Suspense>
-        </AnimatedSection>
-
-        {/* 4. Operational Security Failures - Accordion */}
+        {/* Section 3: Your exposure in detail */}
         <AnimatedSection delay={200}>
-          <Suspense fallback={<SectionSkeleton />}>
-            <OpsecFailuresSection data={data.opsec_failures} />
-          </Suspense>
+          <AnalysisSection
+            number={3}
+            title="Your exposure in detail"
+            education={
+              <>
+                This section breaks down the <strong className="text-foreground">specific links and failures</strong> that increase exposure (funding sources, cashouts, critical leaks) and how your wallet can appear on platforms like Arkham, 0xppl, or Blockscanner. Understanding these vectors is the first step to reducing them.
+              </>
+            }
+          >
+            <Suspense fallback={<SectionSkeleton />}>
+              <OpsecFailuresSection data={data.opsec_failures} />
+            </Suspense>
+            <Suspense fallback={<SectionSkeleton />}>
+              <SearchWalletElsewhere wallet={wallet} />
+            </Suspense>
+            <Suspense fallback={<SectionSkeleton />}>
+              <FinancialContext
+                tradingPnl={data.token_trading_pnl}
+                netWorth={data.net_worth}
+              />
+            </Suspense>
+          </AnalysisSection>
         </AnimatedSection>
 
-        {/* 4b. Search wallet on Arkham / X */}
-        <AnimatedSection delay={225}>
-          <Suspense fallback={<SectionSkeleton />}>
-            <SearchWalletElsewhere wallet={wallet} />
-          </Suspense>
-        </AnimatedSection>
-
-        {/* 5. Exposure Score Breakdown - Collapsed by default */}
-        <AnimatedSection delay={250}>
-          <Suspense fallback={<SectionSkeleton />}>
-            <ExposureBreakdown data={data} />
-          </Suspense>
-        </AnimatedSection>
-
-        {/* 6. Financial Activity Context - Collapsed, secondary */}
+        {/* Section 4: Reducing exposure (selective privacy) */}
         <AnimatedSection delay={300}>
-          <Suspense fallback={<SectionSkeleton />}>
-            <FinancialContext 
-              tradingPnl={data.token_trading_pnl} 
-              netWorth={data.net_worth} 
-            />
-          </Suspense>
-        </AnimatedSection>
-
-        {/* 7. What This Means For You - Always Expanded */}
-        <AnimatedSection delay={350}>
-          <Suspense fallback={<SectionSkeleton />}>
-            <ImplicationsSection />
-          </Suspense>
-        </AnimatedSection>
-
-        {/* 8. Final CTA Section - Minimal, centered */}
-        <AnimatedSection delay={400}>
-          <Suspense fallback={<SectionSkeleton />}>
-            <MitigationCTA />
-          </Suspense>
+          <AnalysisSection
+            number={4}
+            title="Reducing exposure (selective privacy)"
+            education={
+              <>
+                <strong className="text-foreground">Selective privacy</strong> means reducing linkability where it matters, without giving up normal use. Data from X, Blockscanner, Arkham, and 0xppl shows how exposure is visible; the same levers (address hygiene, timing, and tooling) can be used to reduce it while keeping usability.
+              </>
+            }
+          >
+            <Suspense fallback={<SectionSkeleton />}>
+              <ImplicationsSection />
+            </Suspense>
+            <Suspense fallback={<SectionSkeleton />}>
+              <MitigationCTA />
+            </Suspense>
+          </AnalysisSection>
         </AnimatedSection>
 
         {/* Footer Trust Signal */}

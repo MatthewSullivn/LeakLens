@@ -25,6 +25,7 @@ const ReduceExposure = lazy(() =>
   }))
 )
 
+
 // Loading fallback for lazy-loaded Bento section
 const FeatureBentoSkeleton = () => (
   <div className="py-20 sm:py-28 px-4 sm:px-6">

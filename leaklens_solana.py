@@ -1,26 +1,5 @@
 #!/usr/bin/env python3
-"""
-╔═══════════════════════════════════════════════════════════════════════════════╗
-║                                                                               ║
-║    ██╗     ███████╗ █████╗ ██╗  ██╗██╗     ███████╗███╗   ██╗███████╗        ║
-║    ██║     ██╔════╝██╔══██╗██║ ██╔╝██║     ██╔════╝████╗  ██║██╔════╝        ║
-║    ██║     █████╗  ███████║█████╔╝ ██║     █████╗  ██╔██╗ ██║███████╗        ║
-║    ██║     ██╔══╝  ██╔══██║██╔═██╗ ██║     ██╔══╝  ██║╚██╗██║╚════██║        ║
-║    ███████╗███████╗██║  ██║██║  ██╗███████╗███████╗██║ ╚████║███████║        ║
-║    ╚══════╝╚══════╝╚═╝  ╚═╝╚═╝  ╚═╝╚══════╝╚══════╝╚═╝  ╚═══╝╚══════╝        ║
-║                                                                               ║
-║              LEAKLENS SOLANA - See What Your Wallet Leaks                     ║
-║                                                                               ║
-║  Surveillance exposure analysis for Solana wallets.                           ║
-║  Built for encrypt.trade hackathon - Track 1: Mass Financial Surveillance     ║
-║                                                                               ║
-║  COMMANDS:                                                                    ║
-║    python leaklens_solana.py profile <address>    - Analyze exposure          ║
-║    python leaklens_solana.py connect <addr1> ...  - Find connections          ║
-║    python leaklens_solana.py scan <address>       - Map wallet network        ║
-║                                                                               ║
-╚═══════════════════════════════════════════════════════════════════════════════╝
-"""
+"""LeakLens Solana - Surveillance exposure analysis for Solana wallets."""
 
 import sys
 import os
@@ -1434,7 +1413,7 @@ def visualize_profile(df: pd.DataFrame, wallet: str, probs: ProfileProbabilities
     accent_purple = '#a855f7'
     
     fig.patch.set_facecolor(bg_color)
-    fig.suptitle(f"LEAKLENS EXPOSURE — {wallet[:12]}...{wallet[-6:]}", 
+    fig.suptitle(f"LEAKLENS EXPOSURE - {wallet[:12]}...{wallet[-6:]}", 
                  fontsize=16, color=accent_green, fontweight='bold', y=0.98)
     
     # Panel 1: Profile probabilities
@@ -1753,7 +1732,7 @@ def print_profile_report(df: pd.DataFrame, wallet: str, probs: ProfileProbabilit
     
     print("\n" + "═" * 70)
     print(" 🛡️  Improve your privacy: https://encrypt.trade")
-    print(" ⚠️  All data from public blockchain — no encryption broken")
+    print(" ⚠️  All data from public blockchain - no encryption broken")
     print("═" * 70 + "\n")
 
 
@@ -1922,7 +1901,7 @@ def print_connection_report(connections: Dict[Tuple[str, str], WalletConnection]
     
     print("\n" + "═" * 70)
     print(" 🛡️  Improve your privacy: https://encrypt.trade")
-    print(" ⚠️  All data from public blockchain — no encryption broken")
+    print(" ⚠️  All data from public blockchain - no encryption broken")
     print("═" * 70 + "\n")
 
 

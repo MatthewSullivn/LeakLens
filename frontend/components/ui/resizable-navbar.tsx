@@ -8,8 +8,9 @@ import {
   useMotionValueEvent,
 } from "motion/react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { Globe, Github, ExternalLink, ScanSearch } from "lucide-react";
+import { Globe, Github, ExternalLink } from "lucide-react";
 import React, { useRef, useState } from "react";
 
 
@@ -231,7 +232,7 @@ export const NavbarLogo = () => {
       href="/"
       className="relative z-20 flex items-center gap-2 px-2 py-1"
     >
-      <ScanSearch className="w-5 h-5 text-cyan-500" />
+      <Image src="/logo.jpg" alt="LeakLens" width={28} height={28} className="rounded-sm" />
       <span className="font-bold text-lg tracking-tight text-foreground">
         LeakLens
       </span>

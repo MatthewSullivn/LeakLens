@@ -2,10 +2,11 @@
 
 import { memo, useState, useCallback, useEffect } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { 
   Copy, Download, Wallet, CheckCircle, 
-  Menu, Search, FileJson, FileText, Table, ScanSearch
+  Menu, Search, FileJson, FileText, Table
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -128,7 +129,7 @@ export const TopNavBar = memo(function TopNavBar({
             aria-label="Main"
           >
             <Link href="/" className="relative z-10 flex items-center gap-2 px-2 py-1 shrink-0">
-              <ScanSearch className="w-5 h-5 text-cyan-500" />
+              <Image src="/logo.jpg" alt="LeakLens" width={28} height={28} className="rounded-sm" />
               <span className="font-bold text-lg tracking-tight text-foreground">LeakLens</span>
             </Link>
             <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center gap-2">
@@ -175,7 +176,7 @@ export const TopNavBar = memo(function TopNavBar({
         {/* Mobile: full-width bar */}
         <div className="flex md:hidden items-center justify-between h-14 border-b border-border/40 bg-background/95 px-4 sm:px-6 lg:px-8">
           <Link href="/" className="flex items-center gap-2">
-            <ScanSearch className="w-5 h-5 text-cyan-500" />
+            <Image src="/logo.jpg" alt="LeakLens" width={28} height={28} className="rounded-sm" />
             <span className="font-bold text-lg tracking-tight text-foreground">LeakLens</span>
           </Link>
           <div className="flex items-center gap-2">

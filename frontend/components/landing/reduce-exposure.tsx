@@ -1,8 +1,8 @@
 'use client'
 
-import { memo} from 'react'
+import { memo } from 'react'
 import Link from 'next/link'
-import { Wallet, GitBranch, Clock, ArrowRight, Shield, Eye, EyeOff, X, Check, Link2, Lock, BookOpen } from 'lucide-react'
+import { Wallet, GitBranch, Clock, ArrowRight, Shield, Eye, EyeOff, X, Check, Link2, Lock } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button' 
 
@@ -120,7 +120,6 @@ export const ReduceExposure = memo(function ReduceExposure() {
               'relative overflow-hidden'
             )}>
               <div className="absolute inset-0 bg-gradient-to-br from-destructive/5 to-transparent opacity-0 hover:opacity-100 transition-opacity duration-300" />
-              {/* Background decorative icon - broken chain */}
               <div className="absolute top-4 right-4 w-32 h-32 opacity-10 pointer-events-none">
                 <Link2 className="w-full h-full text-muted-foreground" strokeWidth={1.5} />
               </div>
@@ -144,7 +143,6 @@ export const ReduceExposure = memo(function ReduceExposure() {
               'shadow-[0_0_30px_rgba(8,145,178,0.2)] hover:shadow-[0_0_40px_rgba(8,145,178,0.3)]'
             )}>
               <div className="absolute inset-0 bg-gradient-to-br from-[var(--color-cyan-600)]/10 to-transparent opacity-0 hover:opacity-100 transition-opacity duration-300" />
-              {/* Background decorative icon - shield */}
               <div className="absolute top-4 right-4 w-32 h-32 opacity-10 pointer-events-none">
                 <Shield className="w-full h-full text-[var(--color-cyan-600)]" strokeWidth={1.5} />
               </div>

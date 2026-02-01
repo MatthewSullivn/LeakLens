@@ -1,7 +1,8 @@
 'use client'
 
 import Link from 'next/link'
-import { Globe, Github, ExternalLink, ScanSearch } from 'lucide-react'
+import Image from 'next/image'
+import { Globe, Github, ExternalLink } from 'lucide-react'
 
 export function Navbar() {
   return (
@@ -10,7 +11,7 @@ export function Navbar() {
         <div className="flex items-center justify-between h-14">
           {/* Logo & Title */}
           <Link href="/" className="flex items-center gap-2">
-            <ScanSearch className="w-5 h-5 text-primary" />
+            <Image src="/logo.jpg" alt="LeakLens" width={28} height={28} className="rounded-sm" />
             <span className="font-bold text-lg tracking-tight text-foreground">
               LeakLens
             </span>

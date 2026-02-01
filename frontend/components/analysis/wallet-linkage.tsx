@@ -54,7 +54,7 @@ function getEdgeType(edge: NetworkEdge): { label: string; color: string; icon: R
   }
 }
 
-// Simplified educational visualization with cyan glow
+// Simplified educational visualization with cyan glow; shows all links
 const LinkageVisualization = memo(function LinkageVisualization({ 
   edges, 
   nodes 
@@ -65,15 +65,21 @@ const LinkageVisualization = memo(function LinkageVisualization({
   const [hoveredNode, setHoveredNode] = useState<string | null>(null)
   
   const displayEdges = useMemo(() => {
-    return edges.slice(0, 8).map((edge, i) => {
-      const targetNode = nodes.find(n => n.id === edge.target)
-      const edgeType = getEdgeType(edge)
-      const angle = (i / 8) * 2 * Math.PI - Math.PI / 2
-      const radius = 85
+    const filtered = edges
+      .map((edge) => {
+        const targetNode = nodes.find(n => n.id === edge.target)
+        const edgeType = getEdgeType(edge)
+        return { edge, targetNode, edgeType }
+      })
+      .filter((item): item is typeof item & { targetNode: NonNullable<typeof item.targetNode> } => !!item.targetNode)
+    const count = filtered.length
+    const radius = count > 8 ? 85 + Math.min(25, (count - 8) * 2) : 85
+    return filtered.map((item, idx) => {
+      const angle = (idx / count) * 2 * Math.PI - Math.PI / 2
       const x = 150 + radius * Math.cos(angle)
       const y = 115 + radius * Math.sin(angle)
-      return { edge, targetNode, edgeType, x, y, angle }
-    }).filter(item => item.targetNode)
+      return { ...item, x, y, angle }
+    })
   }, [edges, nodes])
 
   return (
@@ -232,6 +238,8 @@ export const WalletLinkage = memo(function WalletLinkage({ data }: WalletLinkage
       .slice(0, 6)
   }, [data.edges])
 
+  const linkCountLabel = `${data.total_links} top link${data.total_links !== 1 ? 's' : ''}`
+
   return (
     <Card className="border-border/40">
       <CardHeader className="pb-4">
@@ -243,7 +251,7 @@ export const WalletLinkage = memo(function WalletLinkage({ data }: WalletLinkage
             <CardTitle className="text-base">How this wallet is connected</CardTitle>
           </div>
           <Badge variant="outline" className="w-fit border-primary/30 text-primary">
-            {data.total_links} links
+            {linkCountLabel}
           </Badge>
         </div>
         <CardDescription className="text-xs">

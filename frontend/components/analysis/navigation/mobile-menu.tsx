@@ -100,7 +100,7 @@ export const MobileBottomSheet = memo(function MobileBottomSheet({
             <p className="font-mono text-sm break-all">{wallet}</p>
           </div>
 
-          {/* Nav links — Analysis not clickable on analysis page */}
+          {/* Nav links: Analysis not clickable on analysis page */}
           <div className="flex flex-wrap gap-2 mb-4 pb-4 border-b border-border/40">
             <Link href="/" onClick={onClose} className="flex items-center gap-2 px-3 py-2 rounded-lg bg-muted/30 hover:bg-muted/50 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
               <Home className="w-4 h-4" /> Home
