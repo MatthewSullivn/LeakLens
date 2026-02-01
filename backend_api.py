@@ -158,86 +158,23 @@ def _build_df_and_lists_from_helius_enhanced(enhanced_txs: List[dict]) -> Tuple[
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
-# Price fetching helpers (Jupiter primary, Helius fallback)
+# Price fetching (CoinGecko for SOL; Helius for wallet context when available)
 # ═══════════════════════════════════════════════════════════════════════════════
 
 
-def jupiter_price_now(addresses: List[str]) -> Dict[str, float]:
+def _token_prices_sol_only(addresses: List[str]) -> Dict[str, float]:
     """
-    Fetch current prices from Jupiter (more reliable for Solana tokens).
-    Jupiter price API: https://price.jup.ag/v4/price?ids=...
-    Uses smaller chunks, retries with exponential backoff, validates mints.
+    Fetch SOL price from CoinGecko. Other mints are not priced (no Jupiter).
+    Returns dict with WSOL_MINT -> price when SOL is in addresses.
     """
     if not addresses:
         return {}
-    # Filter invalid/truncated mints (Solana mainnet addresses are 32-44 chars)
-    valid = [a for a in addresses if a and len(str(a).strip()) >= 32]
-    if not valid:
+    if WSOL_MINT not in addresses:
         return {}
-    out: Dict[str, float] = {}
-    chunk = 20
-    for i in range(0, len(valid), chunk):
-        batch = valid[i : i + chunk]
-        last_err = None
-        for attempt in range(3):
-            try:
-                ids = ",".join(batch)
-                resp = requests.get(
-                    "https://price.jup.ag/v4/price",
-                    params={"ids": ids},
-                    headers={"Accept": "application/json", "User-Agent": "LeakLens/1.0"},
-                    timeout=15,
-                )
-                if resp.status_code == 200:
-                    data = resp.json().get("data", {})
-                    for mint, rec in data.items():
-                        if isinstance(rec, dict):
-                            price = rec.get("price")
-                            if price is not None:
-                                out[mint] = _safe_float(price, 0.0)
-                    last_err = None
-                    break
-                elif resp.status_code == 429:
-                    last_err = "rate limited"
-                    if attempt < 2:
-                        time.sleep(1.0 * (attempt + 1))
-                        continue
-            except requests.exceptions.Timeout:
-                last_err = "timeout"
-                if attempt < 2:
-                    time.sleep(0.5 * (2**attempt))
-                    continue
-            except Exception as e:
-                last_err = str(e)[:80]
-                if attempt < 2:
-                    time.sleep(0.5 * (2**attempt))
-                    continue
-        if last_err:
-            print(f"[Jupiter] Batch failed after 3 attempts ({last_err})")
-    # Fallback: individual requests; use CoinGecko for SOL
-    if not out and valid:
-        for mint in valid[:20]:
-            if mint == WSOL_MINT:
-                sol = _coingecko_sol_price()
-                if sol > 0:
-                    out[WSOL_MINT] = sol
-                continue
-            try:
-                resp = requests.get(
-                    "https://price.jup.ag/v4/price",
-                    params={"ids": mint},
-                    headers={"Accept": "application/json", "User-Agent": "LeakLens/1.0"},
-                    timeout=10,
-                )
-                if resp.status_code == 200:
-                    data = resp.json().get("data", {})
-                    if mint in data and isinstance(data[mint], dict):
-                        p = data[mint].get("price")
-                        if p is not None:
-                            out[mint] = _safe_float(p, 0.0)
-            except Exception:
-                pass
-    return out
+    sol = _coingecko_sol_price()
+    if sol > 0:
+        return {WSOL_MINT: sol}
+    return {}
 
 
 def helius_token_prices(wallet: str, mints: List[str]) -> Dict[str, float]:
@@ -316,32 +253,18 @@ def _coingecko_sol_price() -> float:
 def fetch_token_prices(addresses: List[str], wallet: str = None) -> Dict[str, float]:
     """
     Fetch current prices for a list of mints.
-    SOL-only: use CoinGecko first to avoid Jupiter rate limits.
-    Else: Jupiter, then Helius fallback if wallet provided.
+    Uses CoinGecko for SOL; Helius balances for wallet context when provided.
+    Other tokens have no price source (Jupiter removed).
     """
     if not addresses:
         return {}
-    
-    # SOL-only: use CoinGecko first (avoids Jupiter errors for common case)
-    if addresses == [WSOL_MINT]:
-        sol = _coingecko_sol_price()
-        if sol > 0:
-            return {WSOL_MINT: sol}
-    
-    # Try Jupiter (more reliable for other Solana tokens)
-    prices = jupiter_price_now(addresses)
-    
-    # Check what we got
+    prices: Dict[str, float] = _token_prices_sol_only(addresses)
     missing = [m for m in addresses if m not in prices or prices.get(m, 0) <= 0]
-    
-    # If still missing and we have wallet context, try Helius balances
     if missing and wallet:
-        print(f"[Price] Trying Helius balances for {len(missing)} missing tokens")
         helius_prices = helius_token_prices(wallet, missing)
         for mint, price in helius_prices.items():
             if mint not in prices or prices.get(mint, 0) <= 0:
                 prices[mint] = price
-    
     return prices
 
 
@@ -2555,7 +2478,7 @@ def summarize_portfolio(tokens: list, total_value: float = 0) -> dict:
 
 def helius_portfolio_summary(wallet: str) -> tuple:
     """
-    Fallback portfolio summary using Helius token accounts + Jupiter prices.
+    Fallback portfolio summary using Helius token accounts + CoinGecko SOL price.
     Only returns a summary (no token list) to keep it lightweight.
     """
     helius_key = os.getenv("HELIUS_API_KEY")
@@ -2579,46 +2502,11 @@ def helius_portfolio_summary(wallet: str) -> tuple:
     except Exception as e:
         return {}, {"error": f"helius_balances_exception_{str(e)[:60]}"}
     
-    # Compute USD values
+    # Compute USD values (CoinGecko for SOL only; other tokens 0)
     enriched = []
-    # Collect symbols (and include SOL for pricing)
-    symbols = set()
-    for t in tokens:
-        if not isinstance(t, dict):
-            continue
-        sym = t.get("symbol")
-        if sym:
-            symbols.add(sym)
-    symbols.add("SOL")
-    prices = {}
-    price_status = "skipped"
-    if symbols:
-        try:
-            sym_q = ",".join(list(symbols)[:50])  # cap to avoid huge query
-            price_resp = requests.get(f"https://price.jup.ag/v4/price?ids={sym_q}", timeout=8)
-            if price_resp.status_code == 200:
-                price_json = price_resp.json()
-                prices = price_json.get("data", {})
-                price_status = "jup_ok"
-            else:
-                price_status = f"price_status_{price_resp.status_code}"
-        except Exception:
-            price_status = "jup_failed"
-            prices = {}
-    
-    # Fallback: if no prices from Jupiter, try Coingecko for SOL only (others 0)
-    if not prices:
-        try:
-            cg_resp = requests.get("https://api.coingecko.com/api/v3/simple/price?ids=solana&vs_currencies=usd", timeout=6)
-            if cg_resp.status_code == 200:
-                cg_json = cg_resp.json()
-                sol_price_val = cg_json.get("solana", {}).get("usd", 0)
-                if sol_price_val:
-                    prices = {"SOL": {"price": sol_price_val}}
-                    price_status = "coingecko_sol"
-        except Exception:
-            if not prices:
-                price_status = "price_all_failed"
+    sol_price_val = _coingecko_sol_price()
+    prices = {"SOL": {"price": sol_price_val}} if sol_price_val else {}
+    price_status = "coingecko_sol" if sol_price_val else "coingecko_failed"
     for t in tokens:
         if not isinstance(t, dict):
             continue

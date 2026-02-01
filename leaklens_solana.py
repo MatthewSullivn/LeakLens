@@ -1,26 +1,5 @@
 #!/usr/bin/env python3
-"""
-╔═══════════════════════════════════════════════════════════════════════════════╗
-║                                                                               ║
-║    ██╗     ███████╗ █████╗ ██╗  ██╗██╗     ███████╗███╗   ██╗███████╗        ║
-║    ██║     ██╔════╝██╔══██╗██║ ██╔╝██║     ██╔════╝████╗  ██║██╔════╝        ║
-║    ██║     █████╗  ███████║█████╔╝ ██║     █████╗  ██╔██╗ ██║███████╗        ║
-║    ██║     ██╔══╝  ██╔══██║██╔═██╗ ██║     ██╔══╝  ██║╚██╗██║╚════██║        ║
-║    ███████╗███████╗██║  ██║██║  ██╗███████╗███████╗██║ ╚████║███████║        ║
-║    ╚══════╝╚══════╝╚═╝  ╚═╝╚═╝  ╚═╝╚══════╝╚══════╝╚═╝  ╚═══╝╚══════╝        ║
-║                                                                               ║
-║              LEAKLENS SOLANA - See What Your Wallet Leaks                     ║
-║                                                                               ║
-║  Surveillance exposure analysis for Solana wallets.                           ║
-║  Built for encrypt.trade hackathon - Track 1: Mass Financial Surveillance     ║
-║                                                                               ║
-║  COMMANDS:                                                                    ║
-║    python leaklens_solana.py profile <address>    - Analyze exposure          ║
-║    python leaklens_solana.py connect <addr1> ...  - Find connections          ║
-║    python leaklens_solana.py scan <address>       - Map wallet network        ║
-║                                                                               ║
-╚═══════════════════════════════════════════════════════════════════════════════╝
-"""
+"""LeakLens Solana - Surveillance exposure analysis for Solana wallets."""
 
 import sys
 import os

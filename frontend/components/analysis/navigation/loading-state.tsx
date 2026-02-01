@@ -5,6 +5,7 @@ import { motion } from 'motion/react'
 import { LockIcon, Wallet } from 'lucide-react'
 import { formatAddress } from '@/lib/utils'
 import WorldMap from '@/components/ui/world-map'
+import { SolscanLink } from '../shared'
 
 // ============================================================================
 // TYPES
@@ -182,7 +183,11 @@ export const LoadingState = memo(function LoadingState({ wallet }: LoadingStateP
             </div>
             <div className="text-left">
               <p className="text-xs text-muted-foreground">Target Wallet</p>
-              <p className="font-mono text-sm text-foreground">{formatAddress(wallet)}</p>
+              <p className="font-mono text-sm text-foreground">
+                <SolscanLink address={wallet} className="text-foreground hover:text-cyan-500" showIcon={true}>
+                  {formatAddress(wallet)}
+                </SolscanLink>
+              </p>
             </div>
           </div>
         </motion.div>

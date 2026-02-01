@@ -6,7 +6,7 @@ import { PrivacyStory } from '@/components/learn'
 
 export default function LearnPage() {
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background animate-page-fade-in">
       <LeakLensNavbar />
       <main className="pt-20">
         <PrivacyStory />

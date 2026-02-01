@@ -81,7 +81,7 @@ export function setCachedAnalysis(wallet: string, data: AnalysisResult): void {
  * Prefetch analysis for a wallet and store in cache.
  * Call on hover or page load (e.g. demo wallet link). No-op if already cached.
  */
-export function prefetchAnalysis(wallet: string, limit = 50): void {
+export function prefetchAnalysis(wallet: string, limit = 100): void {
   const key = normalizeWallet(wallet)
   if (memory.has(key)) return
   fetch('/api/analyze-wallet', {
