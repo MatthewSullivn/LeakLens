@@ -53,7 +53,7 @@ export const ActivityHeatmap = memo(function ActivityHeatmap({ data }: ActivityH
       { key: 'other', label: 'Unclear', example: 'Mixed or low confidence' },
     ] as const
     const sorted = entries
-      .map((e) => ({ ...e, pct: (geographic as Record<string, number>)[e.key] ?? 0 }))
+      .map((e) => ({ ...e, pct: geographic[e.key] ?? 0 }))
       .sort((a, b) => b.pct - a.pct)
     const top = sorted[0]
     if (!top || top.pct <= 0) return null
