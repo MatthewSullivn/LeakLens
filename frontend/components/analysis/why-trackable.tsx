@@ -229,7 +229,7 @@ export const WhyTrackable = memo(function WhyTrackable({ data }: WhyTrackablePro
           icon={<Users className="w-4 h-4 text-primary" />}
           title="Repeated counterparties create links"
           summary={`${repeatedCounterparties} repeated interactions, ${strongestLinks} strong links`}
-          explanation="Every time you interact with the same wallet—for funding, trading, or withdrawals—you strengthen the link between those addresses. Surveillance systems cluster wallets based on these patterns."
+          explanation="Every time you interact with the same wallet (for funding, trading, or withdrawals) you strengthen the link between those addresses. Surveillance systems cluster wallets based on these patterns."
           evidence={[
             { label: 'Repeated', value: repeatedCounterparties.toString() },
             { label: 'Strong Links', value: strongestLinks.toString() },
@@ -246,7 +246,7 @@ export const WhyTrackable = memo(function WhyTrackable({ data }: WhyTrackablePro
             icon={<Zap className="w-4 h-4 text-primary" />}
             title="Transaction patterns reveal sophistication"
             summary={`${surveillanceSignals?.swap_count || 0} swaps, ${surveillanceSignals?.mev_execution_detected ? 'MEV detected' : 'standard execution'}`}
-            explanation="The complexity of your transactions—MEV awareness, swap frequency, and execution style—creates a profile of your trading sophistication and likely wallet type."
+            explanation="The complexity of your transactions (MEV awareness, swap frequency, and execution style) creates a profile of your trading sophistication and likely wallet type."
             evidence={[
               { label: 'MEV', value: surveillanceSignals?.mev_execution_detected ? 'Yes' : 'No' },
               { label: 'Swaps', value: (surveillanceSignals?.swap_count || 0).toString() },
@@ -262,7 +262,7 @@ export const WhyTrackable = memo(function WhyTrackable({ data }: WhyTrackablePro
           <p className="text-xs text-muted-foreground leading-relaxed">
             <span className="text-primary font-medium">How surveillance works: </span>
             Blockchain analysis firms combine these signals to build probabilistic identity clusters. 
-            No single factor reveals identity—but patterns compound. Each identifiable behavior 
+            No single factor reveals identity; but patterns compound. Each identifiable behavior 
             reduces the anonymity set and increases confidence in wallet clustering.
           </p>
         </div>

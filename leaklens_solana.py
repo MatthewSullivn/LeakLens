@@ -1413,7 +1413,7 @@ def visualize_profile(df: pd.DataFrame, wallet: str, probs: ProfileProbabilities
     accent_purple = '#a855f7'
     
     fig.patch.set_facecolor(bg_color)
-    fig.suptitle(f"LEAKLENS EXPOSURE — {wallet[:12]}...{wallet[-6:]}", 
+    fig.suptitle(f"LEAKLENS EXPOSURE - {wallet[:12]}...{wallet[-6:]}", 
                  fontsize=16, color=accent_green, fontweight='bold', y=0.98)
     
     # Panel 1: Profile probabilities
@@ -1732,7 +1732,7 @@ def print_profile_report(df: pd.DataFrame, wallet: str, probs: ProfileProbabilit
     
     print("\n" + "═" * 70)
     print(" 🛡️  Improve your privacy: https://encrypt.trade")
-    print(" ⚠️  All data from public blockchain — no encryption broken")
+    print(" ⚠️  All data from public blockchain - no encryption broken")
     print("═" * 70 + "\n")
 
 
@@ -1901,7 +1901,7 @@ def print_connection_report(connections: Dict[Tuple[str, str], WalletConnection]
     
     print("\n" + "═" * 70)
     print(" 🛡️  Improve your privacy: https://encrypt.trade")
-    print(" ⚠️  All data from public blockchain — no encryption broken")
+    print(" ⚠️  All data from public blockchain - no encryption broken")
     print("═" * 70 + "\n")
 
 

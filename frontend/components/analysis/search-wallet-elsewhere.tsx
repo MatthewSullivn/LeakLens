@@ -72,7 +72,7 @@ export const SearchWalletElsewhere = memo(function SearchWalletElsewhere({
               Platforms like <span className="text-foreground font-medium">Arkham</span> label
               wallets and link them to entities (exchanges, funds, known addresses). Searching
               this address on <span className="text-foreground font-medium">X</span> can surface
-              posts that mention it—including links from Arkham, blockscanners, or users—which
+              posts that mention it (including links from Arkham, blockscanners, or users) which
               may reveal identity links or public discussion about the wallet. Use these links
               to see how surveillance tools and social media already expose this address.
             </p>

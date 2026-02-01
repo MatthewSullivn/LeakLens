@@ -1,7 +1,7 @@
 'use client'
 
 import { memo, useState } from 'react'
-import { Wallet, TrendingUp, TrendingDown, ChevronDown, Info } from 'lucide-react'
+import { Wallet, TrendingUp, TrendingDown, ChevronDown } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import {
@@ -31,7 +31,7 @@ function formatSOL(value: number): string {
 }
 
 export const FinancialContext = memo(function FinancialContext({ tradingPnl, netWorth }: FinancialContextProps) {
-  const [isExpanded, setIsExpanded] = useState(false)
+  const [isExpanded, setIsExpanded] = useState(true)
 
   const realizedPnlUSD = tradingPnl?.totals?.realized_pnl_usd || 0
   const realizedPnlSOL = tradingPnl?.totals?.realized_pnl_sol || 0
@@ -52,26 +52,26 @@ export const FinancialContext = memo(function FinancialContext({ tradingPnl, net
 
   return (
     <Collapsible open={isExpanded} onOpenChange={setIsExpanded}>
-      <Card className="border-border/40 border-dashed">
+      <Card className="border-border/40">
         <CollapsibleTrigger className="w-full text-left">
           <CardHeader className="pb-3 cursor-pointer hover:bg-muted/10 transition-colors rounded-t-lg">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <div className="p-1.5 rounded-lg bg-muted/30">
-                  <Wallet className="w-4 h-4 text-muted-foreground" />
+                <div className="p-1.5 rounded-lg bg-primary/10">
+                  <Wallet className="w-4 h-4 text-primary" />
                 </div>
                 <div>
-                  <CardTitle className="text-sm font-medium text-muted-foreground">
+                  <CardTitle className="text-sm font-medium text-foreground">
                     Financial Activity Context
                   </CardTitle>
-                  <CardDescription className="text-[10px]">
+                  <CardDescription className="text-[10px] text-muted-foreground">
                     Trading behavior contributes to exposure patterns
                   </CardDescription>
                 </div>
               </div>
               <div className="flex items-center gap-3">
                 {/* Total SOL */}
-                <Badge variant="outline" className="text-[10px] py-0 bg-muted/30 text-foreground border-border/40">
+                <Badge variant="outline" className="text-[10px] py-0 bg-primary/10 text-primary border-primary/30">
                   {formatSOL(solBalance)}
                 </Badge>
                 <ChevronDown className={cn(
@@ -189,17 +189,6 @@ export const FinancialContext = memo(function FinancialContext({ tradingPnl, net
               </div>
             )}
 
-            {/* Context Note */}
-            <div className="p-3 rounded-lg bg-muted/20 border border-border/30">
-              <div className="flex gap-2.5">
-                <Info className="w-3.5 h-3.5 text-muted-foreground shrink-0 mt-0.5" />
-                <p className="text-[10px] text-muted-foreground leading-relaxed">
-                  <span className="font-medium text-foreground">Note: </span>
-                  Financial outcomes are not the focus of this analysis. Trading behavior—frequency, 
-                  patterns, and asset selection—contributes to behavioral fingerprinting and exposure patterns.
-                </p>
-              </div>
-            </div>
           </CardContent>
         </CollapsibleContent>
       </Card>

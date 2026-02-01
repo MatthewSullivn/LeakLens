@@ -54,7 +54,7 @@ function getEdgeType(edge: NetworkEdge): { label: string; color: string; icon: R
   }
 }
 
-// Simplified educational visualization with cyan glow — shows all links
+// Simplified educational visualization with cyan glow; shows all links
 const LinkageVisualization = memo(function LinkageVisualization({ 
   edges, 
   nodes 

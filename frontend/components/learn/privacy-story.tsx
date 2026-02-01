@@ -588,7 +588,7 @@ const Scene6 = memo(function Scene6() {
           </div>
           
           <p className="text-sm text-foreground mb-4 text-center">
-            Tracking still works — just worse.
+            Tracking still works; just worse.
           </p>
           
           <div className="space-y-3 text-sm text-muted-foreground max-w-xl mx-auto">

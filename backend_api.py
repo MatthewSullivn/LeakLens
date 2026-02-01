@@ -2138,7 +2138,7 @@ def analyze_wallet_comprehensive(request: WalletAnalysisRequest):
         if not isinstance(request.limit, (int, type(None))):
             request.limit = 100
         # Solana only. Use Helius for transaction fetch whenever API key is set (fast 1-call path).
-        # Without key we fall back to RPC (1 + N getTransaction calls — slow).
+        # Without key we fall back to RPC (1 + N getTransaction calls, slow).
         use_helius_primary = bool(os.getenv("HELIUS_API_KEY"))
         limit = request.limit or 100
         enhanced_all: List[dict] = []

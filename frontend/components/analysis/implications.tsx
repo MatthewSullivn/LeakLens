@@ -1,7 +1,7 @@
 'use client'
 
 import { memo } from 'react'
-import { Lightbulb, ArrowRight } from 'lucide-react'
+import { Lightbulb, ArrowRight, Shield, ExternalLink, Link2 } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import Link from 'next/link'
 import { cn } from '@/lib/utils'
@@ -118,51 +118,103 @@ export const ImplicationsSection = memo(function ImplicationsSection() {
 
 export const MitigationCTA = memo(function MitigationCTA() {
   return (
-    <div className="py-8 text-center space-y-6">
-      <h3 className="text-base font-medium text-muted-foreground">
-        What comes next?
-      </h3>
-      
-      <p className="text-sm text-muted-foreground/80 leading-relaxed max-w-md mx-auto">
-        Now that you understand how surveillance systems classify wallets, 
-        you can make more informed decisions about how you interact on-chain.
-      </p>
+    <Card className="border-2 border-primary/30 bg-gradient-to-b from-primary/5 via-card to-card overflow-hidden">
+      <CardContent className="py-8 px-6 sm:px-8">
+        <div className="max-w-xl mx-auto text-center space-y-6">
+          {/* Icon + headline */}
+          <div className="flex flex-col items-center gap-3">
+            <div className="p-3 rounded-full bg-primary/15 border border-primary/30">
+              <Shield className="w-6 h-6 text-primary" />
+            </div>
+            <h3 className="text-xl font-semibold text-foreground">
+              Reduce your exposure
+            </h3>
+          </div>
 
-      {/* Primary CTA with glow */}
-      <div className="flex flex-col sm:flex-row gap-3 justify-center pt-2">
-        <Link
-          href="/learn"
-          className={cn(
-            "inline-flex items-center justify-center gap-2",
-            "px-6 py-3 rounded-lg",
-            "bg-primary text-primary-foreground",
-            "hover:bg-primary/90 transition-all duration-200",
-            "font-medium text-sm",
-            "shadow-lg"
-          )}
-          style={{
-            boxShadow: '0 0 20px oklch(0.75 0.15 195 / 0.3)'
-          }}
-        >
-          Learn how exposure can be reduced
-          <ArrowRight className="w-4 h-4" />
-        </Link>
-      </div>
+          <p className="text-sm text-muted-foreground leading-relaxed">
+            You don&apos;t have to go dark to improve privacy. Selective privacy means reducing linkability where it matters while keeping normal use. Start with better habits, then consider tools built for it.
+          </p>
 
-      {/* Secondary Link */}
-      <div>
-        <Link
-          href="/learn#privacy-concepts"
-          className="text-xs text-muted-foreground hover:text-primary transition-colors underline-offset-4 hover:underline"
-        >
-          Explore selective privacy concepts
-        </Link>
-      </div>
+          {/* Before/after visualization: high linkability → selective privacy → lower exposure */}
+          <div className="flex items-center justify-center gap-3 sm:gap-4 py-4 px-4 rounded-xl bg-muted/10 border border-border/30">
+            <div className="flex flex-col items-center gap-2 min-w-[100px]">
+              <div className="flex items-center justify-center w-12 h-12 rounded-full bg-red-500/10 border border-red-500/30">
+                <Link2 className="w-5 h-5 text-red-400/90" />
+              </div>
+              <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">Many links</span>
+            </div>
+            <ArrowRight className="w-5 h-5 text-muted-foreground/60 shrink-0" />
+            <div className="flex flex-col items-center gap-2 min-w-[100px]">
+              <div className="flex items-center justify-center w-12 h-12 rounded-full bg-primary/15 border border-primary/40">
+                <Shield className="w-5 h-5 text-primary" />
+              </div>
+              <span className="text-[10px] font-medium text-primary uppercase tracking-wide">Selective privacy</span>
+            </div>
+            <ArrowRight className="w-5 h-5 text-muted-foreground/60 shrink-0" />
+            <div className="flex flex-col items-center gap-2 min-w-[100px]">
+              <div className="flex items-center justify-center w-12 h-12 rounded-full bg-violet-500/15 border border-violet-500/40">
+                <Link2 className="w-5 h-5 text-violet-400" />
+              </div>
+              <span className="text-[10px] font-medium text-violet-400 uppercase tracking-wide">Fewer links</span>
+            </div>
+          </div>
 
-      {/* Trust Note */}
-      <p className="text-[10px] text-muted-foreground/50 pt-4 max-w-sm mx-auto">
-        LeakLens is an educational tool. We do not collect wallet data or store analysis results.
-      </p>
-    </div>
+          {/* CTAs: primary + encrypt.trade */}
+          <div className="flex flex-col gap-3 pt-2">
+            <div className="flex flex-col sm:flex-row gap-3 justify-center items-center">
+              <Link
+                href="/learn"
+                className={cn(
+                  "inline-flex items-center justify-center gap-2 w-full sm:w-auto",
+                  "px-6 py-3.5 rounded-lg",
+                  "bg-primary text-primary-foreground",
+                  "hover:bg-primary/90 hover:scale-[1.02] transition-all duration-200",
+                  "font-semibold text-sm",
+                  "shadow-lg"
+                )}
+                style={{
+                  boxShadow: '0 0 24px oklch(0.75 0.15 195 / 0.35)'
+                }}
+              >
+                Learn how to reduce exposure
+                <ArrowRight className="w-4 h-4" />
+              </Link>
+              <a
+                href="https://encrypt.trade"
+                target="_blank"
+                rel="noopener noreferrer"
+                className={cn(
+                  "inline-flex items-center justify-center gap-2 w-full sm:w-auto",
+                  "px-6 py-3.5 rounded-lg",
+                  "bg-violet-500/20 text-violet-300 border border-violet-500/40",
+                  "hover:bg-violet-500/30 hover:border-violet-500/50 hover:scale-[1.02] transition-all duration-200",
+                  "font-semibold text-sm"
+                )}
+              >
+                <Shield className="w-4 h-4" />
+                encrypt.trade
+                <ExternalLink className="w-3.5 h-3.5 opacity-80" />
+              </a>
+            </div>
+            <p className="text-[11px] text-muted-foreground max-w-sm mx-auto">
+              <span className="text-foreground/80 font-medium">encrypt.trade</span> lets you trade with selective privacy on Solana. Fewer permanent links, same chain.
+            </p>
+          </div>
+
+          {/* Secondary: concepts link */}
+          <Link
+            href="/learn#privacy-concepts"
+            className="inline-block text-xs text-muted-foreground hover:text-primary transition-colors underline-offset-4 hover:underline"
+          >
+            Explore selective privacy concepts
+          </Link>
+
+          {/* Trust note */}
+          <p className="text-[10px] text-muted-foreground/50 border-t border-border/30 max-w-sm mx-auto pt-4">
+            LeakLens is an educational tool. We do not collect wallet data or store analysis results.
+          </p>
+        </div>
+      </CardContent>
+    </Card>
   )
 })

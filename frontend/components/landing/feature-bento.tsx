@@ -32,7 +32,7 @@ function Skeleton({ icon, thumbnailCopy }: { icon: React.ReactNode; thumbnailCop
 const items = [
   {
     title: 'Your wallet is not alone',
-    body: "Your transactions don't exist in isolation. Funding sources, repeated counterparties, and shared behavior allow wallets to be grouped together — even if you never interact directly.",
+    body: "Your transactions don't exist in isolation. Funding sources, repeated counterparties, and shared behavior allow wallets to be grouped together, even if you never interact directly.",
     subline: 'Clusters form faster than most users realize.',
     header: (
       <Skeleton
@@ -51,7 +51,7 @@ const items = [
   {
     title: 'When you transact matters',
     body: 'Transaction timestamps expose routines, timezones, and inactivity windows. Over time, simple timing patterns can narrow down where and how a wallet is operated.',
-    subline: "Privacy loss doesn't require amounts — timing is enough.",
+    subline: "Privacy loss doesn't require amounts; timing is enough.",
     header: (
       <Skeleton
         icon={

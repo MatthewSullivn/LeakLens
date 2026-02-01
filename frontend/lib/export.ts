@@ -12,7 +12,7 @@ function sanitizeForPdf(s: string): string {
   if (!s || typeof s !== 'string') return ''
   return s
     .replace(/\u2248/g, '~=')       // ≈
-    .replace(/\u2014|\u2013|\u2212/g, '-')  // — – −
+    .replace(/\u2014|\u2013|\u2212/g, '-')  // em-dash, en-dash, minus
     .replace(/\u2026/g, '...')      // …
     .replace(/\u2022/g, '- ')       // •
     .replace(/[\u2018\u2019]/g, "'").replace(/[\u201C\u201D]/g, '"')  // smart quotes

@@ -1,5 +1,5 @@
 import { memo } from 'react'
-import { ScanSearch } from 'lucide-react'
+import Image from 'next/image'
 
 export const Footer = memo(function Footer() {
   return (
@@ -8,7 +8,7 @@ export const Footer = memo(function Footer() {
         <div className="flex flex-col md:flex-row items-center justify-between gap-4">
           {/* Logo */}
           <div className="flex items-center gap-2">
-            <ScanSearch className="w-8 h-8 text-cyan-500" />
+            <Image src="/logo.jpg" alt="LeakLens" width={32} height={32} className="rounded-sm" />
             <span className="font-bold">LeakLens.</span>
           </div>
 

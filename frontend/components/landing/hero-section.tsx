@@ -140,7 +140,7 @@ export const HeroSection = memo(function HeroSection() {
 
                   {/* Improved trust microcopy */}
                   <p className="mt-4 text-sm text-muted-foreground drop-shadow-[0_1px_2px_rgba(0,0,0,0.2)]">
-                    Zero access to your wallet. We only read public chain data — no sign-in, no connect, no permissions.
+                    Zero access to your wallet. We only read public chain data; no sign-in, no connect, no permissions.
                   </p>
 
                   {error && (
