@@ -1,6 +1,6 @@
 # LeakLens - See What Your Wallet Leaks
 
-A blockchain surveillance exposure tool for Solana. Built by [MatthewSullivn](https://github.com/MatthewSullivn), [RITTUVIK](https://github.com/RITTUVIK), and [GeorgeBacky](https://github.com/GeorgeBacky) for the **Solana Privacy Hackathon**. Submitting to the [encrypt.trade](https://encrypt.trade) bounty **Track 1: Educate users about mass financial surveillance** ($500).
+A blockchain surveillance exposure tool for Solana. Built by [MatthewSullivn](https://github.com/MatthewSullivn), [RITTUVIK](https://github.com/RITTUVIK), and [GeorgeBacky](https://github.com/GeorgeBacky) for the **Solana Privacy Hackathon**. Submitting to the [encrypt.trade](https://encrypt.trade) bounty **Track 1: Educate users about mass financial surveillance**.
 
 <div align="center">
   <a href="https://www.youtube.com/watch?v=PLACEHOLDER">
