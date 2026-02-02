@@ -3,11 +3,11 @@
 A blockchain surveillance exposure tool for Solana. Built by [MatthewSullivn](https://github.com/MatthewSullivn), [RITTUVIK](https://github.com/RITTUVIK), and [GeorgeBacky](https://github.com/GeorgeBacky) for the **Solana Privacy Hackathon**. Submitting to the [encrypt.trade](https://encrypt.trade) bounty **Track 1: Educate users about mass financial surveillance**.
 
 <div align="center">
-  <a href="https://www.youtube.com/watch?v=PLACEHOLDER">
+  <a href="https://www.youtube.com/watch?v=1UH30uhi0Yk">
     <p>LeakLens - Watch Demo</p>
   </a>
-  <a href="https://www.youtube.com/watch?v=PLACEHOLDER">
-    <img src="https://img.youtube.com/vi/PLACEHOLDER/hqdefault.jpg" alt="LeakLens Demo" style="max-width:300px;">
+  <a href="https://www.youtube.com/watch?v=1UH30uhi0Yk">
+    <img src="https://img.youtube.com/vi/1UH30uhi0Yk/hqdefault.jpg" alt="LeakLens Demo" style="max-width:300px;">
   </a>
 </div>
 
